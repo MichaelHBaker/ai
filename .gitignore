@@ -1,0 +1,39 @@
+# C:\dev\ai\.gitignore
+
+### Python Environment and Build Artifacts ###
+
+# Virtual environment directory (CRUCIAL: keeps project dependencies off GitHub)
+.venv/
+venv/
+env/
+ENV/
+
+# Byte-compiled files
+__pycache__/
+*.pyc
+
+# Distribution and packaging
+dist/
+build/
+*.egg-info/
+
+### Configuration and Secrets (CRUCIAL: keeps keys off GitHub) ###
+
+# Environment variable file (NEVER commit this)
+.env
+
+# Local run-time data and logs
+*.log
+.DS_Store # macOS system files
+
+### IDE and Editor Files ###
+
+# VS Code settings that manage local configurations (like terminal auto-activation)
+# We ignore the whole folder to keep local settings off the repo.
+.vscode/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+
+# Pytest cache
+.pytest_cache
