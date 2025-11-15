@@ -1,7 +1,6 @@
-# Robot Vision AI - 12 Month Learning Project
+# Robot Vision AI - Learning Project
 
-
-A year-long hands-on learning journey to understand AI, machine learning, computer vision, and robotics by building an autonomous voice-controlled robot from scratch.
+A hands-on learning journey to understand AI, machine learning, computer vision, and robotics by building an autonomous voice-controlled robot from scratch.
 
 ## 🎯 Project Goals
 
@@ -16,8 +15,8 @@ Build a robot that can:
 
 **Hardware Requirements:**
 - Raspberry Pi 4/5 (4GB+ RAM)
-- Pi Camera or USB webcam
-- Ultrasonic distance sensors (HC-SR04)
+- 2x Pi Camera or USB webcams (stereo vision)
+- Ultrasonic distance sensors (HC-SR04) - 3x sensors
 - DC motors + motor controller (L298N)
 - 3D printed chassis (Prusa MK4)
 - USB microphone
@@ -38,8 +37,8 @@ Build a robot that can:
 
 ## 📊 Current Progress
 
-**Phase:** Month 1 - Foundations  
-**Status:** ✅ Initial setup complete, first programs working!
+**Phase:** Foundations - Computer Vision  
+**Status:** ✅ Edge detection complete, ready for contour detection
 
 ### Completed Milestones ✅
 - [x] Project structure established (topic-based organization)
@@ -49,15 +48,18 @@ Build a robot that can:
 - [x] OpenCV camera access working (external USB camera)
 - [x] First computer vision program complete (live video feed)
 - [x] Diagnostic tools created (camera detection, display testing)
+- [x] Edge detection fundamentals (interactive lesson completed)
+- [x] Understanding of Gaussian blur and Canny algorithm
+- [x] Grasp of image processing pipeline concepts
 
 ### Current Work 🔨
-- [ ] Image manipulation exercises
-- [ ] Understanding pixels and color spaces
-- [ ] Edge detection deep dive
-- [ ] Building more ML algorithms
+- [ ] Contour detection (grouping edges into objects)
+- [ ] Contour properties and shape classification
+- [ ] Color space transformations (RGB, HSV, grayscale)
+- [ ] Motion detection basics
 
 ### Next Milestone 🎯
-Complete computer vision fundamentals - edge detection, color tracking, basic obstacle detection
+Complete contour detection and object property analysis - bridge from low-level vision (edges) to high-level understanding (objects)
 
 ## 🗂️ Project Structure
 ```
@@ -69,7 +71,9 @@ ai/
 │   │   ├── 02_computer_vision/      # OpenCV, image processing  
 │   │   │   ├── hello_opencv.py      # ✅ Live camera feed (completed)
 │   │   │   ├── test_cameras.py      # ✅ Camera diagnostic tool
-│   │   │   └── test_display.py      # ✅ Display diagnostic tool
+│   │   │   ├── test_display.py      # ✅ Display diagnostic tool
+│   │   │   ├── edge_detection_lesson.py      # ✅ Interactive edge detection (completed)
+│   │   │   └── contour_detection_lesson.py   # ⏭️ Interactive contour detection (next)
 │   │   ├── 03_machine_learning/     # Vision ML (YOLO, classifiers)
 │   │   ├── 04_hardware/             # Raspberry Pi, sensors, motors
 │   │   ├── 05_navigation/           # Path planning, obstacle avoidance
@@ -114,13 +118,14 @@ ai/
 - TensorFlow 2.20.0 - Neural networks (for future use)
 - YOLOv8 Nano - Object detection (6 MB, planned)
 
+**Hardware Control (Planned):**
+- gpiozero - GPIO control for ultrasonic sensors and motors
+- RPi.GPIO - Backend for gpiozero
+- OpenCV - Camera interface
+
 **Voice (Planned):**
 - Vosk (50 MB model) - Offline speech-to-text
 - PyAudio - Microphone access
-
-**Hardware Control (Planned):**
-- RPi.GPIO / gpiozero - GPIO control
-- OpenCV - Camera interface
 
 **Development:**
 - VS Code - IDE
@@ -173,6 +178,12 @@ python src/learning/02_computer_vision/hello_opencv.py
 # Diagnostic tools
 python src/learning/02_computer_vision/test_cameras.py
 python src/learning/02_computer_vision/test_display.py
+
+# Interactive edge detection lesson
+python src/learning/02_computer_vision/edge_detection_lesson.py
+
+# Interactive contour detection lesson (next)
+python src/learning/02_computer_vision/contour_detection_lesson.py
 ```
 
 ## 📚 Learning Progression
@@ -184,32 +195,53 @@ python src/learning/02_computer_vision/test_display.py
 - ✅ K-Nearest Neighbors algorithm from scratch
 - ✅ OpenCV installation and camera access
 - ✅ Live video feed display
+- ✅ Edge detection (Canny algorithm)
+- ✅ Gaussian blur and noise reduction
+- ✅ Understanding of image processing pipeline
 
 **In Progress:**
-- Image manipulation (rotate, crop, filter)
-- Color space transformations (RGB, HSV, grayscale)
-- Edge detection (Canny, Sobel)
-- Understanding pixels and image data structures
+- Contour detection (organizing edges into objects)
+- Contour properties (area, perimeter, center)
+- Shape classification (circles, rectangles, etc.)
+- Understanding object boundaries
+
+**Coming Next:**
+- Color space transformations (RGB, BGR, HSV)
+- Color-based object tracking
+- Motion detection
+- Combining multiple techniques
 
 **Deliverable:** Webcam obstacle detection running on PC
 
-### Phase 2: Advanced Vision & Hardware
-**Topics:** `03_machine_learning/` & `04_hardware/`
-- Object detection (YOLO Nano)
-- Raspberry Pi GPIO programming
-- Motor control and sensor reading
-- 3D printing robot chassis
-- **Deliverable:** Assembled robot with basic motor control
+### Phase 2: Stereo Vision & Sensor Fusion
+**Topics:** `03_machine_learning/` & `06_sensor_fusion/`
+- Add second camera for stereo vision
+- Stereo calibration process
+- Depth map computation
+- Ultrasonic sensor integration (3x HC-SR04)
+- Sensor fusion algorithms
+- Comparing stereo vs ultrasonic accuracy
+- **Deliverable:** Depth perception system with multiple sensors
 
-### Phase 3: Navigation
-**Topics:** `05_navigation/` & `06_sensor_fusion/`
+### Phase 3: Hardware Integration
+**Topics:** `04_hardware/`
+- Raspberry Pi GPIO programming
+- Motor control with PWM (speed control)
+- Ultrasonic sensor wiring and reading
+- 3D printing robot chassis
+- Power management
+- **Deliverable:** Assembled robot with motor and sensor control
+
+### Phase 4: Navigation Algorithms
+**Topics:** `05_navigation/`
 - Path planning algorithms (A*, potential fields)
 - Obstacle avoidance (geometry + sensors)
-- Combining camera + sensor data
 - Dead reckoning and localization
+- Real-time decision making
+- Speed-dependent processing strategies
 - **Deliverable:** Robot navigates room avoiding obstacles
 
-### Phase 4: Integration & Voice
+### Phase 5: Integration & Voice
 **Topics:** `07_voice_control/` & final integration
 - Voice recognition (Vosk - offline)
 - Command parsing
@@ -223,7 +255,7 @@ python src/learning/02_computer_vision/test_display.py
 A K-Nearest Neighbors implementation from scratch that classifies fruits based on weight and color.
 
 **Key Concepts:**
-- Non-learning vs learning algorithms
+- Learning vs non-learning algorithms
 - Training data and features
 - Distance metrics
 - Classification by similarity
@@ -237,11 +269,21 @@ Live video feed from external USB camera with text overlay.
 - Window management
 - Event handling (keyboard input)
 
-### 3. Diagnostic Tools
+### 3. Edge Detection Lesson (`edge_detection_lesson.py`)
+Interactive program demonstrating the complete edge detection pipeline.
+
+**Key Concepts:**
+- Gaussian blur for noise reduction
+- Canny edge detection algorithm
+- Multi-stage processing (blur → gradient → non-max suppression → hysteresis)
+- Real-time visualization of each processing step
+- Understanding why blur kernel size matters
+
+### 4. Diagnostic Tools
 - `test_cameras.py` - Scans for available cameras (indices 0-4)
 - `test_display.py` - Tests OpenCV GUI display capabilities
 
-## 🐛 Troubleshooting
+## 🛠 Troubleshooting
 
 ### Camera Issues
 
@@ -304,6 +346,8 @@ python src/learning/02_computer_vision/test_display.py
 
 **Non-Learning Algorithms** (Rules written by programmer):
 - Edge detection (Canny, Sobel)
+- Gaussian blur (noise reduction)
+- Contour detection (boundary following)
 - Path planning (A*, Dijkstra)
 - Obstacle avoidance (potential fields)
 - PID control
@@ -315,12 +359,54 @@ python src/learning/02_computer_vision/test_display.py
 - Neural Networks
 - Reinforcement Learning (future)
 
+### Computer Vision Pipeline
+
+**Low-Level Vision:**
+- Pixels and color spaces (RGB, BGR, HSV)
+- Gaussian blur (noise reduction)
+- Edge detection (Canny algorithm)
+- Gradient computation
+
+**Mid-Level Vision:**
+- Contour detection (grouping edges)
+- Shape analysis
+- Object properties (area, perimeter, center)
+- Motion detection
+
+**High-Level Vision:**
+- Object recognition
+- Scene understanding
+- Depth perception (stereo vision)
+- Navigation decisions
+
 ### Important Distinctions
 
 - **OpenCV ≠ Machine Learning** - It's mostly non-learning computer vision algorithms
 - **Classical ML vs Neural Networks** - Both learn from data, different complexity
 - **Vision Models vs Language Models** - YOLOv8 Nano (6 MB) vs DeepSeek (400+ GB)
 - **On-Device vs Cloud** - Everything must run on Raspberry Pi
+- **Edges vs Contours** - Edges are pixels, contours are organized object boundaries
+- **2D Vision vs 3D Depth** - Single camera sees flat, stereo/sensors provide distance
+
+### Sensor Fusion Strategy
+
+**Stereo Vision (Dual Cameras):**
+- Full scene depth map
+- Wide field of view
+- Computationally intensive
+- Fails on textureless surfaces
+
+**Ultrasonic Sensors (HC-SR04):**
+- Direct distance measurement
+- Fast and accurate
+- Narrow beam (single direction)
+- Works in any lighting
+
+**Fusion Approach:**
+- Use US for critical close-range safety
+- Use stereo for scene understanding
+- Cross-validate when both available
+- Adaptive processing based on distance
 
 ## 🎯 Learning vs Production Code
 
@@ -329,12 +415,14 @@ python src/learning/02_computer_vision/test_display.py
 - Algorithms built from scratch for understanding
 - Lots of comments and explanations
 - Focus on learning how things work
+- Interactive demonstrations
 
 **`src/robot/`** - Production code
 - Code that actually runs on the robot
 - Optimized and tested
 - Minimal dependencies
 - Production-ready and reliable
+- Real-time performance
 
 ## 🤝 Contributing
 
@@ -353,10 +441,11 @@ MIT License - Feel free to use this for your own learning!
 - Raspberry Pi Foundation for accessible hardware
 - Open source ML community (scikit-learn, TensorFlow)
 - Claude (Anthropic) for learning guidance and pair programming
+- John Canny for the edge detection algorithm (1986)
 
 ---
 
-**Current Status:** ✅ Phase 1 (Month 1) - Initial Foundation Complete  
-**Last Updated:** 2025-11-11  
-**Next Session:** Image manipulation and edge detection exercises  
+**Current Status:** ✅ Edge Detection Complete, Contour Detection Next  
+**Last Updated:** 2025-11-14  
+**Next Session:** Run and understand contour detection lesson  
 **GitHub:** [MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
