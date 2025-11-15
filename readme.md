@@ -1,5 +1,6 @@
 # Robot Vision AI - 12 Month Learning Project
 
+
 A year-long hands-on learning journey to understand AI, machine learning, computer vision, and robotics by building an autonomous voice-controlled robot from scratch.
 
 ## 🎯 Project Goals
