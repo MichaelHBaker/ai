@@ -2,6 +2,17 @@
 
 A hands-on learning journey to understand AI, machine learning, computer vision, and robotics by building an autonomous voice-controlled robot from scratch.
 
+**Repository:** [github.com/MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
+
+## 💻 Development Stack
+
+**This is a Python-only project** - no web frameworks, no JavaScript
+- **Language:** Python 3.13
+- **Libraries:** OpenCV, NumPy, scikit-learn, TensorFlow
+- **Deployment:** Raspberry Pi OS (Linux)
+- **Interface:** Command-line and direct hardware control
+- **No Django, no web interface, no JavaScript**
+
 ## 🎯 Project Goals
 
 Build a robot that can:
@@ -13,22 +24,22 @@ Build a robot that can:
 
 ## 🔧 Project Constraints & Rules
 
-**Hardware Requirements:**
-- Raspberry Pi 4/5 (4GB+ RAM)
-- 2x Pi Camera or USB webcams (stereo vision)
-- Ultrasonic distance sensors (HC-SR04) - 3x sensors
-- DC motors + motor controller (L298N)
-- 3D printed chassis (Prusa MK4)
+**Hardware Requirements (Updated):**
+- Raspberry Pi 4 (8GB RAM)
+- 1x USB webcam (design accommodates 2nd camera for future stereo)
+- 3x Ultrasonic distance sensors (HC-SR04)
+- DC motors + motor controller
+- 3D printed chassis
 - USB microphone
-- Budget: ~$150-250
+- Budget: ~$250 Phase 0, ~$400 total
 
 **Software Constraints:**
 - ✅ MUST be open source
-- ✅ MUST run on Raspberry Pi (no cloud dependency for core functions)
-- ✅ MUST be free (no paid APIs for essential features)
+- ✅ MUST run on Raspberry Pi (no cloud dependency)
+- ✅ MUST be free (no paid APIs)
 - ❌ NO proprietary software
-- ❌ NO mandatory internet connection for core functions
-- ❌ NO expensive hardware (no Jetson, no LiDAR)
+- ❌ NO mandatory internet connection
+- ❌ NO expensive hardware
 
 **Philosophy:**
 > This is NOT about building the world's best robot.  
@@ -37,415 +48,261 @@ Build a robot that can:
 
 ## 📊 Current Progress
 
-**Phase:** Foundations - Computer Vision  
-**Status:** ✅ Edge detection complete, ready for contour detection
+**Phase:** Phase 0 - Sensor & Camera Learning (Hardware Acquisition)  
+**Status:** ✅ Major breakthroughs achieved, hardware list finalized, ready to order
 
 ### Completed Milestones ✅
-- [x] Project structure established (topic-based organization)
-- [x] Development environment configured (Python 3.13, venv, VS Code)
-- [x] Dependencies installed (OpenCV, TensorFlow, scikit-learn, etc.)
-- [x] First ML algorithm built (K-Nearest Neighbors fruit classifier)
-- [x] OpenCV camera access working (external USB camera)
-- [x] First computer vision program complete (live video feed)
-- [x] Diagnostic tools created (camera detection, display testing)
-- [x] Edge detection fundamentals (interactive lesson completed)
-- [x] Understanding of Gaussian blur and Canny algorithm
-- [x] Grasp of image processing pipeline concepts
+- [x] Project structure and development environment
+- [x] K-NN classifier from scratch
+- [x] OpenCV fundamentals and camera access
+- [x] Edge detection (Canny algorithm)
+- [x] Contour detection (file-based, realistic testing)
+- [x] Stereo vision experimentation
+- [x] **BREAKTHROUGH: HSV color filtering** (works where stereo failed!)
+- [x] **Critical architectural decisions made**
+- [x] Phase 0 hardware procurement list (best-in-class, $250)
+
+### Key Lessons Learned 🎓
+1. **Stereo vision fails on repetitive carpet texture** - no depth map possible
+2. **HSV color filtering succeeds brilliantly** - detects all floor obstacles
+3. **Single camera + US sensors >> Stereo cameras** (for indoor navigation)
+4. **Design for 2 cameras, buy 1 initially** - expandable architecture
+5. **Ultrasonic sensors are PRIMARY, vision is SECONDARY** - sensor fusion strategy
 
 ### Current Work 🔨
-- [ ] Contour detection (grouping edges into objects)
-- [ ] Contour properties and shape classification
-- [ ] Color space transformations (RGB, HSV, grayscale)
-- [ ] Motion detection basics
+- [ ] Order Phase 0 hardware (~$250)
+- [ ] Await delivery (1-2 weeks)
+- [ ] Continue vision lessons with iPhone while waiting
+- [ ] Optional: Path planning algorithm lesson (no hardware needed)
 
 ### Next Milestone 🎯
-Complete contour detection and object property analysis - bridge from low-level vision (edges) to high-level understanding (objects)
+**Phase 0 Execution:** Master sensors and real camera before robot design
+- Wire 3x HC-SR04 ultrasonic sensors
+- Test Logitech C920 with color filtering
+- Validate HSV ranges on real robot camera
+- Sensor fusion experiments
+- **Then** design chassis based on learned requirements
+
+## 🛒 Phase 0 Shopping List - Best-in-Class ($250)
+
+### Adafruit Order (~$139)
+| Item | Product # | Price |
+|------|-----------|-------|
+| Raspberry Pi 4 (8GB) | #4564 | $75 |
+| Official 27W Power Supply | #4298 | $12 |
+| 3x HC-SR04 Sensors | #3942 | $12 |
+| Premium Breadboard 830pt | #239 | $6 |
+| M-M Jumper Wires | #1956 | $4 |
+| F-F Jumper Wires | #1951 | $4 |
+| Resistors (1kΩ, 2kΩ) | Various | $3 |
+| Official Pi 4 Case | #4301 | $8 |
+| Micro HDMI Cable 6ft | #4302 | $6 |
+| Logic Level Converter | #757 | $4 |
+
+### Amazon Order (~$110)
+| Item | Price |
+|------|-------|
+| SanDisk Extreme 64GB microSD A2 | $15 |
+| Logitech C920 HD Pro Webcam | $70 |
+| Klein Tools MM400 Multimeter | $25 |
+
+**Design Note:** Chassis will have mounts for 2 cameras (6-8cm baseline), but purchasing only 1 camera initially. Second camera can be added later for outdoor navigation or elevation detection if needed.
 
 ## 🗂️ Project Structure
 ```
 ai/
 ├── src/
-│   ├── learning/                    # Learning exercises by topic
-│   │   ├── 01_fundamentals/         # ML basics, Python fundamentals
-│   │   │   └── simple_ml.py         # ✅ K-NN classifier (completed)
-│   │   ├── 02_computer_vision/      # OpenCV, image processing  
-│   │   │   ├── hello_opencv.py      # ✅ Live camera feed (completed)
-│   │   │   ├── test_cameras.py      # ✅ Camera diagnostic tool
-│   │   │   ├── test_display.py      # ✅ Display diagnostic tool
-│   │   │   ├── edge_detection_lesson.py      # ✅ Interactive edge detection (completed)
-│   │   │   └── contour_detection_lesson.py   # ⏭️ Interactive contour detection (next)
-│   │   ├── 03_machine_learning/     # Vision ML (YOLO, classifiers)
-│   │   ├── 04_hardware/             # Raspberry Pi, sensors, motors
-│   │   ├── 05_navigation/           # Path planning, obstacle avoidance
-│   │   ├── 06_sensor_fusion/        # Combining camera + sensors
-│   │   └── 07_voice_control/        # Speech recognition, commands
-│   │
-│   ├── robot/                       # Production robot code (empty for now)
-│   │   ├── control.py               # Motor control
-│   │   ├── sensors.py               # Sensor reading
-│   │   ├── vision.py                # Computer vision processing
-│   │   ├── navigation.py            # Navigation logic
-│   │   └── voice.py                 # Voice command handling
-│   │
-│   └── utils/                       # Shared utility functions (empty for now)
-│       ├── image_utils.py
-│       ├── math_utils.py
-│       └── config.py
-│
-├── notebooks/                       # Jupyter notebooks for exploration
-├── configs/                         # YAML configuration files
-├── datasets/                        # Training/test data
-├── models/                          # Trained ML models
-├── hardware/                        # 3D prints, schematics
-│   ├── 3d_prints/                   # STL files for Prusa MK4
-│   └── schematics/                  # Electronic diagrams
-├── tests/                           # Unit tests
-├── .vscode/                         # VS Code settings
-├── pyproject.toml                   # Project dependencies & config
-└── README.md                        # This file
+│   ├── learning/
+│   │   ├── 01_fundamentals/
+│   │   │   └── simple_ml.py                # ✅ K-NN from scratch
+│   │   ├── 02_computer_vision/
+│   │   │   ├── hello_opencv.py             # ✅ Live camera feed
+│   │   │   ├── test_cameras.py             # ✅ Camera diagnostic
+│   │   │   ├── test_display.py             # ✅ Display diagnostic
+│   │   │   ├── edge_detection_lesson.py    # ✅ Canny algorithm
+│   │   │   ├── contour_detection_lesson.py # ✅ File-based contours
+│   │   │   ├── stereo_contour_detection_lesson.py  # ✅ Stereo + floor filtering
+│   │   │   └── color_space_lesson.py       # ✅ HSV filtering BREAKTHROUGH
+│   │   ├── 03_machine_learning/
+│   │   ├── 04_hardware/                    # HC-SR04 lessons (coming)
+│   │   ├── 05_navigation/                  # A* path planning (can do now)
+│   │   ├── 06_sensor_fusion/
+│   │   └── 07_voice_control/
+│   ├── robot/                              # Production code (future)
+│   └── utils/
+├── datasets/
+│   └── raw/
+│       ├── IMG_0096.jpg                    # Stereo pair - left
+│       ├── IMG_0097.jpg                    # Stereo pair - right  
+│       └── Iphone_11-15-25_3-59.jpg       # Floor scene test
+├── hardware/
+├── .vscode/
+└── README.md
 ```
 
 ## 🛠️ Technology Stack
 
 **Core:**
 - Python 3.13
-- OpenCV 4.12.0 - Computer vision
-- NumPy 2.2.6 - Math operations
-- Raspberry Pi OS (for deployment)
+- OpenCV 4.12.0
+- NumPy 2.2.6
+- Raspberry Pi OS
 
-**Machine Learning:**
-- scikit-learn 1.7.2 - Classical ML algorithms
-- TensorFlow 2.20.0 - Neural networks (for future use)
-- YOLOv8 Nano - Object detection (6 MB, planned)
-
-**Hardware Control (Planned):**
-- gpiozero - GPIO control for ultrasonic sensors and motors
-- RPi.GPIO - Backend for gpiozero
-- OpenCV - Camera interface
-
-**Voice (Planned):**
-- Vosk (50 MB model) - Offline speech-to-text
-- PyAudio - Microphone access
+**Libraries:**
+- scikit-learn 1.7.2
+- TensorFlow 2.20.0 (if needed)
+- gpiozero (sensors/motors)
+- Vosk (offline speech)
 
 **Development:**
-- VS Code - IDE
-- Git/GitHub - Version control
-- PowerShell 7 - Terminal
-- Windows 11 - Development machine
+- VS Code
+- Git/GitHub
+- PowerShell 7
+- Windows 11
 
 ## 🚀 Getting Started
 
-### Setup Development Environment
 ```powershell
-# Clone repository
+# Clone and setup
 git clone https://github.com/MichaelHBaker/ai.git
 cd ai
-
-# Create virtual environment
 python -m venv .venv
-
-# Activate (Windows PowerShell)
 .venv\Scripts\activate
-
-# Activate (Linux/Mac)
-source .venv/bin/activate
-
-# Install in editable mode (installs all dependencies)
 pip install -e .
 
-# Install development tools (optional)
-pip install -e ".[dev]"
-```
-
-### VS Code Setup
-
-The project includes `.vscode/settings.json` that automatically:
-- Activates the virtual environment in integrated terminal
-- Points Python extension to the correct interpreter
-- Configures linting and formatting
-
-### Run Learning Exercises
-```powershell
-# Activate virtual environment first
-.venv\Scripts\activate
-
-# Simple ML classifier (K-Nearest Neighbors)
-python src/learning/01_fundamentals/simple_ml.py
-
-# OpenCV camera test (live video feed)
-python src/learning/02_computer_vision/hello_opencv.py
-
-# Diagnostic tools
-python src/learning/02_computer_vision/test_cameras.py
-python src/learning/02_computer_vision/test_display.py
-
-# Interactive edge detection lesson
-python src/learning/02_computer_vision/edge_detection_lesson.py
-
-# Interactive contour detection lesson (next)
-python src/learning/02_computer_vision/contour_detection_lesson.py
+# Run lessons
+python src/learning/02_computer_vision/color_space_lesson.py datasets/raw/your_image.jpg
 ```
 
 ## 📚 Learning Progression
 
-### Phase 1: Foundations ⚡ **(Current)**
-**Topics:** `01_fundamentals/` & `02_computer_vision/`
+### Phase 0: Sensor & Camera Learning ⚡ **(Current)**
+**Hardware:** Pi + 1 camera + 3 US sensors + breadboard
+**Goal:** Master components before robot design
+**Timeline:** 2-4 weeks
 
-**Completed:**
-- ✅ K-Nearest Neighbors algorithm from scratch
-- ✅ OpenCV installation and camera access
-- ✅ Live video feed display
-- ✅ Edge detection (Canny algorithm)
-- ✅ Gaussian blur and noise reduction
-- ✅ Understanding of image processing pipeline
+**Lessons:**
+- Wire HC-SR04 sensors (voltage dividers)
+- Read distance data in Python
+- Test Logitech C920 real camera
+- Validate HSV color filtering
+- Sensor fusion experiments
 
-**In Progress:**
-- Contour detection (organizing edges into objects)
-- Contour properties (area, perimeter, center)
-- Shape classification (circles, rectangles, etc.)
-- Understanding object boundaries
+**Deliverable:** Confident hardware knowledge + validated color detection
 
-**Coming Next:**
-- Color space transformations (RGB, BGR, HSV)
-- Color-based object tracking
+### Phase 1: Vision Fundamentals ✅ **(Mostly Complete)**
+**Status:** Edge detection, contours, stereo concepts, **HSV filtering complete**
+
+**Still to do:**
 - Motion detection
-- Combining multiple techniques
+- Morphological operations
+- Fine-tune HSV for robot camera
 
-**Deliverable:** Webcam obstacle detection running on PC
+### Phase 2: Hardware Integration
+**Hardware:** Motors + chassis + power
+**Goal:** Robot moves and avoids obstacles
+**Topics:** GPIO, PWM, path planning, 3D printing
 
-### Phase 2: Stereo Vision & Sensor Fusion
-**Topics:** `03_machine_learning/` & `06_sensor_fusion/`
-- Add second camera for stereo vision
-- Stereo calibration process
-- Depth map computation
-- Ultrasonic sensor integration (3x HC-SR04)
-- Sensor fusion algorithms
-- Comparing stereo vs ultrasonic accuracy
-- **Deliverable:** Depth perception system with multiple sensors
+### Phase 3: Sensor Fusion
+**Goal:** Combine vision + US sensors
+**Topics:** Confidence scoring, conflict resolution
 
-### Phase 3: Hardware Integration
-**Topics:** `04_hardware/`
-- Raspberry Pi GPIO programming
-- Motor control with PWM (speed control)
-- Ultrasonic sensor wiring and reading
-- 3D printing robot chassis
-- Power management
-- **Deliverable:** Assembled robot with motor and sensor control
+### Phase 4: Voice Control
+**Goal:** Voice-commanded autonomous robot
+**Topics:** Vosk, command parsing, integration
 
-### Phase 4: Navigation Algorithms
-**Topics:** `05_navigation/`
-- Path planning algorithms (A*, potential fields)
-- Obstacle avoidance (geometry + sensors)
-- Dead reckoning and localization
-- Real-time decision making
-- Speed-dependent processing strategies
-- **Deliverable:** Robot navigates room avoiding obstacles
+## 🎓 Critical Lessons Learned
 
-### Phase 5: Integration & Voice
-**Topics:** `07_voice_control/` & final integration
-- Voice recognition (Vosk - offline)
-- Command parsing
-- System integration
-- Testing and refinement
-- **Deliverable:** Voice-controlled autonomous robot
+### Stereo Vision vs Color Filtering
 
-## 🔍 What We've Built So Far
+**Stereo Vision:**
+- ✅ Works: Textured surfaces with distinctive features (brick, pavers, wood grain)
+- ❌ Fails: Repetitive patterns (carpet, uniform surfaces)
+- Requires: Two cameras, complex algorithms, feature matching
+- Result: **No depth map on indoor carpet**
 
-### 1. Simple ML Classifier (`simple_ml.py`)
-A K-Nearest Neighbors implementation from scratch that classifies fruits based on weight and color.
+**Color Filtering (HSV):**
+- ✅ Works: Indoor carpet with colored obstacles
+- ✅ Detects: Red iPad, yellow tape, black box perfectly
+- ✅ Ignores: Tan/beige carpet texture
+- Requires: Single camera, simple thresholds
+- Result: **12 objects detected clearly**
 
-**Key Concepts:**
-- Learning vs non-learning algorithms
-- Training data and features
-- Distance metrics
-- Classification by similarity
-
-### 2. Camera Display (`hello_opencv.py`)
-Live video feed from external USB camera with text overlay.
-
-**Key Concepts:**
-- OpenCV camera interface
-- Frame capture and display
-- Window management
-- Event handling (keyboard input)
-
-### 3. Edge Detection Lesson (`edge_detection_lesson.py`)
-Interactive program demonstrating the complete edge detection pipeline.
-
-**Key Concepts:**
-- Gaussian blur for noise reduction
-- Canny edge detection algorithm
-- Multi-stage processing (blur → gradient → non-max suppression → hysteresis)
-- Real-time visualization of each processing step
-- Understanding why blur kernel size matters
-
-### 4. Diagnostic Tools
-- `test_cameras.py` - Scans for available cameras (indices 0-4)
-- `test_display.py` - Tests OpenCV GUI display capabilities
-
-## 🛠 Troubleshooting
-
-### Camera Issues
-
-**Problem:** Camera not accessible or showing gray screen
-
-**Solution:**
-```powershell
-# Find working camera index
-python src/learning/02_computer_vision/test_cameras.py
-
-# Common scenarios:
-# - Built-in laptop camera: usually index 0
-# - External USB camera: usually index 1
-# - If laptop lid closed: built-in camera won't work
-```
-
-**Hardware Setup Notes:**
-- ThinkPad with closed lid → built-in camera obscured
-- External USB camera via monitor → works as camera index 1
-
-### OpenCV Display Issues
-
-**Problem:** `cv2.imshow()` window not appearing
-
-**Solution:**
-```powershell
-# Test display system
-python src/learning/02_computer_vision/test_display.py
-
-# Check for:
-# - Window behind other applications (use ALT+TAB)
-# - Multiple monitors (check all displays)
-# - Need cv2.waitKey(1) in loop for window updates
-```
-
-### Import Errors in VS Code
-
-**Problem:** Red squiggles on `import cv2` or `import numpy`
-
-**Solution:**
-1. Press `Ctrl + Shift + P`
-2. Type "Python: Select Interpreter"
-3. Choose `.venv` (Python 3.13.x)
-4. Reload window if needed
-
-## 📋 Success Criteria
-
-**Final Robot Demo:**
-1. Place robot at Point A in office
-2. Say "Start"
-3. Robot autonomously navigates to Point B
-4. Avoids all obstacles (furniture, walls, coffee cups)
-5. Say "Stop" - robot halts immediately
-6. Say "Return home" - robot returns to Point A
-7. **Most importantly: I understand how and why it works!**
-
-## 🎓 Key Concepts Learned
-
-### Algorithm Categories
-
-**Non-Learning Algorithms** (Rules written by programmer):
-- Edge detection (Canny, Sobel)
-- Gaussian blur (noise reduction)
-- Contour detection (boundary following)
-- Path planning (A*, Dijkstra)
-- Obstacle avoidance (potential fields)
-- PID control
-- Geometry and trigonometry
-
-**Learning Algorithms (ML)** (Rules learned from data):
-- K-Nearest Neighbors
-- Decision Trees
-- Neural Networks
-- Reinforcement Learning (future)
-
-### Computer Vision Pipeline
-
-**Low-Level Vision:**
-- Pixels and color spaces (RGB, BGR, HSV)
-- Gaussian blur (noise reduction)
-- Edge detection (Canny algorithm)
-- Gradient computation
-
-**Mid-Level Vision:**
-- Contour detection (grouping edges)
-- Shape analysis
-- Object properties (area, perimeter, center)
-- Motion detection
-
-**High-Level Vision:**
-- Object recognition
-- Scene understanding
-- Depth perception (stereo vision)
-- Navigation decisions
-
-### Important Distinctions
-
-- **OpenCV ≠ Machine Learning** - It's mostly non-learning computer vision algorithms
-- **Classical ML vs Neural Networks** - Both learn from data, different complexity
-- **Vision Models vs Language Models** - YOLOv8 Nano (6 MB) vs DeepSeek (400+ GB)
-- **On-Device vs Cloud** - Everything must run on Raspberry Pi
-- **Edges vs Contours** - Edges are pixels, contours are organized object boundaries
-- **2D Vision vs 3D Depth** - Single camera sees flat, stereo/sensors provide distance
+**Architectural Decision:** Start with single camera + HSV, add stereo only if needed for:
+- Outdoor navigation (concrete pavers work for stereo)
+- Elevation detection (stairs, ramps)
+- Not needed for basic indoor obstacle avoidance
 
 ### Sensor Fusion Strategy
 
-**Stereo Vision (Dual Cameras):**
-- Full scene depth map
-- Wide field of view
-- Computationally intensive
-- Fails on textureless surfaces
+**Primary: Ultrasonic Sensors**
+- Reliable distance (any surface, any lighting)
+- 20Hz update rate
+- Safety-critical
+- Confirms obstacles
 
-**Ultrasonic Sensors (HC-SR04):**
-- Direct distance measurement
-- Fast and accurate
-- Narrow beam (single direction)
-- Works in any lighting
+**Secondary: Vision (HSV Color)**
+- Scene understanding
+- Object classification
+- Spatial extent (width, position)
+- Path planning context
+- Advisory (not safety-critical)
 
-**Fusion Approach:**
-- Use US for critical close-range safety
-- Use stereo for scene understanding
-- Cross-validate when both available
-- Adaptive processing based on distance
+**Example:**
+```
+Vision: "RED object at center, ~8 inches wide"
+US Center: "Obstacle at 50cm"
+US Left: "Clear"
+US Right: "Clear"
+Decision: "High confidence - avoid left"
+```
 
-## 🎯 Learning vs Production Code
+### Robot Design Principles
 
-**`src/learning/`** - Educational exercises
-- Experimental code
-- Algorithms built from scratch for understanding
-- Lots of comments and explanations
-- Focus on learning how things work
-- Interactive demonstrations
+**What works:**
+- ✅ Fixed camera mounts (not motorized)
+- ✅ Single camera + HSV (simpler than stereo)
+- ✅ Multiple simple sensors
+- ✅ US primary, vision secondary
+- ✅ Design for 2 cameras, buy 1 initially
 
-**`src/robot/`** - Production code
-- Code that actually runs on the robot
-- Optimized and tested
-- Minimal dependencies
-- Production-ready and reliable
-- Real-time performance
+**What doesn't:**
+- ❌ Stereo on carpet
+- ❌ Vision-only navigation
+- ❌ Motorized camera pivot
+- ❌ Cloud dependencies
 
-## 🤝 Contributing
+## 🔍 Completed Lessons
 
-This is a personal learning project, but feedback and suggestions are welcome! Feel free to:
-- Open issues for questions or discussions
-- Suggest improvements to learning approaches
-- Share similar projects or resources
+### 1. Edge Detection (`edge_detection_lesson.py`)
+Canny algorithm, Gaussian blur, multi-stage processing
 
-## 📝 License
+### 2. Contour Detection (`contour_detection_lesson.py`)  
+Organizing edges into objects, properties, bounding boxes
 
-MIT License - Feel free to use this for your own learning!
+### 3. Stereo Vision (`stereo_contour_detection_lesson.py`)
+Depth maps, floor plane detection, **learned limitations**
 
-## 🙏 Acknowledgments
+### 4. Color Spaces (`color_space_lesson.py`) ⭐
+**THE BREAKTHROUGH** - HSV filtering, color-based detection
+- Mode 1-3: Understand RGB vs HSV
+- Mode 4-6: Isolate red/yellow/black objects
+- Mode 7-8: Combined detection + classification
+- **Result: Perfect obstacle detection on carpet!**
 
-- OpenCV community for amazing computer vision tools
-- Raspberry Pi Foundation for accessible hardware
-- Open source ML community (scikit-learn, TensorFlow)
-- Claude (Anthropic) for learning guidance and pair programming
-- John Canny for the edge detection algorithm (1986)
+## 📋 Success Criteria
+
+**Final Demo:**
+1. Voice: "Start"
+2. Robot navigates office autonomously
+3. Avoids all obstacles (detected by color + US)
+4. Voice: "Stop" - immediate halt
+5. Voice: "Return home" - navigates back
+6. **Most important: I understand every line of code!**
 
 ---
 
-**Current Status:** ✅ Edge Detection Complete, Contour Detection Next  
-**Last Updated:** 2025-11-14  
-**Next Session:** Run and understand contour detection lesson  
-**GitHub:** [MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
+**Current Status:** ✅ Hardware list finalized, color filtering validated, ready to order!  
+**Last Updated:** 2025-11-18  
+**Next Session:** Order hardware, continue lessons while waiting  
+**GitHub:** [github.com/MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
