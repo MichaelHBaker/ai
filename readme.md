@@ -18,6 +18,24 @@ A hands-on learning journey to understand AI, machine learning, computer vision,
 - **Web Claude** (claude.ai) - Conversations, planning, research, broader context
 - **VS Code Claude** - Code development, file editing, testing, implementation
 
+**Which Claude to Ask?**
+
+Ask **Web Claude** for:
+- "Should I...?" - Exploring approaches and trade-offs
+- "Would it make sense to...?" - Architectural decisions
+- "What's the best approach for...?" - Planning and strategy
+- "Which technique should I learn next?" - Learning path guidance
+- "How do X and Y compare?" - Conceptual analysis
+- Theoretical discussions before implementing
+
+Ask **VS Code Claude** for:
+- "Implement X" - Writing/modifying code
+- "Fix this error" - Debugging and troubleshooting
+- "Write a lesson for Y" - Creating learning modules
+- "Run this test" - Executing experiments
+- "Commit these changes" - Git operations
+- Making code work after decisions are made
+
 **Update Protocol:**
 1. At end of each session, update this README with session notes (see format below)
 2. Commit and push to GitHub
