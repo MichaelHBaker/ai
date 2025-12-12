@@ -341,6 +341,499 @@
 
 ---
 
+### Session 6: Calibration Pattern Procurement & Gemini Review
+**Date:** December 12, 2024  
+**Duration:** ~3 hours  
+**Focus:** Calibration pattern sourcing, power system validation concerns, FedEx Office order  
+**Context:** Same day as Session 5 (hardware orders complete), addressing Gemini's technical review
+
+#### Session Objectives
+1. Source camera calibration checkerboard pattern for Week 2 testing
+2. Address Gemini's concerns about power bank PD negotiation
+3. Address Gemini's warnings about wide-angle barrel distortion
+4. Plan mitigation strategies for identified technical risks
+5. Secure calibration pattern with correct specifications
+
+#### Key Accomplishments
+
+##### 1. Gemini AI Technical Review Analysis ✅
+**Prompted Gemini with README.md and session_notes.md for external review**
+
+**Gemini's Verdict:** "High Potential / High Learning Value" ✅
+
+**Critical Issues Identified:**
+
+1. **Power Bank PD Negotiation (HIGH RISK ⚠️)**
+   - Issue: Anker PowerCore Essential 20000 PD negotiates at 5V/3A = 15W max
+   - Pi 5 official spec: 5V/5A = 25W max
+   - Gap: 10W shortfall under peak load
+   - Risk: Under-voltage throttling, USB peripheral power limits (600mA)
+   
+   **Mitigation Plan:**
+   - Week 1: Measure actual power draw with MM420 multimeter
+   - Test: Idle, single camera CV, dual camera CV, peak workload
+   - Monitor: `vcgencmd get_throttled` for under-voltage warnings
+   - Config: Add `usb_max_current_enable=1` to `/boot/firmware/config.txt` if needed
+   - Fallback: Desktop development on wall power, mobile testing with battery
+
+2. **Wide-Angle Barrel Distortion (MEDIUM COMPLEXITY ⚠️)**
+   - Issue: 120° FOV cameras have significant barrel distortion
+   - Impact: Standard stereo algorithms require rectified images
+   - Consequence: Added calibration/undistortion computational overhead
+   
+   **Revised Week 2 Timeline:**
+   - Days 1-2: Checkerboard calibration (20-30 images per camera)
+   - Days 3-4: Camera matrix calculation and validation
+   - Days 5-6: Undistortion pipeline implementation
+   - Days 7: Stereo rectification
+   - Week 3: Depth estimation (pushed back from Week 2)
+   
+   **Computational Cost:**
+   - Undistortion: ~5-10ms per frame per camera at 640x480
+   - At 30fps: ~150-300ms/sec added processing
+   - Impact: May reduce achievable framerate 30fps → 20fps
+   
+   **Trade-off Analysis:** Worth it for mobile robot
+   - 120° FOV: Minimal blind spots, excellent peripheral detection
+   - 76° standard: Significant blind spots, poor peripheral awareness
+   - Safety margin: Higher with wide-angle despite complexity
+
+3. **Budget Reality Check (MEDIUM ⚠️)**
+   - Phase 0 actual: $462 (vs $250 estimate)
+   - Phase 1 remaining: -$62 deficit
+   - Quality chassis needs: $60-100 (motors with encoders)
+   
+   **Options:**
+   - Accept $550-600 total project budget
+   - Simplify Phase 2 design (2WD vs 4WD)
+   - Use cheaper materials (cardboard/wood prototyping)
+   
+   **Decision:** Defer until Phase 0 testing validates requirements
+
+**Validated Decisions:**
+- ✅ Pi 5 dual CSI: Correct platform for stereo vision
+- ✅ Logic level converter: Safer than resistor dividers
+- ✅ Auto-ranging multimeter: Time savings justified
+
+##### 2. Calibration Pattern Sourcing Journey ✅
+
+**Challenge:** Finding pre-printed checkerboard calibration pattern
+
+**Attempt 1: Amazon Search - CONFUSING ❌**
+- Search: "camera calibration checkerboard A4"
+- Results: Color calibration tools (Datacolor Spyder $133), lens focus charts
+- Problem: Mixed photography color tools with geometric calibration patterns
+- Wrong products: Color accuracy meters, autofocus tools, not OpenCV patterns
+
+**Attempt 2: Refined Amazon Search - BETTER BUT COMPLICATED ⚠️**
+- Found: "Chessboard Calibrator Lens Test Target" - $88
+  - 18×18 pattern (overkill, too expensive)
+- Found: Custom order products requiring email coordination
+  - Non-standard purchase process
+  - Communication delays
+  - Uncertain delivery
+
+**Decision:** Amazon too complicated for specialized technical print
+
+**Attempt 3: Mark Hedley Jones Calibration Collection - PERFECT ✅**
+- Site: markhedleyjones.com/projects/calibration-checkerboard-collection
+- Free downloadable PDF patterns optimized for OpenCV
+- Community-validated resource (well-known in robotics)
+- Customizable: Page size and checker size options
+
+**Selected Configuration:**
+- Page Size: A4 (210mm × 297mm)
+- Checker Size: 30mm squares
+- Pattern: 8×6 checkerboard (7×5 inner corners for OpenCV)
+- Format: SVG (vector, perfect quality)
+
+**Rationale for 30mm squares:**
+- Detection range: 0.5m - 2.0m (optimal for 120° FOV cameras)
+- Desktop friendly: Can capture calibration images on typical desk
+- Multiple distances: 0.5m (fills 25%), 1.0m (12%), 1.5m (8%), 2.0m (visible)
+- Robust corner detection: Large enough for reliable `findChessboardCorners()`
+
+**File Generated:**
+- Downloaded: Checkerboard-A4-30mm-8x6.svg
+- Converted to PDF: Checkerboard-A4-30mm-8x6.pdf (for printing)
+- Stored in: `/calibration/Checkerboard-A4-30mm-8x6.pdf` (project root)
+- Ready for print shop
+
+**Repository Organization:**
+- Created `/calibration` folder in project root
+- Purpose: Store calibration patterns and artifacts
+- Future contents: Camera matrices, distortion coefficients, calibration images
+
+##### 3. FedEx Office Online Order Process ✅
+
+**Navigation Journey:**
+- Initial confusion: Marketing products page (banners, signs)
+- Found correct section: "Copies & Custom Documents"
+- Configured settings successfully
+
+**Print Configuration:**
+- ✅ Print Color: Black & White (high contrast, cheaper)
+- ✅ Paper Size: 11" × 17" (tabloid)
+- ✅ Paper Type: Matte Cover (100lb) - heavy cardstock
+- ✅ Sides: Single-sided
+- ✅ Quantity: 1
+
+**CRITICAL DECISION POINT:**
+- System prompted: "Convert to Standard Size"
+- Options: Letter, Legal, Tabloid, or "Don't convert - Keep this size"
+- **Selected: "Don't convert - Keep this size"** ✅
+- **Why critical:** Any conversion would resize squares ≠ 30mm, breaking calibration
+
+**Result:** A4 pattern will print centered on 11×17 paper with white borders (correct!)
+
+**Custom Quote Request Submitted:**
+- Quote Number: 125617303
+- Submitted: Dec 12, 2025 at 02:04 PM
+- Status: Routed to FedEx Office for review
+
+**Print Instructions Provided:**
+```
+CAMERA CALIBRATION PATTERN - PRECISION PRINTING
+File: Checkerboard-A4-30mm-8x6.pdf (A4 size: 8.3" × 11.7")
+
+CRITICAL:
+1. Print at EXACTLY 100% scale - DO NOT RESIZE
+2. Print on 11×17" Matte Cover (100lb) cardstock
+3. Each square MUST be exactly 30mm × 30mm
+4. Black & White, single-sided
+5. Mount on white foam board
+6. Must be perfectly flat
+
+This is a precision robotics calibration tool.
+Any scaling error makes it unusable.
+
+Phone: (206) 329-7445
+Pickup: Friday or Saturday
+```
+
+**Expected Timeline:**
+- Today (Thu Dec 12): Quote request submitted ✅
+- Tomorrow (Fri Dec 13): FedEx calls with quote (~$8-14)
+- Saturday (Dec 14): Print completed, pickup
+- Week 2 (Dec 20): Begin camera calibration
+
+**Expected Cost:**
+- Custom A4 print on 11×17" cardstock: ~$2-4
+- Foam board mounting: ~$5-8
+- Tax: ~$1-2
+- **Total Expected: $8-14**
+
+##### 4. Updated Phase 0 Budget Summary ✅
+
+**Previous Total (Session 5):** $462.28
+**Calibration Pattern (estimated):** +$8-14
+**New Phase 0 Total:** ~$470-476
+
+**Complete Phase 0 Breakdown:**
+- Adafruit order: $329.15
+- Amazon order: $133.13
+- Calibration pattern: ~$8-14 (pending quote)
+- **Grand Total: ~$470-476**
+- **Over original $400 budget: ~$70-76**
+
+**Budget Impact Analysis:**
+- Original Phase 0 estimate: $250
+- Actual Phase 0 cost: ~$470-476
+- Variance: +$220-226 (+88-90%)
+- Reasons: Battery system, professional tools, expedited shipping, wide-angle cameras, Pi 5 upgrade
+- Phase 1 impact: Will need budget revision or simplified design
+
+#### Technical Decisions & Rationale
+
+##### Decision 1: Mark Hedley Jones Pattern Over Amazon Products
+**Why it matters:** Source quality and cost efficiency
+
+**Key Factors:**
+1. **Free vs Paid:** $0 vs $25-88
+2. **Community-validated:** Known resource in robotics community
+3. **Customizable:** Choose exact specifications (page size, square size)
+4. **Vector quality:** SVG format = perfect edges, no pixelation
+5. **Standard OpenCV format:** Designed for `findChessboardCorners()`
+
+**Risk Assessment:**
+- ✓ Local printing required (adds complexity)
+- ✓ Must verify 100% scale (critical step)
+- ✓ Quality depends on print shop execution
+- ⚠️ 24-hour quote delay (online ordering)
+
+**Alternative Rejected:** Amazon pre-printed products
+**Reason:** Confusing listings, custom communication required, higher cost
+
+##### Decision 2: 30mm Square Size
+**Why it matters:** Detection range optimization for 120° FOV cameras
+
+**Analysis:**
+- 20mm: Too small for distances >1m
+- 25mm: Good, but limited range (0.3-1.5m)
+- **30mm: Optimal sweet spot (0.5-2.0m)** ✅
+- 40mm: Requires more workspace
+- 50mm+: Too large for desktop testing
+
+**Validation:**
+- At 0.5m: Pattern fills 25% of frame (good detection)
+- At 1.5m: Pattern fills 8% of frame (still visible)
+- At 2.0m: Pattern detectable with 120° FOV
+
+##### Decision 3: "Don't Convert - Keep This Size" in FedEx System
+**Why it matters:** CRITICAL for calibration accuracy
+
+**System Prompt Analysis:**
+- Letter (8.5×11): Would shrink A4 → squares become ~25mm ❌
+- Legal (8.5×14): Would resize A4 → squares change ❌
+- Tabloid (11×17): Would stretch A4 → squares become ~33mm ❌
+- **Don't convert: Keeps A4 at 100% scale → squares remain 30mm** ✅
+
+**Impact of Wrong Choice:**
+- Systematic calibration error
+- Incorrect depth estimation
+- Entire calibration process invalid
+- Would need to reprint and recalibrate
+
+**This decision saved the entire calibration workflow!**
+
+#### Open Questions & Next Steps
+
+##### Question 1: FedEx Office Quote Price
+**Issue:** Custom quote still pending (submitted Dec 12, 02:04 PM)  
+**Quote Number:** 125617303  
+**Expected:** $8-14  
+**Timeline:** Response within 24 hours (by Fri Dec 13)
+
+**Decision Point:** Approve or negotiate quote
+**Fallback:** If quote >$20, cancel and go in-person instead
+
+##### Question 2: Anker Power Bank Sufficiency
+**Issue:** 15W max output vs Pi 5's 25W max spec (10W gap)  
+**Risk Level:** HIGH ⚠️
+
+**Testing Plan (Week 1):**
+1. Measure idle power draw with MM420
+2. Measure single camera CV workload
+3. Measure dual camera CV workload
+4. Monitor for under-voltage warnings (`vcgencmd get_throttled`)
+5. Add `usb_max_current_enable=1` if needed
+
+**Decision Point:** After Week 1 power measurements
+**Options:**
+- A: Continue with Anker if measurements <15W
+- B: Upgrade to higher-wattage PD bank (~$150)
+- C: Desktop development on wall power only
+
+##### Question 3: Wide-Angle Calibration Complexity
+**Issue:** 120° FOV requires barrel distortion correction  
+**Impact:** Added computational overhead, extended Week 2 timeline
+
+**Week 2 Revised Plan:**
+- Days 1-2: Calibration image capture (not Days 1-3)
+- Days 3-4: Camera matrix calculation
+- Days 5-6: Undistortion pipeline implementation
+- Days 7: Stereo rectification
+- Week 3: Depth estimation (delayed from Week 2)
+
+**Performance Impact:**
+- Undistortion: +5-10ms per frame per camera
+- Potential framerate reduction: 30fps → 20fps
+- Trade-off justified by safety (peripheral vision)
+
+##### Question 4: Phase 1 Budget Reconciliation
+**Issue:** Phase 0 overrun creates Phase 1 deficit  
+**Current Status:** -$70-76 remaining for Phase 1
+
+**Phase 1 Requirements:**
+- Quality chassis: $60-100 (motors with encoders)
+- Budget remaining: -$70-76 (deficit)
+- **Total needed: $130-176**
+
+**Options:**
+1. Increase total project budget to $550-600
+2. Simplify chassis (2WD vs 4WD, cheaper motors)
+3. DIY chassis materials (cardboard/wood prototyping)
+4. Defer decision until Phase 0 validates requirements
+
+**Recommendation:** Option 4 - Let power/weight data inform decisions
+
+#### Session Insights & Learnings
+
+##### Insight 1: External Review Extremely Valuable
+**Learning:** Gemini's technical review caught critical issues we hadn't fully considered
+
+**Specific Value:**
+- Power bank PD negotiation physics explained clearly
+- Wide-angle calibration complexity quantified (5-10ms overhead)
+- Budget reality check validated our concerns
+- Architectural decisions confirmed
+
+**Takeaway:** External technical review from different AI perspectives provides valuable validation and catches blind spots
+
+##### Insight 2: "Don't Convert" Decision Was Make-or-Break
+**Learning:** Online print systems default to auto-scaling, which breaks precision calibration
+
+**What Could Have Gone Wrong:**
+- User selects "Tabloid" thinking "bigger is better"
+- System stretches A4 to fill 11×17
+- Squares become 33mm instead of 30mm
+- Entire calibration invalid
+- Week 2 wasted, need to reprint
+
+**What Went Right:**
+- Careful reading of dialog
+- Understanding scale implications
+- Selecting "Don't convert - Keep this size"
+- Verification step in instructions (measure 30mm before mounting)
+
+**Broader Principle:** Precision engineering requires understanding every step in the production chain
+
+##### Insight 3: Free Community Resources Often Superior
+**Learning:** Mark Hedley Jones' free calibration patterns better than paid Amazon products
+
+**Why Free Was Better:**
+- Designed specifically for OpenCV
+- Community-validated (used by professionals)
+- Customizable specifications
+- Vector quality (perfect edges)
+- Zero cost
+
+**Amazon Products Were:**
+- Confusing (wrong product categories)
+- Expensive ($25-88)
+- Unclear specifications
+- Required custom communication
+
+**Broader Principle:** Open-source/community resources often higher quality than commercial alternatives, especially in technical domains
+
+##### Insight 4: Calibration Complexity Underestimated
+**Learning:** Wide-angle cameras add significant Week 2 complexity
+
+**Original Week 2 Plan:** Stereo vision + depth estimation (3-4 days)  
+**Revised Week 2 Plan:** Calibration only (7 days)  
+**Week 3:** Now needed for depth estimation
+
+**Added Steps:**
+- Capture 40-60 calibration images (20-30 per camera)
+- Calculate camera matrices (both cameras)
+- Implement undistortion pipeline
+- Validate reprojection error <0.5 pixels
+- Test frame rate impact (30fps → 20fps)
+
+**Gemini's Warning Was Correct:** "Your Week 2 software tasks will be harder than anticipated"
+
+**Takeaway:** Wide-angle = better robot vision, but not free - pays in calibration complexity
+
+##### Insight 5: Repository Organization Pays Dividends
+**Learning:** Creating `/calibration` folder upfront simplifies future workflow
+
+**Benefits:**
+- Clear separation: source pattern vs generated data
+- Easy to .gitignore large image files
+- Reusable camera matrices across sessions
+- Professional project structure
+
+**Pattern Observed:**
+- Time spent on organization upfront saves debugging time later
+- Clear folder structure = clear mental model
+- Applies to: code organization, documentation, hardware layout
+
+#### Session Metrics
+
+**Time Breakdown:**
+- Gemini review analysis: 20 minutes
+- Amazon product research: 30 minutes
+- Mark Hedley Jones pattern generation: 15 minutes
+- FedEx Office order process: 45 minutes
+- Documentation updates: 30 minutes
+- Repository organization: 10 minutes
+- **Total: ~2.5 hours**
+
+**Decisions Made:** 3 major sourcing/procurement decisions
+**Research Quality:** High (external AI review, multiple vendor comparison)
+**Documentation Quality:** Comprehensive with risk analysis
+**Files Created:** 2 (SVG pattern, PDF for printing)
+**Order Status:** Quote pending (125617303)
+
+**Risk Assessment:**
+- Calibration pattern acquisition: **LOW** ✅ (quote pending, fallback available)
+- Power system validation: **HIGH** ⚠️ (Week 1 testing critical)
+- Calibration complexity: **MEDIUM** ⚠️ (Week 2 timeline adjusted)
+- Budget overrun: **MEDIUM** ⚠️ (Phase 1 requires revision)
+
+#### Next Session Preview
+
+**Session 7: Phase 0 Desktop Testing - Week 1**  
+**Expected Date:** December 13-19, 2024  
+**Focus:** Pi 5 setup, single camera testing, power validation, thermal monitoring  
+**Prerequisites:** 
+- Adafruit hardware delivery (Dec 13) ✅
+- Klein MM420 multimeter (Dec 12, 5-10PM) ✅
+- Calibration pattern (Dec 14 pickup, pending quote)
+
+**Planned Activities:**
+1. **Hardware Arrival & Unboxing (Dec 13):**
+   - Adafruit order inventory verification
+   - Component inspection and initial testing
+   - Active cooler installation on Pi 5
+
+2. **Pi 5 Initial Setup (Dec 13-14):**
+   - Case assembly with fan integration
+   - Raspberry Pi OS installation (64-bit)
+   - WiFi, SSH, timezone configuration
+   - System updates and package manager setup
+
+3. **Development Environment (Dec 14-15):**
+   - Python 3.11+ installation and venv setup
+   - OpenCV installation (`pip install opencv-python`)
+   - picamera2 library installation
+   - RPi.GPIO library installation
+   - VS Code Remote-SSH configuration
+
+4. **CRITICAL: Power System Validation (Dec 13-15):**
+   - Use Klein MM420 to measure current draw:
+     - Pi 5 idle (wall power): Expected 3-4W
+     - Single camera connected: Expected 6-8W
+     - Single camera + CV processing: Expected 8-12W
+     - Peak load: Measure actual vs 15W limit
+   - Monitor temperature with active cooler
+   - Check for under-voltage warnings
+   - Document whether Anker 15W sufficient
+
+5. **Single Camera Testing (Dec 15-17):**
+   - Connect Camera Module 3 Wide to CSI-0 port
+   - Test basic image capture (picamera2)
+   - Port HSV filtering algorithm from previous work
+   - Validate 30fps capture performance
+   - Thermal monitoring during sustained CV
+
+6. **GPIO Pin Mapping (Dec 17-19):**
+   - Document GPIO assignments for Phase 0
+   - Test HC-SR04 sensor connections (without sensors yet)
+   - Validate logic level converter setup
+   - Create pin reference diagram
+
+**Success Criteria:**
+- ✅ Pi 5 operational and stable
+- ✅ Single camera capturing at 30fps
+- ✅ HSV filtering running in real-time
+- ✅ Thermal: <70°C under sustained load
+- ✅ Power: Measured and documented (critical for Anker decision)
+- ✅ Development environment fully configured
+
+**Documentation Deliverables:**
+- Week 1 progress report
+- Power consumption measurements (CRITICAL)
+- Thermal performance data
+- GPIO pin mapping reference
+- Setup troubleshooting notes
+
+**Key Risk to Monitor:**
+- ⚠️ Anker power bank sufficiency (15W max vs measured draw)
+- If measured draw >15W under realistic load, need to revise power strategy
+
+---
+
 ### Session 4: HSV-Bounded Stereo Vision Breakthrough
 **Date:** November 19, 2024  
 **Duration:** ~3 hours  
@@ -940,4 +1433,4 @@ Reality: Quality components cost more than minimum viable
 
 *Session notes maintained by: Michael Baker & Claude (Anthropic)*  
 *Documentation format established: Session 2 (Oct 15, 2024)*  
-*Last updated: Session 5 (Dec 12, 2024)*
+*Last updated: Session 6 (Dec 12, 2024)*

@@ -2,6 +2,9 @@
 
 ### Python Environment and Build Artifacts ###
 
+calibration/calibration_images/
+calibration/camera_matrices/
+
 # Virtual environment directory (CRUCIAL: keeps project dependencies off GitHub)
 .venv/
 venv/
