@@ -1,486 +1,500 @@
-# Robot Vision AI - Learning Project
+# Autonomous Robot Learning Project
 
-A hands-on learning journey to understand AI, machine learning, computer vision, and robotics by building an autonomous voice-controlled robot from scratch.
+## Project Overview
+12-month self-directed learning project to build an autonomous voice-controlled robot from scratch using only open-source software and Raspberry Pi hardware. Budget: $400 (actual: $462).
 
-**Repository:** [github.com/MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
+## Current Status
+**Phase:** Phase 0 - Hardware Procurement **COMPLETE** ✅  
+**Date:** December 12, 2024  
+**Next Phase:** Desktop Testing & Component Validation (begins Dec 13, 2024)
 
----
+### Recent Milestones
+- ✅ **Dec 12, 2024:** All hardware ordered (Adafruit + Amazon)
+- ✅ **Nov 19, 2024:** HSV-bounded stereo vision algorithm completed
+- ✅ **Nov 2024:** Phase 0 planning and component research completed
+- ✅ **Oct 2024:** Project initiated, initial architecture decisions made
 
-## 📌 Context Transfer Protocol (For Claude)
+## Hardware - Phase 0 (Actual Purchases)
 
-**Last Updated:** 2025-11-19
-**Current Phase:** Phase 0 - Sensor & Camera Learning (Hardware Acquisition)
-**Status:** Hardware list finalized, ready to order
+### Computing Platform - $144.04
+**Ordered:** Adafruit Order #3595833-5617335047 (Dec 12, 2024)  
+**Delivery:** UPS Next Day Air (Dec 13, 2024)
 
-### Collaboration Workflow
+- **Raspberry Pi 5 8GB** (#5813) - $104.50
+  - 2.4GHz quad-core ARM Cortex-A76
+  - Dual native CSI camera ports
+  - VideoCore VII GPU for CV acceleration
+  - Selected over Pi 4 for 2-3x performance, dual CSI support
+  
+- **Official 27W USB-C Power Supply 5.1V 5A** (#5814) - $14.04
+  - Desktop testing and development
+  
+- **Official Active Cooler** (#5815) - $13.50
+  - Temperature-controlled, 1.4CFM airflow
+  - Required for sustained CV workloads
+  - Desktop testing: 40-50°C typical, 60-70°C peak
+  
+- **Official Pi 5 Case + Fan** (#5816) - $12.00
+  - Protective enclosure with integrated cooling
 
-**Two Claude Instances:**
-- **Web Claude** (claude.ai) - Conversations, planning, research, broader context
-- **VS Code Claude** - Code development, file editing, testing, implementation
+### Vision System - $82.40
+**Ordered:** Adafruit Order #3595833-5617335047 (Dec 12, 2024)  
+**Delivery:** UPS Next Day Air (Dec 13, 2024)
 
-**Which Claude to Ask?**
+- **2x Raspberry Pi Camera Module 3 Wide** (#5658) - $77.00
+  - 12MP Sony IMX708 sensor
+  - 120° FOV (selected over 76° standard for obstacle detection)
+  - Native CSI interface (5-15ms latency vs 30-50ms USB)
+  - 40% less power than USB webcams
+  - 3g weight vs 200g for USB alternatives
+  
+- **2x Pi 5 Camera Cable 200mm** (#5818) - $5.40
+  - 22-pin 0.5mm to 15-pin 1mm FPC adapters
+  - Enables dual native CSI stereo vision
 
-Ask **Web Claude** for:
-- "Should I...?" - Exploring approaches and trade-offs
-- "Would it make sense to...?" - Architectural decisions
-- "What's the best approach for...?" - Planning and strategy
-- "Which technique should I learn next?" - Learning path guidance
-- "How do X and Y compare?" - Conceptual analysis
-- Theoretical discussions before implementing
+**Architecture Decision:** CSI cameras selected over Logitech C920 USB webcams for:
+- Direct GPU connection (lower latency)
+- Native dual-camera support on Pi 5
+- Lower power consumption (critical for battery operation)
+- Lighter weight (6g vs 400g for two cameras)
+- Cost savings ($83 vs $280 for USB alternative)
 
-Ask **VS Code Claude** for:
-- "Implement X" - Writing/modifying code
-- "Fix this error" - Debugging and troubleshooting
-- "Write a lesson for Y" - Creating learning modules
-- "Run this test" - Executing experiments
-- "Commit these changes" - Git operations
-- Making code work after decisions are made
+### Sensors & Electronics - $31.60
+**Ordered:** Adafruit Order #3595833-5617335047 (Dec 12, 2024)  
+**Delivery:** UPS Next Day Air (Dec 13, 2024)
 
-**Update Protocol:**
-1. At end of each session, update this README with session notes (see format below)
-2. Commit and push to GitHub
-3. Next session: Upload README to Claude (web or VS Code)
-4. Claude reads session notes and auto-fetches modified files from GitHub as needed
-5. No additional context needed - README provides complete handoff
+- **3x HC-SR04 Ultrasonic Sensors** (#3942) - $11.85
+  - 2-400cm range, ±3mm accuracy
+  - 5V operation with 5V echo output
+  - Includes 2x 10kΩ resistors per sensor
+  
+- **4-channel Logic Level Converter** (#757) - $3.95
+  - BSS138 bidirectional converter
+  - Protects Pi 5 GPIO (3.3V) from HC-SR04 echo (5V)
+  - Selected over voltage dividers for cleaner breadboard
+  
+- **Premium Breadboard 830 tie points** (#239) - $5.95
+- **Premium M-M Jumper Wires 20x3"** (#1956) - $1.95
+- **Premium F-F Jumper Wires 20x3"** (#1951) - $1.95
+- **Micro HDMI to HDMI Cable 1m** (#4302) - $11.81
+  - Desktop monitor connection for development
 
-**File Access:** Web Claude can fetch files directly from GitHub using paths listed in session notes:
+**Bonuses (Free):**
+- Adafruit KB2040 RP2040 Kee Boar Driver (#5302)
+- PCB Coaster with Gold Adafruit Logo (#5719)
+
+### Tools & Storage - $133.13
+**Ordered:** Amazon (Dec 12, 2024)  
+**Delivery:** Staggered (Dec 12-24, 2024)
+
+- **Klein Tools MM420 Auto-Ranging Multimeter** - $64.98
+  - Delivers: Today (Dec 12) 5PM-10PM
+  - TRMS, 600V AC/DC, 10A current, 50MΩ resistance
+  - Auto-ranging for efficient testing workflow
+  - Critical for: voltage verification, current measurement, continuity testing
+  
+- **Anker PowerCore Essential 20000 PD** - $51.95
+  - Delivers: Wednesday, Dec 17
+  - 20,000mAh capacity, USB-C Power Delivery
+  - 18W output (sufficient for Pi 5 + sensors)
+  - 8-10 hour runtime estimate for autonomous operation
+  - Selected over wall-only power for mobile robotics requirement
+  
+- **SanDisk Extreme 64GB microSDXC A2** - $16.20
+  - Delivers: Dec 19-24
+  - 170MB/s read, C10/U3/V30/4K/5K/A2 ratings
+  - A2 performance class for faster app loading
+
+### Phase 0 Budget Summary
+- **Adafruit Subtotal:** $263.90
+- **Adafruit Shipping (UPS Next Day):** $34.38
+- **Adafruit Sales Tax:** $30.87
+- **Adafruit Total:** $329.15
+- **Amazon Total:** $133.13
+- **Phase 0 Grand Total:** $462.28
+- **Over Original $400 Budget:** $62.28
+
+**Budget Variance Rationale:**
+- Wide angle cameras: +$18.50 (120° FOV better for obstacle detection)
+- Pi 5 upgrade: +$15.00 (2-3x performance, dual CSI native support)
+- Professional multimeter: +$40.00 (vs basic model, auto-ranging saves time)
+- Battery system: +$52.00 (essential for autonomous navigation)
+- Expedited shipping: +$34.38 (immediate project start)
+
+**Remaining for Phase 2 (Motors/Chassis):** -$62.28 (requires budget revision or simplified design)
+
+## Phase 0 - Desktop Testing Plan
+
+### Week 1-2: Single Camera Validation (Dec 13-26)
+**Hardware arrives Dec 13, begin immediately:**
+- [ ] Pi 5 initial setup (OS, WiFi, SSH, updates)
+- [ ] Install development environment (Python 3, OpenCV, picamera2)
+- [ ] Connect single Camera Module 3 Wide to CSI-0 port
+- [ ] Port HSV color filtering algorithm from previous work
+- [ ] Validate CSI latency vs USB baseline
+- [ ] Test thermal performance under sustained CV load
+- [ ] Measure idle vs CV workload power consumption
+- [ ] Document GPIO pin mapping for sensors
+
+**Success Criteria:**
+- HSV filtering running at 30fps on Pi 5
+- Thermal stability under 70°C with active cooler
+- Power consumption measured and documented
+
+### Week 2-3: Stereo Vision Testing (Dec 20-Jan 2)
+**Requires: Both cameras operational**
+- [ ] Connect second Camera Module 3 Wide to CSI-1 port
+- [ ] Implement stereo camera synchronization
+- [ ] Calibrate stereo baseline (test 10cm, 15cm, 20cm spacing)
+- [ ] Test depth perception with HSV filtering
+- [ ] Validate frame alignment and timing
+- [ ] Measure dual-camera power consumption
+
+**Success Criteria:**
+- Synchronized stereo capture at 30fps
+- Accurate depth estimation for obstacle detection
+- Frame alignment within 5ms
+
+### Week 3-4: Ultrasonic Sensor Integration (Dec 27-Jan 9)
+**Requires: Logic level converter + HC-SR04 sensors**
+- [ ] Breadboard HC-SR04 sensor with logic level converter
+- [ ] Test 5V→3.3V echo signal protection
+- [ ] Verify distance measurement accuracy (2-400cm range)
+- [ ] Add second and third sensors (left/center/right array)
+- [ ] Measure sensor power consumption
+- [ ] Test sensor + camera combined operation
+
+**Success Criteria:**
+- ±3mm accuracy across full 2-400cm range
+- No GPIO damage from 5V echo signals
+- Reliable multi-sensor operation
+
+### Week 4-5: Power System Testing (Jan 3-16)
+**Requires: Anker power bank (arrives Dec 17)**
+- [ ] Measure total system power draw (Pi + cameras + sensors)
+- [ ] Test battery runtime under realistic CV workload
+- [ ] Validate 18W power bank output sufficiency
+- [ ] Monitor voltage stability under load
+- [ ] Document power consumption for chassis design constraints
+
+**Success Criteria:**
+- 6+ hour runtime on 20,000mAh bank
+- Stable 5V output under peak load
+- No voltage brownouts during operation
+
+### Week 5-6: Integrated System Test (Jan 10-23)
+**All components operational**
+- [ ] Combined vision + ultrasonic obstacle detection
+- [ ] Real-time sensor fusion testing
+- [ ] Desktop obstacle avoidance algorithm development
+- [ ] Performance profiling and optimization
+- [ ] Thermal testing under full system load
+- [ ] Power consumption validation for mobile operation
+
+**Success Criteria:**
+- Real-time obstacle detection at 30fps
+- Sensor fusion latency under 50ms
+- 6+ hour autonomous runtime
+- Ready for Phase 2 chassis design
+
+## Technical Achievements - Phase 0 Pre-Hardware
+
+### HSV-Bounded Stereo Vision Algorithm (Nov 19, 2024)
+**Breakthrough:** Successfully implemented color-bounded obstacle detection using HSV color space filtering rather than traditional edge detection or neural networks.
+
+**Innovation:**
+- Defines navigable space by **color boundaries** rather than object recognition
+- Example: "Navigate between yellow cones" becomes HSV color filtering
+- Simpler, faster, more interpretable than deep learning approaches
+- Lower computational requirements (critical for Pi 5)
+
+**Technical Implementation:**
+```python
+# HSV color space filtering for obstacle boundaries
+# Hue: Color (0-179), Saturation: Color intensity (0-255), Value: Brightness (0-255)
+yellow_lower = np.array([20, 100, 100])  # Lower HSV bound for yellow
+yellow_upper = np.array([30, 255, 255])  # Upper HSV bound for yellow
+mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
 ```
-https://raw.githubusercontent.com/MichaelHBaker/ai/main/[file-path]
-```
 
-### Recent Session Summary
-**Date:** 2025-11-19
-**Session With:** Claude VS Code
-**Files Modified:**
-- `README.md` - Enhanced with Context Transfer Protocol and collaboration workflow
-**Key Discussion:** Established and validated collaboration workflow between Web and VS Code Claude instances
-**Decision Made:** README serves as single source of truth; structured session notes enable seamless handoffs
-**Next Actions:** Commit workflow, order Phase 0 hardware, optionally continue vision lessons or path planning while waiting
+**Advantages:**
+- **Computational efficiency:** Simple array operations vs neural network inference
+- **Interpretability:** Explicit color boundaries vs black-box model
+- **Real-time capable:** Runs at 30fps on Pi 5
+- **Adaptable:** Easy to adjust color boundaries for different environments
 
-### Session Notes Format (For Future Updates)
+**Architecture Decision:** This approach validates the "learn fundamentals first" philosophy - mastering computer vision basics (color spaces, filtering, thresholding) before attempting complex ML models.
 
-Use this template when updating after VS Code or Web sessions:
+## Development Workflow
 
-```markdown
-**Date:** YYYY-MM-DD
-**Session With:** Claude VS Code | Claude Web
-**Files Modified:** 
-- `path/to/file.py` - Brief description of changes
-- `path/to/new_file.py` - New file: purpose
-**Key Discovery:** Main technical insight or learning
-**Decision Made:** Any architectural or approach decisions
-**Next Actions:** What to do next session
-```
+### Unique Multi-Instance Claude Approach
+**Innovation:** Discovered optimal workflow using two separate Claude instances simultaneously:
 
-### Learning Style & Velocity
-- **Approach:** Experiment-first, simplify over architect, hands-on over theory
-- **Velocity:** Fast learner - compressed what was originally planned as months of work into weeks
-- **Code Preferences:** Interactive lessons with multiple modes, well-commented, file-based testing
-- **Architecture Philosophy:** Simple > Complex, Working > Perfect, Practical > Theoretical
+1. **VS Code Claude Extension (Sonnet 3.5):**
+   - Code writing and debugging
+   - File editing and refactoring
+   - Quick iterations on implementation
+
+2. **Web Claude Interface (Sonnet 3.5):**
+   - Architecture discussions and planning
+   - Research and learning new concepts
+   - Documentation and session notes
+
+**Advantage:** Each instance maintains separate context optimized for its task, preventing context pollution and maintaining focus.
 
 ### Development Environment
-- **Machine:** ThinkPad, Windows 11, PowerShell 7, VS Code
-- **Test Setup:** Office with tan carpet, colored obstacles (red iPad, yellow tape, black box)
-- **Camera:** External USB webcam (index 1), iPhone 13 for test photos
-- **3D Printer:** Prusa MK4 (available for chassis fabrication)
+- **OS:** Raspberry Pi OS (64-bit, Debian-based)
+- **IDE:** VS Code with Remote-SSH extension
+- **Languages:** Python 3.11+ (primary), Bash (system)
+- **Libraries:** 
+  - OpenCV (cv2) - Computer vision
+  - picamera2 - Pi camera interface
+  - NumPy - Array operations
+  - RPi.GPIO - Hardware control
 
-### Open Questions & Future Exploration
-- Path planning algorithms (A*, Dijkstra) - can learn without hardware
-- Motion detection and tracking
-- Morphological operations (erosion, dilation)
-- Fine-tuning HSV ranges for different lighting conditions
-- Sensor fusion confidence scoring algorithms
+### Version Control
+- **Repository:** github.com/MichaelHBaker/ai
+- **Strategy:** Session-based documentation approach
+  - Each session documented in session_notes.md
+  - Major milestones captured with decisions and rationale
+  - Code changes committed after validation
 
----
+## Learning Philosophy
 
-## 🚫 Rejected Approaches (Don't Suggest Again)
+### Open-Source Only Constraint
+**Rationale:** Maximum learning, minimal vendor lock-in, full transparency
 
-These have been explored, tested, or considered and explicitly rejected:
+- **No proprietary platforms:** No ROS (Robot Operating System) despite industry standard status
+- **No closed-source libraries:** Only open-source Python packages
+- **No cloud dependencies:** All processing on-device
+- **Exception:** Hardware is necessarily proprietary (Raspberry Pi, camera sensors)
 
-### Architecture & Planning
-- ❌ **Concept-oriented architecture with synchronization coordinators** - Too complex for a learning project; adds architectural overhead that obscures learning
-- ❌ **Formal 12-month roadmap with strict phases** - Learning velocity is unpredictable; objectives evolve through experimentation
-- ❌ **Heavy upfront planning** - Discovery through hands-on work is more effective than theoretical planning
+### Build Everything Approach
+**Rationale:** Deep understanding through implementation
 
-### Technical Approaches
-- ❌ **Stereo vision for indoor carpet navigation** - Tested with stereo pair; failed on repetitive carpet texture; no feature matching possible
-- ❌ **Vision-only navigation** - Unreliable; requires sensor fusion with ultrasonic for safety
-- ❌ **Motorized camera pivot** - Adds complexity; fixed cameras sufficient for learning goals
-- ❌ **Two cameras initially** - Start with one; add second only if needed for outdoor/elevation detection
+- **No pre-built robot kits:** Design custom chassis and architecture
+- **No high-level abstractions initially:** Understand fundamentals first (GPIO, I2C, PWM)
+- **Progressive complexity:** Start simple, add features iteratively
 
-### Technology Stack
-- ❌ **Web frameworks (Django, Flask, etc.)** - This is a Python-only CLI/hardware project
-- ❌ **JavaScript/web interface** - Command-line and direct hardware control only
-- ❌ **Cloud dependencies** - Must run completely offline on Raspberry Pi
-- ❌ **Paid APIs or proprietary software** - Open source and free only
+### Documentation-First Development
+**Practice:** Every session documented before code commits
 
-### Hardware
-- ❌ **Expensive components** - Budget constraint ~$250 Phase 0, ~$400 total
-- ❌ **Cloud-connected hardware** - No mandatory internet connection
+- Technical decisions recorded with rationale
+- Failed approaches documented (learning from mistakes)
+- Architecture evolution tracked chronologically
+- Budget and component decisions preserved
 
----
+## Project Timeline
 
-## 💻 Development Stack
+### Phase 0: Foundation (3 months) - IN PROGRESS
+**Goal:** Master sensors, cameras, and basic computer vision  
+**Status:** Hardware procurement complete, desktop testing begins Dec 13  
+**Timeline:** Oct 2024 - Jan 2025
 
-**This is a Python-only project** - no web frameworks, no JavaScript
+- [x] Project planning and architecture design
+- [x] Component research and selection
+- [x] HSV filtering algorithm development
+- [x] Hardware procurement (Adafruit + Amazon)
+- [ ] Desktop testing and validation (Dec 13 - Jan 23)
+- [ ] Component integration and sensor fusion
+- [ ] Power system characterization
+- [ ] Phase 1 chassis design requirements documentation
 
-- **Language:** Python 3.13
-- **Libraries:** OpenCV, NumPy, scikit-learn, TensorFlow
-- **Deployment:** Raspberry Pi OS (Linux)
-- **Interface:** Command-line and direct hardware control
-- **No Django, no web interface, no JavaScript**
+### Phase 1: Mobility (3 months) - PLANNED
+**Goal:** Build chassis, integrate motors, achieve basic navigation  
+**Timeline:** Jan 2025 - Apr 2025  
+**Budget:** $56 remaining (requires revision or simplified design)
 
----
+**Planned Components:**
+- DC motors with encoders (2x or 4x, TBD based on budget)
+- Motor driver board (L298N or similar)
+- Chassis frame (3D printed or laser-cut acrylic, design TBD)
+- Wheels and mechanical components
+- Additional structural hardware
 
-## 🎯 Project Goals
+**Objectives:**
+- [ ] Design custom chassis for Pi 5 + cameras + sensors
+- [ ] Select motor configuration (2WD vs 4WD)
+- [ ] Implement motor control (PWM, direction, speed)
+- [ ] Integrate encoders for odometry
+- [ ] Develop basic navigation algorithms
+- [ ] Obstacle avoidance using vision + ultrasonic fusion
+- [ ] Dead reckoning and position estimation
 
-Build a robot that can:
-- Respond to voice commands (start, stop, navigate, return home)
-- Traverse an office floor autonomously
-- Detect and avoid obstacles (furniture, walls, coffee cups)
-- Use computer vision and sensors for navigation
-- All while **understanding how and why it works**
+**Budget Challenge:** $56 remaining requires either:
+1. Budget increase to ~$500-550 total
+2. Simplified chassis design (2WD instead of 4WD)
+3. Reduced mechanical complexity
+4. DIY chassis materials (cardboard/wood prototyping)
 
----
+### Phase 2: Intelligence (3 months) - FUTURE
+**Goal:** Add voice control, autonomous decision-making  
+**Timeline:** Apr 2025 - Jul 2025
 
-## 🔧 Project Constraints & Rules
+- Voice recognition (offline, on-device)
+- Natural language command processing
+- Path planning algorithms
+- Environmental mapping
+- Autonomous task execution
 
-### Hardware Requirements (Updated)
-- Raspberry Pi 4 (8GB RAM)
-- 1x USB webcam (design accommodates 2nd camera for future stereo)
-- 3x Ultrasonic distance sensors (HC-SR04)
-- DC motors + motor controller
-- 3D printed chassis
-- USB microphone
-- Budget: ~$250 Phase 0, ~$400 total
+### Phase 3: Advanced Features (3 months) - FUTURE
+**Goal:** Machine learning integration, complex behaviors  
+**Timeline:** Jul 2025 - Oct 2025
 
-### Software Constraints
-- ✅ MUST be open source
-- ✅ MUST run on Raspberry Pi (no cloud dependency)
-- ✅ MUST be free (no paid APIs)
-- ❌ NO proprietary software
-- ❌ NO mandatory internet connection
-- ❌ NO expensive hardware
+- Object recognition (lightweight models for Pi 5)
+- Behavior trees for complex decision-making
+- Multi-room navigation
+- Task learning and adaptation
 
-### Philosophy
-> This is NOT about building the world's best robot.
-> This IS about **understanding AI, ML, computer vision, and robotics**.
-> The robot is the vehicle for learning. The knowledge gained is the destination.
+## Key Technical Decisions
 
----
+### 1. Raspberry Pi 5 8GB over Pi 4 8GB
+**Decision Date:** December 12, 2024  
+**Cost Delta:** +$15 (vs Pi 4)
 
-## 📊 Current Progress
+**Rationale:**
+- **Performance:** 2-3x faster CPU (ARM Cortex-A76 vs A72)
+- **Vision Architecture:** Dual native CSI ports (vs single on Pi 4)
+- **AI Acceleration:** 2x faster inference for future ML models
+- **Thermal Parity:** Both Pi 4 and Pi 5 require active cooling for sustained CV workloads
+- **Power Delta Minimal:** Pi 4 + fan (3.5-4.5W) vs Pi 5 + cooler (4.2-6.2W)
+- **Battery Runtime Similar:** 7-9hrs vs 8-10hrs on 20,000mAh bank
+- **Future-Proofing:** Better positioned for Phases 2-3 complexity
 
-**Phase:** Phase 0 - Sensor & Camera Learning (Hardware Acquisition)
-**Status:** ✅ Major breakthroughs achieved, hardware list finalized, ready to order
+**Initial Concern:** Battery-powered mobile robot → power consumption critical  
+**Resolution:** Research showed Pi 4 also needs cooling for sustained CV, making Pi 5's 15% higher power consumption worthwhile for 200% performance gain
 
-### Completed Milestones ✅
-- [x] Project structure and development environment
-- [x] K-NN classifier from scratch
-- [x] OpenCV fundamentals and camera access
-- [x] Edge detection (Canny algorithm)
-- [x] Contour detection (file-based, realistic testing)
-- [x] Stereo vision experimentation
-- [x] **BREAKTHROUGH: HSV color filtering** (works where stereo failed!)
-- [x] **Critical architectural decisions made**
-- [x] Phase 0 hardware procurement list (best-in-class, $250)
-- [x] Collaboration workflow established between Claude instances
+**Alternative Considered:** Pi 4 8GB with single camera ($80 savings)  
+**Rejected Because:** Dual native CSI support essential for stereo vision architecture
 
-### Current Work 🔨
-- [ ] Order Phase 0 hardware (~$250)
-- [ ] Continue vision lessons with iPhone while waiting
-- [ ] Optional: Path planning algorithm lesson (no hardware needed)
+### 2. Camera Module 3 (CSI) over Logitech C920 (USB)
+**Decision Date:** December 12, 2024  
+**Cost Delta:** -$90 (CSI cheaper than USB)
 
-### Next Milestone 🎯
-**Phase 0 Execution:** Master sensors and real camera before robot design
-- Wire 3x HC-SR04 ultrasonic sensors
-- Test Logitech C920 with color filtering
-- Validate HSV ranges on real robot camera
-- Sensor fusion experiments
-- **Then** design chassis based on learned requirements
+**Technical Comparison:**
 
----
+| Metric | Camera Module 3 CSI | Logitech C920 USB |
+|--------|---------------------|-------------------|
+| Latency | 5-15ms (direct GPU) | 30-50ms (CPU processing) |
+| Power | 40% less | Higher (USB bus power) |
+| Weight | 3g each (6g total) | 200g each (400g total) |
+| CPU Load | Minimal (GPU decode) | Higher (CPU decode) |
+| Interface | Native CSI x2 | USB (shared bandwidth) |
+| Cost | $83 for 2x | $280 for 2x |
 
-## 🛒 Phase 0 Shopping List - Best-in-Class ($250)
+**Rationale:**
+- **Native Architecture:** Pi 5's dual CSI ports enable true stereo vision
+- **Lower Latency:** Critical for real-time obstacle avoidance
+- **Power Efficiency:** Battery runtime extended by 40% camera power reduction
+- **Weight:** 394g savings significant for mobile robot chassis
+- **Cost:** $197 savings allows budget reallocation
 
-### Adafruit Order (~$139)
-| Item | Product # | Price |
-|------|-----------|-------|
-| Raspberry Pi 4 (8GB) | #4564 | $75 |
-| Official 27W Power Supply | #4298 | $12 |
-| 3x HC-SR04 Sensors | #3942 | $12 |
-| Premium Breadboard 830pt | #239 | $6 |
-| M-M Jumper Wires | #1956 | $4 |
-| F-F Jumper Wires | #1951 | $4 |
-| Resistors (1kΩ, 2kΩ) | Various | $3 |
-| Official Pi 4 Case | #4301 | $8 |
-| Micro HDMI Cable 6ft | #4302 | $6 |
-| Logic Level Converter | #757 | $4 |
+**Trade-off:** 120° wide angle cameras chosen over 76° standard (+$18.50) for better peripheral obstacle detection
 
-### Amazon Order (~$110)
-| Item | Price |
-|------|-------|
-| SanDisk Extreme 64GB microSD A2 | $15 |
-| Logitech C920 HD Pro Webcam | $70 |
-| Klein Tools MM400 Multimeter | $25 |
+### 3. Logic Level Converter over Voltage Dividers
+**Decision Date:** December 12, 2024  
+**Cost Delta:** +$2.50 (vs resistor approach)
 
-**Design Note:** Chassis will have mounts for 2 cameras (6-8cm baseline), but purchasing only 1 camera initially. Second camera can be added later for outdoor navigation or elevation detection if needed.
+**Problem:** HC-SR04 ultrasonic sensors output 5V echo signal, Pi 5 GPIO maximum safe input is 3.3V
 
----
+**Solutions Compared:**
 
-## 🗂️ Project Structure
+| Approach | Cost | Pros | Cons |
+|----------|------|------|------|
+| Voltage Dividers | $1.50 | Educational, simple circuit | 6 resistors/sensor = messy breadboard |
+| Logic Level Converter | $4.00 | Clean, bidirectional, reusable | Slightly more expensive |
+
+**Decision:** Logic Level Converter (#757)  
+**Rationale:** 
+- Learning project benefits from cleaner breadboard (easier debugging)
+- Bidirectional capability useful for future I2C sensors
+- Reusable across multiple projects
+- $2.50 premium justified by reduced complexity
+
+### 4. Battery Power over Wall-Only Development
+**Decision Date:** December 12, 2024  
+**Cost Delta:** +$52 (power bank + cables)
+
+**Initial Assumption:** Desktop testing only, wall power sufficient  
+**Correction:** Robot must be autonomous and mobile from Phase 1 onward
+
+**Selected:** Anker PowerCore Essential 20000 PD (18W USB-C)  
+**Rationale:**
+- 20,000mAh capacity → 8-10 hour runtime estimate
+- USB-C Power Delivery → native Pi 5 power input
+- 18W output → sufficient for Pi 5 + cameras + sensors (15W peak)
+- Proven reliability (Anker brand)
+
+**Alternative Considered:** Development with wall power, add battery later  
+**Rejected Because:** Power constraints must inform chassis design from Phase 1 start
+
+## Repository Structure
 ```
 ai/
-├── src/
-│   ├── learning/
-│   │   ├── 01_fundamentals/
-│   │   │   └── simple_ml.py                # ✅ K-NN from scratch
-│   │   ├── 02_computer_vision/
-│   │   │   ├── hello_opencv.py             # ✅ Live camera feed
-│   │   │   ├── test_cameras.py             # ✅ Camera diagnostic
-│   │   │   ├── test_display.py             # ✅ Display diagnostic
-│   │   │   ├── edge_detection_lesson.py    # ✅ Canny algorithm
-│   │   │   ├── contour_detection_lesson.py # ✅ File-based contours
-│   │   │   ├── stereo_contour_detection_lesson.py  # ✅ Stereo + floor filtering
-│   │   │   └── color_space_lesson.py       # ✅ HSV filtering BREAKTHROUGH
-│   │   ├── 03_machine_learning/
-│   │   ├── 04_hardware/                    # HC-SR04 lessons (coming)
-│   │   ├── 05_navigation/                  # A* path planning (can do now)
-│   │   ├── 06_sensor_fusion/
-│   │   └── 07_voice_control/
-│   ├── robot/                              # Production code (future)
-│   └── utils/
-├── datasets/
-│   └── raw/
-│       ├── IMG_0096.jpg                    # Stereo pair - left
-│       ├── IMG_0097.jpg                    # Stereo pair - right
-│       └── Iphone_11-15-25_3-59.jpg       # Floor scene test
-├── hardware/
-├── .vscode/
-└── README.md
+├── README.md                 # This file (project overview and documentation)
+├── session_notes.md          # Chronological session history with decisions
+├── src/                      # Source code (Phase 0 testing begins Dec 13)
+│   ├── vision/              # Computer vision algorithms
+│   │   └── hsv_filter.py    # HSV color space filtering (to be ported)
+│   ├── sensors/             # Sensor interfaces
+│   │   └── ultrasonic.py    # HC-SR04 distance sensing (to be developed)
+│   └── tests/               # Component validation tests
+├── docs/                     # Additional documentation
+│   ├── datasheets/          # Component datasheets and references
+│   └── architecture/        # System architecture diagrams
+└── hardware/                 # Hardware designs (Phase 1)
+    ├── chassis/             # Chassis CAD files (future)
+    └── schematics/          # Circuit diagrams and wiring (future)
 ```
 
----
+## Next Actions (Week of Dec 13, 2024)
 
-## 🛠️ Technology Stack
+### Immediate (Dec 13-14)
+1. **Receive Adafruit hardware** - UPS Next Day Air delivery
+2. **Unbox and inventory** all components against order confirmation
+3. **Assemble Pi 5** - Install in case, attach active cooler
+4. **OS Setup** - Flash Raspberry Pi OS 64-bit to microSD
+5. **Initial Configuration** - WiFi, SSH, timezone, updates
+6. **Development Environment** - Install Python 3, OpenCV, picamera2
 
-### Core
-- Python 3.13
-- OpenCV 4.12.0
-- NumPy 2.2.6
-- Raspberry Pi OS
+### Week 1 Goals (Dec 13-19)
+1. **Single camera testing** - Connect Camera Module 3 Wide to CSI-0
+2. **Port HSV filtering** - Migrate previous algorithm to Pi 5
+3. **Thermal validation** - Monitor temperatures under CV workload
+4. **Power measurement** - Use MM420 to measure current draw
+5. **GPIO mapping** - Document pin assignments for sensors
 
-### Libraries
-- scikit-learn 1.7.2
-- TensorFlow 2.20.0 (if needed)
-- gpiozero (sensors/motors)
-- Vosk (offline speech)
+### Week 2 Goals (Dec 20-26)
+1. **Stereo camera setup** - Connect second camera to CSI-1
+2. **Synchronization testing** - Validate frame alignment
+3. **Baseline experiments** - Test 10cm, 15cm, 20cm stereo spacing
+4. **Depth perception** - Implement basic stereo vision algorithm
 
-### Development
-- VS Code
-- Git/GitHub
-- PowerShell 7
-- Windows 11
+## Learning Resources
 
----
+### Documentation
+- [Raspberry Pi 5 Documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html)
+- [picamera2 Library Guide](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf)
+- [OpenCV Python Tutorials](https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html)
+- [RPi.GPIO Documentation](https://sourceforge.net/p/raspberry-gpio-python/wiki/Home/)
 
-## 🚀 Getting Started
+### Adafruit Learning System
+- All ordered components include tutorial links in order confirmation
+- HC-SR04 sensor tutorials: https://www.adafruit.com/product/3942#tutorials
+- Camera Module 3 guides: https://www.adafruit.com/product/5658#tutorials
+- Pi 5 resources: https://www.adafruit.com/product/5813#tutorials
 
-```powershell
-# Clone and setup
-git clone https://github.com/MichaelHBaker/ai.git
-cd ai
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e .
+### Computer Vision Fundamentals
+- HSV color space: Understanding hue, saturation, value for object detection
+- Stereo vision: Disparity mapping and depth estimation
+- Real-time processing: Optimization techniques for embedded systems
 
-# Run lessons
-python src/learning/02_computer_vision/color_space_lesson.py datasets/raw/your_image.jpg
-```
-
----
-
-## 📚 Learning Progression
-
-Phases are learning stages, not time-bound commitments. Progress is driven by experimentation and understanding, not schedules.
-
-### Phase 0: Sensor & Camera Learning ⚡ **(Current)**
-**Hardware:** Pi + 1 camera + 3 US sensors + breadboard
-**Goal:** Master components before robot design
-
-**Lessons:**
-- Wire HC-SR04 sensors (voltage dividers)
-- Read distance data in Python
-- Test Logitech C920 real camera
-- Validate HSV color filtering
-- Sensor fusion experiments
-
-**Deliverable:** Confident hardware knowledge + validated color detection
-
-### Phase 1: Vision Fundamentals ✅ **(Mostly Complete)**
-**Status:** Edge detection, contours, stereo concepts, **HSV filtering complete**
-
-**Still to do:**
-- Motion detection
-- Morphological operations
-- Fine-tune HSV for robot camera
-
-### Phase 2: Hardware Integration
-**Hardware:** Motors + chassis + power
-**Goal:** Robot moves and avoids obstacles
-**Topics:** GPIO, PWM, path planning, 3D printing
-
-### Phase 3: Sensor Fusion
-**Goal:** Combine vision + US sensors
-**Topics:** Confidence scoring, conflict resolution
-
-### Phase 4: Voice Control
-**Goal:** Voice-commanded autonomous robot
-**Topics:** Vosk, command parsing, integration
+## Contact & Collaboration
+**Developer:** Michael Baker  
+**Repository:** https://github.com/MichaelHBaker/ai  
+**Project Start:** October 2024  
+**Expected Completion:** October 2025
 
 ---
 
-## 🎓 Critical Lessons Learned
-
-### Stereo Vision vs Color Filtering
-
-**Stereo Vision:**
-- ✅ Works: Textured surfaces with distinctive features (brick, pavers, wood grain)
-- ❌ Fails: Repetitive patterns (carpet, uniform surfaces)
-- Requires: Two cameras, complex algorithms, feature matching
-- Result: **No depth map on indoor carpet**
-
-**Color Filtering (HSV):**
-- ✅ Works: Indoor carpet with colored obstacles
-- ✅ Detects: Red iPad, yellow tape, black box perfectly
-- ✅ Ignores: Tan/beige carpet texture
-- Requires: Single camera, simple thresholds
-- Result: **12 objects detected clearly**
-
-**Architectural Decision:** Start with single camera + HSV, add stereo only if needed for:
-- Outdoor navigation (concrete pavers work for stereo)
-- Elevation detection (stairs, ramps)
-- Not needed for basic indoor obstacle avoidance
-
-### Sensor Fusion Strategy
-
-**Primary: Ultrasonic Sensors**
-- Reliable distance (any surface, any lighting)
-- 20Hz update rate
-- Safety-critical
-- Confirms obstacles
-
-**Secondary: Vision (HSV Color)**
-- Scene understanding
-- Object classification
-- Spatial extent (width, position)
-- Path planning context
-- Advisory (not safety-critical)
-
-**Example:**
-```
-Vision: "RED object at center, ~8 inches wide"
-US Center: "Obstacle at 50cm"
-US Left: "Clear"
-US Right: "Clear"
-Decision: "High confidence - avoid left"
-```
-
-### Robot Design Principles
-
-**What works:**
-- ✅ Fixed camera mounts (not motorized)
-- ✅ Single camera + HSV (simpler than stereo)
-- ✅ Multiple simple sensors
-- ✅ US primary, vision secondary
-- ✅ Design for 2 cameras, buy 1 initially
-
-**What doesn't:**
-- ❌ Stereo on carpet
-- ❌ Vision-only navigation
-- ❌ Motorized camera pivot
-- ❌ Cloud dependencies
-
----
-
-## 🔍 Completed Lessons
-
-### 1. K-NN Classifier (`simple_ml.py`)
-Built from scratch, no libraries - understand the fundamentals
-
-### 2. OpenCV Fundamentals (`hello_opencv.py`, `test_cameras.py`, `test_display.py`)
-Camera access, display windows, basic image operations
-
-### 3. Edge Detection (`edge_detection_lesson.py`)
-Canny algorithm, Gaussian blur, multi-stage processing
-
-### 4. Contour Detection (`contour_detection_lesson.py`)
-Organizing edges into objects, properties, bounding boxes
-
-### 5. Stereo Vision (`stereo_contour_detection_lesson.py`)
-Depth maps, floor plane detection, **learned limitations**
-
-### 6. Color Spaces (`color_space_lesson.py`) ⭐
-**THE BREAKTHROUGH** - HSV filtering, color-based detection
-- Mode 1-3: Understand RGB vs HSV
-- Mode 4-6: Isolate red/yellow/black objects
-- Mode 7-8: Combined detection + classification
-- **Result: Perfect obstacle detection on carpet!**
-
----
-
-## 📋 Key Architectural Decisions
-
-### Decision Log
-
-**2025-11-19: Collaboration Workflow Between Claude Instances**
-- **Context:** Need seamless handoff between web Claude and VS Code Claude
-- **Decision:** Use README as single source of truth with structured session notes
-- **Implementation:** Session notes include file paths for auto-fetching from GitHub
-- **Rationale:** Eliminates need to re-explain context; both Claudes read same document
-- **Impact:** Faster context switching, no information loss between sessions
-
-**2025-11-17: HSV Color Filtering Over Stereo Vision**
-- **Context:** Tested stereo vision with IMG_0096/0097 stereo pair on office carpet
-- **Finding:** No depth map possible - repetitive carpet texture prevents feature matching
-- **Alternative:** Tested HSV color filtering on same scene
-- **Result:** 12 objects detected cleanly (red iPad, yellow tape, black box)
-- **Decision:** Single camera + HSV is primary approach for indoor obstacle detection
-- **Rationale:** Simpler, works reliably, sufficient for learning goals
-
-**2025-11-17: Sensor Fusion Priority - Ultrasonic Primary, Vision Secondary**
-- **Context:** Planning robot navigation architecture
-- **Decision:** Ultrasonic sensors are safety-critical, vision is advisory
-- **Rationale:** US sensors work in any lighting, any surface; vision provides context
-- **Implementation:** Vision identifies objects, US confirms distance and triggers avoidance
-
-**2025-11-17: Buy 1 Camera, Design for 2**
-- **Context:** Chassis design for vision system
-- **Decision:** Purchase 1 Logitech C920, but design mounts for 2 cameras (6-8cm baseline)
-- **Rationale:** Expandable architecture; add stereo later only if needed for outdoor/elevation
-- **Budget Impact:** Saves $70 in Phase 0
-
-**2025-11-18: Simplified Architecture Over Concept-Oriented Design**
-- **Context:** Original plan had complex concept/synchronization architecture
-- **Decision:** Use simple lesson-based structure with hands-on experiments
-- **Rationale:** Learning velocity exceeded formal planning; experiments reveal better solutions
-- **Impact:** Faster progress, clearer understanding, more pragmatic code
-
----
-
-## 📋 Success Criteria
-
-**Final Demo:**
-1. Voice: "Start"
-2. Robot navigates office autonomously
-3. Avoids all obstacles (detected by color + US)
-4. Voice: "Stop" - immediate halt
-5. Voice: "Return home" - navigates back
-6. **Most important: I understand every line of code!**
-
----
-
-**Current Status:** ✅ Hardware list finalized, collaboration workflow established, ready to order!
-**Last Updated:** 2025-11-19
-**Next Session:** Share workflow with VS Code Claude, order hardware, continue lessons while waiting
-**GitHub:** [github.com/MichaelHBaker/ai](https://github.com/MichaelHBaker/ai)
+*Last Updated: December 12, 2024 - Phase 0 Hardware Procurement Complete*
