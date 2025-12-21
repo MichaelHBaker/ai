@@ -4,11 +4,14 @@
 12-month self-directed learning project to build an autonomous voice-controlled robot from scratch using only open-source software and Raspberry Pi hardware. Budget: $400 (actual: $462).
 
 ## Current Status
-**Phase:** Phase 0 - Hardware Procurement **COMPLETE** ✅  
-**Date:** December 12, 2024  
-**Next Phase:** Desktop Testing & Component Validation (begins Dec 13, 2024)
+**Phase:** Phase 0 - Desktop Testing & Component Validation **IN PROGRESS** 🔄  
+**Date:** December 20, 2024  
+**Next Milestone:** Camera Module 3 connection and testing
 
 ### Recent Milestones
+- ✅ **Dec 20, 2024:** Raspberry Pi OS installed, SSH configured, OpenCV 4.10.0 validated
+- ✅ **Dec 20, 2024:** Pi 5 hardware validated with multimeter (3.3V and 5V rails healthy)
+- ✅ **Dec 13, 2024:** Adafruit hardware delivered, Pi 5 assembled
 - ✅ **Dec 12, 2024:** All hardware ordered (Adafruit + Amazon)
 - ✅ **Nov 19, 2024:** HSV-bounded stereo vision algorithm completed
 - ✅ **Nov 2024:** Phase 0 planning and component research completed
@@ -32,7 +35,7 @@
 - **Official Active Cooler** (#5815) - $13.50
   - Temperature-controlled, 1.4CFM airflow
   - Required for sustained CV workloads
-  - Desktop testing: 40-50°C typical, 60-70°C peak
+  - Desktop testing: 39.5°C idle (without cooler installed yet)
   
 - **Official Pi 5 Case + Fan** (#5816) - $12.00
   - Protective enclosure with integrated cooling
@@ -88,10 +91,11 @@
 **Delivery:** Staggered (Dec 12-24, 2024)
 
 - **Klein Tools MM420 Auto-Ranging Multimeter** - $64.98
-  - Delivers: Today (Dec 12) 5PM-10PM
+  - Delivered: Dec 12, 2024
   - TRMS, 600V AC/DC, 10A current, 50MΩ resistance
   - Auto-ranging for efficient testing workflow
   - Critical for: voltage verification, current measurement, continuity testing
+  - **Used:** Validated Pi 5 power rails (3.3V: 3.30V ✓, 5V: 4.93V ✓)
   
 - **Anker PowerCore Essential 20000 PD** - $51.95
   - Delivers: Wednesday, Dec 17
@@ -101,9 +105,10 @@
   - Selected over wall-only power for mobile robotics requirement
   
 - **SanDisk Extreme 64GB microSDXC A2** - $16.20
-  - Delivers: Dec 19-24
+  - Delivered: Dec 20, 2024
   - 170MB/s read, C10/U3/V30/4K/5K/A2 ratings
   - A2 performance class for faster app loading
+  - **Used:** Raspberry Pi OS 64-bit installed successfully
 
 ### Phase 0 Budget Summary
 - **Adafruit Subtotal:** $263.90
@@ -125,23 +130,37 @@
 
 ## Phase 0 - Desktop Testing Plan
 
-### Week 1-2: Single Camera Validation (Dec 13-26)
-**Hardware arrives Dec 13, begin immediately:**
-- [ ] Pi 5 initial setup (OS, WiFi, SSH, updates)
-- [ ] Install development environment (Python 3, OpenCV, picamera2)
+### Week 1: OS Installation & System Validation (Dec 13-20) ✅ COMPLETE
+**Hardware arrived Dec 13, completed Dec 20:**
+- ✅ Pi 5 hardware validation with multimeter (3.3V: 3.30V, 5V: 4.93V)
+- ✅ OS installation (Raspberry Pi OS 64-bit via Raspberry Pi Imager)
+- ✅ Headless SSH configuration (michael@robot.local)
+- ✅ System updates (37 packages upgraded, including picamera2)
+- ✅ Development environment installed (Python 3, OpenCV 4.10.0, picamera2 0.3.33)
+- ✅ Library validation confirmed (OpenCV and picamera2 import successfully)
+
+**Success Criteria: ALL MET**
+- ✓ Power rails within spec (3.2-3.4V and 4.75-5.25V)
+- ✓ Headless SSH operation working
+- ✓ All required libraries installed and verified
+- ✓ System temperature stable (39.5°C idle without active cooler)
+
+### Week 2: Single Camera Validation (Dec 21-27) - IN PROGRESS
+**Next steps:**
 - [ ] Connect single Camera Module 3 Wide to CSI-0 port
-- [ ] Port HSV color filtering algorithm from previous work
-- [ ] Validate CSI latency vs USB baseline
-- [ ] Test thermal performance under sustained CV load
-- [ ] Measure idle vs CV workload power consumption
-- [ ] Document GPIO pin mapping for sensors
+- [ ] Test basic camera capture with picamera2
+- [ ] Port HSV color filtering algorithm from iPhone work
+- [ ] Validate CSI latency vs expected performance
+- [ ] Install and test active cooler under CV workload
+- [ ] Measure power consumption under camera + CV load
+- [ ] Document GPIO pin mapping for future sensor integration
 
 **Success Criteria:**
-- HSV filtering running at 30fps on Pi 5
+- HSV filtering running at 20-30fps on Pi 5
 - Thermal stability under 70°C with active cooler
 - Power consumption measured and documented
 
-### Week 2-3: Stereo Vision Testing (Dec 20-Jan 2)
+### Week 3: Stereo Vision Testing (Dec 28-Jan 3)
 **Requires: Both cameras operational**
 - [ ] Connect second Camera Module 3 Wide to CSI-1 port
 - [ ] Implement stereo camera synchronization
@@ -150,7 +169,7 @@
 - [ ] Validate frame alignment and timing
 - [ ] Measure dual-camera power consumption
 
-**Calibration Process (Week 2):**
+**Calibration Process:**
 - [ ] Print checkerboard pattern from `/calibration/Checkerboard-A4-30mm-8x6.pdf`
 - [ ] Capture 20-30 calibration images per camera at various angles/distances
 - [ ] Store calibration images in `/calibration/calibration_images/`
@@ -160,12 +179,12 @@
 - [ ] Validate reprojection error <0.5 pixels
 
 **Success Criteria:**
-- Synchronized stereo capture at 30fps (or 20fps with undistortion)
+- Synchronized stereo capture at 20-30fps
 - Accurate depth estimation for obstacle detection
 - Frame alignment within 5ms
 - Camera calibration matrices calculated and saved
 
-### Week 3-4: Ultrasonic Sensor Integration (Dec 27-Jan 9)
+### Week 4: Ultrasonic Sensor Integration (Jan 4-10)
 **Requires: Logic level converter + HC-SR04 sensors**
 - [ ] Breadboard HC-SR04 sensor with logic level converter
 - [ ] Test 5V→3.3V echo signal protection
@@ -179,182 +198,57 @@
 - No GPIO damage from 5V echo signals
 - Reliable multi-sensor operation
 
-### Week 4-5: Power System Testing (Jan 3-16)
-**Requires: Anker power bank (arrives Dec 17)**
+### Week 5: Power System Testing (Jan 11-17)
+**Requires: Anker power bank (arrived Dec 17)**
 - [ ] Measure total system power draw (Pi + cameras + sensors)
 - [ ] Test battery runtime under realistic CV workload
-- [ ] Validate 18W power bank output sufficiency
-- [ ] Monitor voltage stability under load
-- [ ] Document power consumption for chassis design constraints
+- [ ] Validate 8-10 hour runtime estimate
+- [ ] Document power consumption profile for chassis design
+- [ ] Test battery charging while operating (if needed)
 
 **Success Criteria:**
-- 6+ hour runtime on 20,000mAh bank
-- Stable 5V output under peak load
-- No voltage brownouts during operation
+- Actual runtime within 20% of estimate
+- No power-related crashes or brownouts
+- Power budget documented for Phase 1 planning
 
-### Week 5-6: Integrated System Test (Jan 10-23)
-**All components operational**
-- [ ] Combined vision + ultrasonic obstacle detection
-- [ ] Real-time sensor fusion testing
-- [ ] Desktop obstacle avoidance algorithm development
-- [ ] Performance profiling and optimization
-- [ ] Thermal testing under full system load
-- [ ] Power consumption validation for mobile operation
+## Software Architecture
 
-**Success Criteria:**
-- Real-time obstacle detection at 30fps
-- Sensor fusion latency under 50ms
-- 6+ hour autonomous runtime
-- Ready for Phase 2 chassis design
+### Development Environment (Installed Dec 20, 2024)
+- **OS:** Raspberry Pi OS 64-bit (Debian Trixie base)
+- **Python:** 3.11.x (default system Python)
+- **OpenCV:** 4.10.0 (python3-opencv package)
+- **Camera Library:** picamera2 0.3.33 (python3-picamera2 package)
+- **Package Manager:** pip 25.1.1
+- **Access Method:** Headless SSH (michael@robot.local)
 
-## Technical Achievements - Phase 0 Pre-Hardware
+### Workflow
+- **VS Code Claude:** Code writing, file editing, debugging
+- **Web Claude:** Architecture, research, session documentation
+- **Version Control:** Git with session-based commits
+- **Testing:** Desktop environment, Pi 5 powered on desk
 
-### HSV-Bounded Stereo Vision Algorithm (Nov 19, 2024)
-**Breakthrough:** Successfully implemented color-bounded obstacle detection using HSV color space filtering rather than traditional edge detection or neural networks.
-
-**Innovation:**
-- Defines navigable space by **color boundaries** rather than object recognition
-- Example: "Navigate between yellow cones" becomes HSV color filtering
-- Simpler, faster, more interpretable than deep learning approaches
-- Lower computational requirements (critical for Pi 5)
-
-**Technical Implementation:**
-```python
-# HSV color space filtering for obstacle boundaries
-# Hue: Color (0-179), Saturation: Color intensity (0-255), Value: Brightness (0-255)
-yellow_lower = np.array([20, 100, 100])  # Lower HSV bound for yellow
-yellow_upper = np.array([30, 255, 255])  # Upper HSV bound for yellow
-mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
+### Repository Structure
 ```
-
-**Advantages:**
-- **Computational efficiency:** Simple array operations vs neural network inference
-- **Interpretability:** Explicit color boundaries vs black-box model
-- **Real-time capable:** Runs at 30fps on Pi 5
-- **Adaptable:** Easy to adjust color boundaries for different environments
-
-**Architecture Decision:** This approach validates the "learn fundamentals first" philosophy - mastering computer vision basics (color spaces, filtering, thresholding) before attempting complex ML models.
-
-## Development Workflow
-
-### Unique Multi-Instance Claude Approach
-**Innovation:** Discovered optimal workflow using two separate Claude instances simultaneously:
-
-1. **VS Code Claude Extension (Sonnet 3.5):**
-   - Code writing and debugging
-   - File editing and refactoring
-   - Quick iterations on implementation
-
-2. **Web Claude Interface (Sonnet 3.5):**
-   - Architecture discussions and planning
-   - Research and learning new concepts
-   - Documentation and session notes
-
-**Advantage:** Each instance maintains separate context optimized for its task, preventing context pollution and maintaining focus.
-
-### Development Environment
-- **OS:** Raspberry Pi OS (64-bit, Debian-based)
-- **IDE:** VS Code with Remote-SSH extension
-- **Languages:** Python 3.11+ (primary), Bash (system)
-- **Libraries:** 
-  - OpenCV (cv2) - Computer vision
-  - picamera2 - Pi camera interface
-  - NumPy - Array operations
-  - RPi.GPIO - Hardware control
-
-### Version Control
-- **Repository:** github.com/MichaelHBaker/ai
-- **Strategy:** Session-based documentation approach
-  - Each session documented in session_notes.md
-  - Major milestones captured with decisions and rationale
-  - Code changes committed after validation
-
-## Learning Philosophy
-
-### Open-Source Only Constraint
-**Rationale:** Maximum learning, minimal vendor lock-in, full transparency
-
-- **No proprietary platforms:** No ROS (Robot Operating System) despite industry standard status
-- **No closed-source libraries:** Only open-source Python packages
-- **No cloud dependencies:** All processing on-device
-- **Exception:** Hardware is necessarily proprietary (Raspberry Pi, camera sensors)
-
-### Build Everything Approach
-**Rationale:** Deep understanding through implementation
-
-- **No pre-built robot kits:** Design custom chassis and architecture
-- **No high-level abstractions initially:** Understand fundamentals first (GPIO, I2C, PWM)
-- **Progressive complexity:** Start simple, add features iteratively
-
-### Documentation-First Development
-**Practice:** Every session documented before code commits
-
-- Technical decisions recorded with rationale
-- Failed approaches documented (learning from mistakes)
-- Architecture evolution tracked chronologically
-- Budget and component decisions preserved
-
-## Project Timeline
-
-### Phase 0: Foundation (3 months) - IN PROGRESS
-**Goal:** Master sensors, cameras, and basic computer vision  
-**Status:** Hardware procurement complete, desktop testing begins Dec 13  
-**Timeline:** Oct 2024 - Jan 2025
-
-- [x] Project planning and architecture design
-- [x] Component research and selection
-- [x] HSV filtering algorithm development
-- [x] Hardware procurement (Adafruit + Amazon)
-- [ ] Desktop testing and validation (Dec 13 - Jan 23)
-- [ ] Component integration and sensor fusion
-- [ ] Power system characterization
-- [ ] Phase 1 chassis design requirements documentation
-
-### Phase 1: Mobility (3 months) - PLANNED
-**Goal:** Build chassis, integrate motors, achieve basic navigation  
-**Timeline:** Jan 2025 - Apr 2025  
-**Budget:** $56 remaining (requires revision or simplified design)
-
-**Planned Components:**
-- DC motors with encoders (2x or 4x, TBD based on budget)
-- Motor driver board (L298N or similar)
-- Chassis frame (3D printed or laser-cut acrylic, design TBD)
-- Wheels and mechanical components
-- Additional structural hardware
-
-**Objectives:**
-- [ ] Design custom chassis for Pi 5 + cameras + sensors
-- [ ] Select motor configuration (2WD vs 4WD)
-- [ ] Implement motor control (PWM, direction, speed)
-- [ ] Integrate encoders for odometry
-- [ ] Develop basic navigation algorithms
-- [ ] Obstacle avoidance using vision + ultrasonic fusion
-- [ ] Dead reckoning and position estimation
-
-**Budget Challenge:** $56 remaining requires either:
-1. Budget increase to ~$500-550 total
-2. Simplified chassis design (2WD instead of 4WD)
-3. Reduced mechanical complexity
-4. DIY chassis materials (cardboard/wood prototyping)
-
-### Phase 2: Intelligence (3 months) - FUTURE
-**Goal:** Add voice control, autonomous decision-making  
-**Timeline:** Apr 2025 - Jul 2025
-
-- Voice recognition (offline, on-device)
-- Natural language command processing
-- Path planning algorithms
-- Environmental mapping
-- Autonomous task execution
-
-### Phase 3: Advanced Features (3 months) - FUTURE
-**Goal:** Machine learning integration, complex behaviors  
-**Timeline:** Jul 2025 - Oct 2025
-
-- Object recognition (lightweight models for Pi 5)
-- Behavior trees for complex decision-making
-- Multi-room navigation
-- Task learning and adaptation
+ai/
+├── README.md                 # This file (project overview and documentation)
+├── session_notes.md          # Chronological session history with decisions
+├── calibration/              # Camera calibration patterns and artifacts
+│   ├── Checkerboard-A4-30mm-8x6.pdf  # Calibration pattern for printing
+│   ├── camera_matrices/      # Computed camera matrices (future)
+│   └── calibration_images/   # Captured calibration images (future)
+├── src/                      # Source code
+│   ├── vision/              # Computer vision algorithms
+│   │   └── hsv_filter.py    # HSV color space filtering (to be ported)
+│   ├── sensors/             # Sensor interfaces
+│   │   └── ultrasonic.py    # HC-SR04 distance sensing (to be developed)
+│   └── tests/               # Component validation tests
+├── docs/                     # Additional documentation
+│   ├── datasheets/          # Component datasheets and references
+│   └── architecture/        # System architecture diagrams
+└── hardware/                 # Hardware designs (Phase 1)
+    ├── chassis/             # Chassis CAD files (future)
+    └── schematics/          # Circuit diagrams and wiring (future)
+```
 
 ## Key Technical Decisions
 
@@ -371,12 +265,6 @@ mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
 - **Battery Runtime Similar:** 7-9hrs vs 8-10hrs on 20,000mAh bank
 - **Future-Proofing:** Better positioned for Phases 2-3 complexity
 
-**Initial Concern:** Battery-powered mobile robot → power consumption critical  
-**Resolution:** Research showed Pi 4 also needs cooling for sustained CV, making Pi 5's 15% higher power consumption worthwhile for 200% performance gain
-
-**Alternative Considered:** Pi 4 8GB with single camera ($80 savings)  
-**Rejected Because:** Dual native CSI support essential for stereo vision architecture
-
 ### 2. Camera Module 3 (CSI) over Logitech C920 (USB)
 **Decision Date:** December 12, 2024  
 **Cost Delta:** -$90 (CSI cheaper than USB)
@@ -392,97 +280,31 @@ mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
 | Interface | Native CSI x2 | USB (shared bandwidth) |
 | Cost | $83 for 2x | $280 for 2x |
 
+### 3. Headless Operation from Day 1
+**Decision Date:** December 20, 2024  
+**Cost Delta:** $0 (no monitor/keyboard/mouse purchased)
+
 **Rationale:**
-- **Native Architecture:** Pi 5's dual CSI ports enable true stereo vision
-- **Lower Latency:** Critical for real-time obstacle avoidance
-- **Power Efficiency:** Battery runtime extended by 40% camera power reduction
-- **Weight:** 394g savings significant for mobile robot chassis
-- **Cost:** $197 savings allows budget reallocation
+- Robot will operate headless on chassis - practice the real workflow immediately
+- SSH access proven reliable (michael@robot.local)
+- WiFi configuration successful via Raspberry Pi Imager
+- Simplifies desktop testing setup (no extra peripherals needed)
+- Forces learning of remote development practices early
 
-**Trade-off:** 120° wide angle cameras chosen over 76° standard (+$18.50) for better peripheral obstacle detection
+## Next Actions (Week of Dec 21, 2024)
 
-### 3. Logic Level Converter over Voltage Dividers
-**Decision Date:** December 12, 2024  
-**Cost Delta:** +$2.50 (vs resistor approach)
+### Immediate (Dec 21)
+1. **Connect first camera** - Camera Module 3 Wide to CSI-0 port
+2. **Test picamera2** - Capture first image via SSH
+3. **Verify camera** - Confirm 12MP sensor, 120° FOV working
+4. **Install active cooler** - Mount on Pi 5 for thermal testing
 
-**Problem:** HC-SR04 ultrasonic sensors output 5V echo signal, Pi 5 GPIO maximum safe input is 3.3V
-
-**Solutions Compared:**
-
-| Approach | Cost | Pros | Cons |
-|----------|------|------|------|
-| Voltage Dividers | $1.50 | Educational, simple circuit | 6 resistors/sensor = messy breadboard |
-| Logic Level Converter | $4.00 | Clean, bidirectional, reusable | Slightly more expensive |
-
-**Decision:** Logic Level Converter (#757)  
-**Rationale:** 
-- Learning project benefits from cleaner breadboard (easier debugging)
-- Bidirectional capability useful for future I2C sensors
-- Reusable across multiple projects
-- $2.50 premium justified by reduced complexity
-
-### 4. Battery Power over Wall-Only Development
-**Decision Date:** December 12, 2024  
-**Cost Delta:** +$52 (power bank + cables)
-
-**Initial Assumption:** Desktop testing only, wall power sufficient  
-**Correction:** Robot must be autonomous and mobile from Phase 1 onward
-
-**Selected:** Anker PowerCore Essential 20000 PD (18W USB-C)  
-**Rationale:**
-- 20,000mAh capacity → 8-10 hour runtime estimate
-- USB-C Power Delivery → native Pi 5 power input
-- 18W output → sufficient for Pi 5 + cameras + sensors (15W peak)
-- Proven reliability (Anker brand)
-
-**Alternative Considered:** Development with wall power, add battery later  
-**Rejected Because:** Power constraints must inform chassis design from Phase 1 start
-
-## Repository Structure
-```
-ai/
-├── README.md                 # This file (project overview and documentation)
-├── session_notes.md          # Chronological session history with decisions
-├── calibration/              # Camera calibration patterns and artifacts
-│   ├── Checkerboard-A4-30mm-8x6.pdf  # Calibration pattern for printing
-│   ├── camera_matrices/      # Computed camera matrices (future)
-│   └── calibration_images/   # Captured calibration images (future)
-├── src/                      # Source code (Phase 0 testing begins Dec 13)
-│   ├── vision/              # Computer vision algorithms
-│   │   └── hsv_filter.py    # HSV color space filtering (to be ported)
-│   ├── sensors/             # Sensor interfaces
-│   │   └── ultrasonic.py    # HC-SR04 distance sensing (to be developed)
-│   └── tests/               # Component validation tests
-├── docs/                     # Additional documentation
-│   ├── datasheets/          # Component datasheets and references
-│   └── architecture/        # System architecture diagrams
-└── hardware/                 # Hardware designs (Phase 1)
-    ├── chassis/             # Chassis CAD files (future)
-    └── schematics/          # Circuit diagrams and wiring (future)
-```
-
-## Next Actions (Week of Dec 13, 2024)
-
-### Immediate (Dec 13-14)
-1. **Receive Adafruit hardware** - UPS Next Day Air delivery
-2. **Unbox and inventory** all components against order confirmation
-3. **Assemble Pi 5** - Install in case, attach active cooler
-4. **OS Setup** - Flash Raspberry Pi OS 64-bit to microSD
-5. **Initial Configuration** - WiFi, SSH, timezone, updates
-6. **Development Environment** - Install Python 3, OpenCV, picamera2
-
-### Week 1 Goals (Dec 13-19)
-1. **Single camera testing** - Connect Camera Module 3 Wide to CSI-0
-2. **Port HSV filtering** - Migrate previous algorithm to Pi 5
-3. **Thermal validation** - Monitor temperatures under CV workload
-4. **Power measurement** - Use MM420 to measure current draw
-5. **GPIO mapping** - Document pin assignments for sensors
-
-### Week 2 Goals (Dec 20-26)
-1. **Stereo camera setup** - Connect second camera to CSI-1
-2. **Synchronization testing** - Validate frame alignment
-3. **Baseline experiments** - Test 10cm, 15cm, 20cm stereo spacing
-4. **Depth perception** - Implement basic stereo vision algorithm
+### Week 2 Goals (Dec 21-27)
+1. **Port HSV filtering** - Migrate iPhone algorithm to Pi 5
+2. **Optimize performance** - Target 20-30fps sustained
+3. **Thermal validation** - Monitor temps under CV workload
+4. **Power measurement** - Current draw with camera active
+5. **GPIO planning** - Document pins for sensors
 
 ## Learning Resources
 
@@ -511,4 +333,4 @@ ai/
 
 ---
 
-*Last Updated: December 12, 2024 - Phase 0 Hardware Procurement Complete*
+*Last Updated: December 20, 2024 - OS Installation Complete, Camera Testing Next*
