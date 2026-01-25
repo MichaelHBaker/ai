@@ -1,0 +1,154 @@
+===========================================
+
+[05:29:29] AI PROJECT STRUCTURE REORGANIZATION
+[05:29:29] PowerShell Version: 7.5.4
+[05:29:29] Current Directory: C:\dev\ai
+[05:29:29] Log File: .\maintenance\reorganize_log_20260125_052929.txt
+[05:29:29] ===========================================
+[05:29:29] 
+[05:29:29] === PRE-FLIGHT CHECKS ===
+[05:29:29] ✓ Found src\ directory
+[05:29:29] ✓ Found hardware\ directory
+[05:29:29] 
+[05:29:29] Checking Git repository status...
+[05:29:29] ✓ Git repository detected
+[05:29:29] Will use 'git mv' to preserve file history
+[05:29:29] 
+[05:29:29] === DIRECTORY STRUCTURE ANALYSIS ===
+[05:29:30] Found: .\src\learning\01_fundamentals (2 files)
+[05:29:30] Found: .\src\learning\02_computer_vision (10 files)
+[05:29:30] Found: .\src\learning\03_machine_learning (1 files)
+[05:29:30] Found: .\src\learning\04_hardware (1 files)
+[05:29:30] Found: .\src\learning\05_navigation (1 files)
+[05:29:30] Found: .\src\learning\06_sensor_fusion (1 files)
+[05:29:30] Found: .\src\learning\07_voice_control (1 files)
+[05:29:30] 
+[05:29:30] === CREATING NEW TOPIC-BASED STRUCTURE ===
+[05:29:30] Created: learning_new\computer_vision\hsv_filtering
+[05:29:30] Created: learning_new\computer_vision\stereo_calibration
+[05:29:30] Created: learning_new\computer_vision\opencv_experiments
+[05:29:30] Created: learning_new\machine_learning\reinforcement_learning
+[05:29:30] Created: learning_new\machine_learning\neural_networks
+[05:29:30] Created: learning_new\openscad\basics
+[05:29:30] Created: learning_new\openscad\advanced
+[05:29:30] Created: learning_new\openscad\robot_parts
+[05:29:30] Created: learning_new\hardware_design\electronics
+[05:29:30] Created: learning_new\hardware_design\pcb
+[05:29:30] Created: learning_new\navigation\path_planning
+[05:29:30] Created: learning_new\navigation\obstacle_avoidance
+[05:29:30] Created: learning_new\sensor_fusion\camera_ultrasonic
+[05:29:30] Created: learning_new\sensor_fusion\imu_integration
+[05:29:30] Created: learning_new\voice_control\speech_recognition
+[05:29:30] Created: learning_new\inverse_kinematics\theory
+[05:29:30] Created: learning_new\inverse_kinematics\implementations
+[05:29:30] Created: learning_new\control_theory\pid_tuning
+[05:29:30] Created: learning_new\control_theory\gait_generation
+[05:29:30] Created: learning_new\python_fundamentals\basics
+[05:29:30] Summary: Created 20 new directories
+[05:29:30] 
+[05:29:30] === MIGRATING CONTENT ===
+[05:29:30] Processing: .\src\learning\01_fundamentals
+[05:29:30]   Target: .\learning_new\python_fundamentals\basics
+[05:29:30]   Found 2 files to move
+[05:29:30]   Moved: amentals\__init__.py
+[05:29:30]   Moved: amentals\simple_ml.py
+[05:29:30]   Summary: Moved 2, Failed 0
+[05:29:30] 
+[05:29:30] Processing: .\src\learning\02_computer_vision
+[05:29:30]   Target: .\learning_new\computer_vision
+[05:29:30]   Found 10 files to move
+[05:29:30]   Moved: r_vision\__init__.py
+[05:29:30]   Moved: r_vision\color_space_lesson.py
+[05:29:31]   Moved: r_vision\contour_detection_lesson.py
+[05:29:31]   Moved: r_vision\edge_detection_lesson.py
+[05:29:31]   Moved: r_vision\floor_detection_gemini.py
+[05:29:31]   Moved: r_vision\hello_opencv.py
+[05:29:31]   Moved: r_vision\hsv_bounded_stereo_lesson_gemini.py
+[05:29:31]   Moved: r_vision\hsv_bounded_stereo_lesson.py
+[05:29:31]   Moved: r_vision\test_cameras.py
+[05:29:31]   Moved: r_vision\test_display.py
+[05:29:31]   Summary: Moved 10, Failed 0
+[05:29:31] 
+[05:29:31] Processing: .\src\learning\03_machine_learning
+[05:29:31]   Target: .\learning_new\machine_learning
+[05:29:31]   Found 1 files to move
+[05:29:31]   Moved: learning\__init__.py
+[05:29:31]   Summary: Moved 1, Failed 0
+[05:29:31] 
+[05:29:31] Processing: .\src\learning\04_hardware
+[05:29:31]   Target: .\learning_new\hardware_design
+[05:29:31]   Found 1 files to move
+[05:29:31]   Moved: hardware\__init__.py
+[05:29:31]   Summary: Moved 1, Failed 0
+[05:29:31] 
+[05:29:31] Processing: .\src\learning\05_navigation
+[05:29:31]   Target: .\learning_new\navigation
+[05:29:31]   Found 1 files to move
+[05:29:31]   Moved: vigation\__init__.py
+[05:29:31]   Summary: Moved 1, Failed 0
+[05:29:31] 
+[05:29:31] Processing: .\src\learning\06_sensor_fusion
+[05:29:31]   Target: .\learning_new\sensor_fusion
+[05:29:31]   Found 1 files to move
+[05:29:31]   Moved: r_fusion\__init__.py
+[05:29:31]   Summary: Moved 1, Failed 0
+[05:29:31] 
+[05:29:31] Processing: .\src\learning\07_voice_control
+[05:29:31]   Target: .\learning_new\voice_control
+[05:29:31]   Found 1 files to move
+[05:29:31]   Moved: _control\__init__.py
+[05:29:31]   Summary: Moved 1, Failed 0
+[05:29:31] 
+[05:29:31] MIGRATION TOTALS:
+[05:29:31]   Files moved: 17
+[05:29:31]   Files failed: 0
+[05:29:31]   Directories skipped: 0
+[05:29:31] 
+[05:29:31] === EXPANDING HARDWARE STRUCTURE ===
+[05:29:31] Created: hardware\chassis
+[05:29:31] Created: hardware\camera
+[05:29:32] Created: hardware\sensors
+[05:29:32] Created: hardware\legs
+[05:29:32] Created: hardware\library
+[05:29:32] Created: hardware\electronics
+[05:29:32] Hardware directories created: 6
+[05:29:32] 
+[05:29:32] Renaming: hardware\3d_prints -> hardware\prints
+[05:29:32]   ERROR: Cannot rename the specified target, because it represents a path or device name.
+[05:29:32] 
+[05:29:32] Moving: hardware\p15 -> hardware\prints\pi5_case
+[05:29:32]   Used git mv
+[05:29:32] 
+[05:29:32] Moving: hardware\schematics -> hardware\electronics\schematics
+[05:29:32]   Used regular move (git mv failed)
+[05:29:32] 
+[05:29:32] === CREATING DOCUMENTATION ===
+[05:29:32] Created: learning_new\README.md
+[05:29:32] Created: hardware\README.md
+[05:29:32] 
+[05:29:32] ===========================================  
+[05:29:32] === REORGANIZATION COMPLETE ===
+[05:29:32] ===========================================
+[05:29:32] 
+[05:29:32] SUMMARY:
+[05:29:32]   Topic directories created: 20
+[05:29:32]   Files migrated: 17
+[05:29:32]   Migration failures: 0
+[05:29:32]   Hardware directories: 6
+[05:29:32] 
+[05:29:32] NEXT STEPS:
+[05:29:32] 1. Review the new structure:
+[05:29:32]    explorer learning_new
+[05:29:32] 
+[05:29:32] 2. If satisfied, finalize:
+[05:29:32]    Remove-Item src\learning -Recurse -Force
+[05:29:32]    Rename-Item learning learning_old_backup
+[05:29:32]    Rename-Item learning_new learning
+[05:29:32] 
+[05:29:32] 3. Commit to Git:
+[05:29:33]    git add -A
+[05:29:33]    git status
+[05:29:33]    git commit -m 'Reorganize to topic-based learning structure'
+[05:29:33] 
+[05:29:33] Log saved to: .\maintenance\reorganize_log_20260125_052929.txt
+[05:29:33] 

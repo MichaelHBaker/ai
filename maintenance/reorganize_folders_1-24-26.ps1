@@ -1,40 +1,104 @@
 # PowerShell Script to Reorganize AI Project Structure
-# Compatible with PowerShell 5.1+ (Windows default)
+# Compatible with PowerShell 5.1+
 # Run this from: C:\dev\ai\
-# Usage: .\reorganize_structure_compat.ps1
+# Usage: .\reorganize_structure_logged.ps1
 
 #Requires -Version 5.1
 
-Write-Host "=== AI Project Structure Reorganization ===" -ForegroundColor Cyan
-Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
-Write-Host ""
+$ErrorActionPreference = "Continue"
+$LogFile = ".\maintenance\reorganize_log_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+
+# Function to write to both console and log
+function Write-Log {
+    param(
+        [string]$Message,
+        [string]$Color = "White"
+    )
+    $timestamp = Get-Date -Format "HH:mm:ss"
+    $logMessage = "[$timestamp] $Message"
+    
+    # Write to console with color
+    Write-Host $logMessage -ForegroundColor $Color
+    
+    # Write to log file (no color codes)
+    Add-Content -Path $LogFile -Value $logMessage
+}
+
+# Start logging
+"===========================================`n" | Out-File -FilePath $LogFile -Encoding UTF8
+Write-Log "AI PROJECT STRUCTURE REORGANIZATION" "Cyan"
+Write-Log "PowerShell Version: $($PSVersionTable.PSVersion.ToString())" "Gray"
+Write-Log "Current Directory: $PWD" "Gray"
+Write-Log "Log File: $LogFile" "Gray"
+Write-Log "==========================================="  "Cyan"
+Write-Log ""
 
 # Check if we're in the right directory
-if (!(Test-Path ".\src") -or !(Test-Path ".\hardware")) {
-    Write-Host "ERROR: Run this script from C:\dev\ai\" -ForegroundColor Red
+Write-Log "=== PRE-FLIGHT CHECKS ===" "Yellow"
+if (!(Test-Path ".\src")) {
+    Write-Log "ERROR: src\ directory not found" "Red"
+    Write-Log "ERROR: Must run from C:\dev\ai\" "Red"
     Read-Host "Press Enter to exit"
     exit 1
 }
+Write-Log "✓ Found src\ directory" "Green"
+
+if (!(Test-Path ".\hardware")) {
+    Write-Log "ERROR: hardware\ directory not found" "Red"
+    Write-Log "ERROR: Must run from C:\dev\ai\" "Red"
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+Write-Log "✓ Found hardware\ directory" "Green"
 
 # Check Git status
-Write-Host "Checking Git status..." -ForegroundColor Yellow
+Write-Log ""
+Write-Log "Checking Git repository status..." "Yellow"
 $gitCheck = git status 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "WARNING: Not in a Git repository or Git error" -ForegroundColor Yellow
+    Write-Log "WARNING: Not in a Git repository or Git error" "Yellow"
+    Write-Log "Git output: $gitCheck" "Gray"
     $response = Read-Host "Continue anyway? (yes/no)"
+    Write-Log "User response: $response" "Gray"
     if ($response -ne "yes") {
+        Write-Log "User cancelled - exiting" "Yellow"
         exit 1
     }
     $useGit = $false
+    Write-Log "Proceeding WITHOUT git mv (regular file moves)" "Yellow"
 } else {
-    Write-Host "Git repository detected" -ForegroundColor Green
+    Write-Log "✓ Git repository detected" "Green"
     $useGit = $true
+    Write-Log "Will use 'git mv' to preserve file history" "Green"
 }
 
-Write-Host ""
-Write-Host "=== Creating New Topic-Based Learning Structure ===" -ForegroundColor Green
+Write-Log ""
+Write-Log "=== DIRECTORY STRUCTURE ANALYSIS ===" "Yellow"
 
-# Create new learning structure (using array for PS 5.1 compatibility)
+# Check what exists currently
+$existingDirs = @(
+    ".\src\learning\01_fundamentals",
+    ".\src\learning\02_computer_vision",
+    ".\src\learning\03_machine_learning",
+    ".\src\learning\04_hardware",
+    ".\src\learning\05_navigation",
+    ".\src\learning\06_sensor_fusion",
+    ".\src\learning\07_voice_control"
+)
+
+foreach ($dir in $existingDirs) {
+    if (Test-Path $dir) {
+        $fileCount = (Get-ChildItem -Path $dir -Recurse -File -ErrorAction SilentlyContinue).Count
+        Write-Log "Found: $dir ($fileCount files)" "Cyan"
+    } else {
+        Write-Log "Not found: $dir" "Gray"
+    }
+}
+
+Write-Log ""
+Write-Log "=== CREATING NEW TOPIC-BASED STRUCTURE ===" "Green"
+
+# Create new learning structure
 $learningDirs = @(
     "learning_new\computer_vision\hsv_filtering",
     "learning_new\computer_vision\stereo_calibration",
@@ -58,17 +122,27 @@ $learningDirs = @(
     "learning_new\python_fundamentals\basics"
 )
 
+$createdCount = 0
 foreach ($dir in $learningDirs) {
     if (!(Test-Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
-        Write-Host "Created: $dir" -ForegroundColor Green
+        try {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            Write-Log "Created: $dir" "Green"
+            $createdCount++
+        }
+        catch {
+            Write-Log "ERROR creating $dir : $_" "Red"
+        }
+    } else {
+        Write-Log "Already exists: $dir" "Gray"
     }
 }
+Write-Log "Summary: Created $createdCount new directories" "Green"
 
-Write-Host ""
-Write-Host "=== Moving Content from Old Structure ===" -ForegroundColor Green
+Write-Log ""
+Write-Log "=== MIGRATING CONTENT ===" "Green"
 
-# Function to move directory contents (PS 5.1 compatible)
+# Function to move directory contents with detailed logging
 function Move-DirectoryContent {
     param(
         [string]$Source,
@@ -77,11 +151,12 @@ function Move-DirectoryContent {
     )
     
     if (!(Test-Path $Source)) {
-        Write-Host "SKIP: $Source (doesn't exist)" -ForegroundColor Yellow
-        return
+        Write-Log "SKIP: $Source (doesn't exist)" "Yellow"
+        return @{Moved=0; Failed=0; Skipped=1}
     }
     
-    Write-Host "Processing: $Source -> $Destination" -ForegroundColor Cyan
+    Write-Log "Processing: $Source" "Cyan"
+    Write-Log "  Target: $Destination" "Gray"
     
     # Ensure destination exists
     if (!(Test-Path $Destination)) {
@@ -92,11 +167,15 @@ function Move-DirectoryContent {
     $items = Get-ChildItem -Path $Source -Recurse -File -ErrorAction SilentlyContinue
     
     if ($items.Count -eq 0) {
-        Write-Host "  No files to move" -ForegroundColor Gray
-        return
+        Write-Log "  No files to move" "Gray"
+        return @{Moved=0; Failed=0; Skipped=0}
     }
     
+    Write-Log "  Found $($items.Count) files to move" "Cyan"
+    
     $movedCount = 0
+    $failedCount = 0
+    
     foreach ($item in $items) {
         try {
             # Calculate relative path
@@ -112,37 +191,59 @@ function Move-DirectoryContent {
             # Move file
             if ($UseGit) {
                 # Try git mv first
-                $gitResult = git mv $item.FullName $destPath 2>&1
+                $gitResult = git mv "$($item.FullName)" "$destPath" 2>&1
                 if ($LASTEXITCODE -ne 0) {
-                    # Fallback to regular move
+                    Write-Log "  Git mv failed for $($item.Name), using regular move" "Yellow"
                     Move-Item -Path $item.FullName -Destination $destPath -Force
                 }
             } else {
                 Move-Item -Path $item.FullName -Destination $destPath -Force
             }
+            
+            Write-Log "  Moved: $relativePath" "Green"
             $movedCount++
         }
         catch {
-            Write-Host "  ERROR moving: $($item.Name)" -ForegroundColor Red
+            Write-Log "  ERROR moving $($item.Name): $_" "Red"
+            $failedCount++
         }
     }
     
-    Write-Host "  Moved $movedCount files" -ForegroundColor Green
+    Write-Log "  Summary: Moved $movedCount, Failed $failedCount" "Cyan"
+    return @{Moved=$movedCount; Failed=$failedCount; Skipped=0}
 }
 
+# Track overall statistics
+$totalStats = @{Moved=0; Failed=0; Skipped=0}
+
 # Move content from numbered folders to topics
-Move-DirectoryContent ".\src\learning\01_fundamentals" ".\learning_new\python_fundamentals\basics" $useGit
-Move-DirectoryContent ".\src\learning\02_computer_vision" ".\learning_new\computer_vision" $useGit
-Move-DirectoryContent ".\src\learning\03_machine_learning" ".\learning_new\machine_learning" $useGit
-Move-DirectoryContent ".\src\learning\04_hardware" ".\learning_new\hardware_design" $useGit
-Move-DirectoryContent ".\src\learning\05_navigation" ".\learning_new\navigation" $useGit
-Move-DirectoryContent ".\src\learning\06_sensor_fusion" ".\learning_new\sensor_fusion" $useGit
-Move-DirectoryContent ".\src\learning\07_voice_control" ".\learning_new\voice_control" $useGit
+$migrations = @(
+    @{From=".\src\learning\01_fundamentals"; To=".\learning_new\python_fundamentals\basics"},
+    @{From=".\src\learning\02_computer_vision"; To=".\learning_new\computer_vision"},
+    @{From=".\src\learning\03_machine_learning"; To=".\learning_new\machine_learning"},
+    @{From=".\src\learning\04_hardware"; To=".\learning_new\hardware_design"},
+    @{From=".\src\learning\05_navigation"; To=".\learning_new\navigation"},
+    @{From=".\src\learning\06_sensor_fusion"; To=".\learning_new\sensor_fusion"},
+    @{From=".\src\learning\07_voice_control"; To=".\learning_new\voice_control"}
+)
 
-Write-Host ""
-Write-Host "=== Expanding Hardware Structure ===" -ForegroundColor Green
+foreach ($migration in $migrations) {
+    $stats = Move-DirectoryContent $migration.From $migration.To $useGit
+    $totalStats.Moved += $stats.Moved
+    $totalStats.Failed += $stats.Failed
+    $totalStats.Skipped += $stats.Skipped
+    Write-Log ""
+}
 
-# Create hardware subdirectories if they don't exist
+Write-Log "MIGRATION TOTALS:" "Yellow"
+Write-Log "  Files moved: $($totalStats.Moved)" "Green"
+Write-Log "  Files failed: $($totalStats.Failed)" "Red"
+Write-Log "  Directories skipped: $($totalStats.Skipped)" "Yellow"
+
+Write-Log ""
+Write-Log "=== EXPANDING HARDWARE STRUCTURE ===" "Green"
+
+# Create hardware subdirectories
 $hardwareDirs = @(
     "hardware\chassis",
     "hardware\camera",
@@ -152,60 +253,93 @@ $hardwareDirs = @(
     "hardware\electronics"
 )
 
+$hardwareCreated = 0
 foreach ($dir in $hardwareDirs) {
     if (!(Test-Path $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
-        Write-Host "Created: $dir" -ForegroundColor Green
+        Write-Log "Created: $dir" "Green"
+        $hardwareCreated++
     } else {
-        Write-Host "Exists: $dir" -ForegroundColor Gray
+        Write-Log "Already exists: $dir" "Gray"
     }
 }
+Write-Log "Hardware directories created: $hardwareCreated" "Cyan"
 
-# Move existing hardware\3d_prints to hardware\prints if needed
+# Move hardware\3d_prints to hardware\prints if needed
 if ((Test-Path ".\hardware\3d_prints") -and !(Test-Path ".\hardware\prints")) {
-    Write-Host "Renaming: hardware\3d_prints -> hardware\prints" -ForegroundColor Cyan
-    if ($useGit) {
-        git mv ".\hardware\3d_prints" ".\hardware\prints" 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
+    Write-Log ""
+    Write-Log "Renaming: hardware\3d_prints -> hardware\prints" "Cyan"
+    try {
+        if ($useGit) {
+            git mv ".\hardware\3d_prints" ".\hardware\prints" 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Rename-Item ".\hardware\3d_prints" ".\hardware\prints"
+                Write-Log "  Used regular rename (git mv failed)" "Yellow"
+            } else {
+                Write-Log "  Used git mv" "Green"
+            }
+        } else {
             Rename-Item ".\hardware\3d_prints" ".\hardware\prints"
+            Write-Log "  Used regular rename" "Green"
         }
-    } else {
-        Rename-Item ".\hardware\3d_prints" ".\hardware\prints"
+    }
+    catch {
+        Write-Log "  ERROR: $_" "Red"
     }
 }
 
 # Move hardware\p15 if present
 if (Test-Path ".\hardware\p15") {
-    Write-Host "Moving: hardware\p15 -> hardware\prints\pi5_case" -ForegroundColor Cyan
-    $destDir = ".\hardware\prints\pi5_case"
-    if (!(Test-Path ".\hardware\prints")) {
-        New-Item -ItemType Directory -Path ".\hardware\prints" -Force | Out-Null
-    }
-    if ($useGit) {
-        git mv ".\hardware\p15" $destDir 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
+    Write-Log ""
+    Write-Log "Moving: hardware\p15 -> hardware\prints\pi5_case" "Cyan"
+    try {
+        $destDir = ".\hardware\prints\pi5_case"
+        if (!(Test-Path ".\hardware\prints")) {
+            New-Item -ItemType Directory -Path ".\hardware\prints" -Force | Out-Null
+        }
+        if ($useGit) {
+            git mv ".\hardware\p15" $destDir 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Move-Item ".\hardware\p15" $destDir -Force
+                Write-Log "  Used regular move (git mv failed)" "Yellow"
+            } else {
+                Write-Log "  Used git mv" "Green"
+            }
+        } else {
             Move-Item ".\hardware\p15" $destDir -Force
+            Write-Log "  Used regular move" "Green"
         }
-    } else {
-        Move-Item ".\hardware\p15" $destDir -Force
+    }
+    catch {
+        Write-Log "  ERROR: $_" "Red"
     }
 }
 
-# Move hardware\schematics if present (keep it)
+# Move hardware\schematics if present
 if ((Test-Path ".\hardware\schematics") -and !(Test-Path ".\hardware\electronics\schematics")) {
-    Write-Host "Moving: hardware\schematics -> hardware\electronics\schematics" -ForegroundColor Cyan
-    if ($useGit) {
-        git mv ".\hardware\schematics" ".\hardware\electronics\schematics" 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
+    Write-Log ""
+    Write-Log "Moving: hardware\schematics -> hardware\electronics\schematics" "Cyan"
+    try {
+        if ($useGit) {
+            git mv ".\hardware\schematics" ".\hardware\electronics\schematics" 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Move-Item ".\hardware\schematics" ".\hardware\electronics\schematics" -Force
+                Write-Log "  Used regular move (git mv failed)" "Yellow"
+            } else {
+                Write-Log "  Used git mv" "Green"
+            }
+        } else {
             Move-Item ".\hardware\schematics" ".\hardware\electronics\schematics" -Force
+            Write-Log "  Used regular move" "Green"
         }
-    } else {
-        Move-Item ".\hardware\schematics" ".\hardware\electronics\schematics" -Force
+    }
+    catch {
+        Write-Log "  ERROR: $_" "Red"
     }
 }
 
-Write-Host ""
-Write-Host "=== Creating Documentation ===" -ForegroundColor Green
+Write-Log ""
+Write-Log "=== CREATING DOCUMENTATION ===" "Green"
 
 # Create README for new learning structure
 $learningReadme = @"
@@ -248,8 +382,13 @@ Each subdirectory can have:
 - notes.md - Written observations
 "@
 
-$learningReadme | Out-File -FilePath ".\learning_new\README.md" -Encoding UTF8
-Write-Host "Created: learning_new\README.md" -ForegroundColor Green
+try {
+    $learningReadme | Out-File -FilePath ".\learning_new\README.md" -Encoding UTF8
+    Write-Log "Created: learning_new\README.md" "Green"
+}
+catch {
+    Write-Log "ERROR creating learning_new\README.md: $_" "Red"
+}
 
 # Create README for hardware
 $hardwareReadme = @"
@@ -283,33 +422,41 @@ Production CAD files and hardware designs.
 - part_name_v2.scad - Major revisions
 "@
 
-$hardwareReadme | Out-File -FilePath ".\hardware\README.md" -Encoding UTF8 -Force
-Write-Host "Created: hardware\README.md" -ForegroundColor Green
+try {
+    $hardwareReadme | Out-File -FilePath ".\hardware\README.md" -Encoding UTF8 -Force
+    Write-Log "Created: hardware\README.md" "Green"
+}
+catch {
+    Write-Log "ERROR creating hardware\README.md: $_" "Red"
+}
 
-Write-Host ""
-Write-Host "=== Summary of Changes ===" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "1. Created topic-based learning structure in: learning_new\" -ForegroundColor White
-Write-Host "2. Moved content from src\learning\XX_topic to learning_new\topic\" -ForegroundColor White
-Write-Host "3. Expanded hardware\ directory structure" -ForegroundColor White
-Write-Host "4. Created README.md files for documentation" -ForegroundColor White
-Write-Host ""
-Write-Host "=== Next Steps ===" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "1. Review the new structure:" -ForegroundColor White
-Write-Host "   explorer learning_new" -ForegroundColor Gray
-Write-Host ""
-Write-Host "2. If satisfied, finalize changes:" -ForegroundColor White
-Write-Host "   Remove-Item src\learning -Recurse -Force" -ForegroundColor Gray
-Write-Host "   Rename-Item learning learning_old_backup" -ForegroundColor Gray
-Write-Host "   Rename-Item learning_new learning" -ForegroundColor Gray
-Write-Host ""
-Write-Host "3. Commit to Git:" -ForegroundColor White
-Write-Host "   git add -A" -ForegroundColor Gray
-Write-Host "   git status" -ForegroundColor Gray
-Write-Host "   git commit -m 'Reorganize to topic-based learning structure'" -ForegroundColor Gray
-Write-Host ""
-Write-Host "Script completed successfully!" -ForegroundColor Green
-Write-Host ""
+Write-Log ""
+Write-Log "===========================================  " "Cyan"
+Write-Log "=== REORGANIZATION COMPLETE ===" "Cyan"
+Write-Log "==========================================="  "Cyan"
+Write-Log ""
+Write-Log "SUMMARY:" "Yellow"
+Write-Log "  Topic directories created: $createdCount" "White"
+Write-Log "  Files migrated: $($totalStats.Moved)" "White"
+Write-Log "  Migration failures: $($totalStats.Failed)" "White"
+Write-Log "  Hardware directories: $hardwareCreated" "White"
+Write-Log ""
+Write-Log "NEXT STEPS:" "Yellow"
+Write-Log "1. Review the new structure:" "White"
+Write-Log "   explorer learning_new" "Gray"
+Write-Log ""
+Write-Log "2. If satisfied, finalize:" "White"
+Write-Log "   Remove-Item src\learning -Recurse -Force" "Gray"
+Write-Log "   Rename-Item learning learning_old_backup" "Gray"
+Write-Log "   Rename-Item learning_new learning" "Gray"
+Write-Log ""
+Write-Log "3. Commit to Git:" "White"
+Write-Log "   git add -A" "Gray"
+Write-Log "   git status" "Gray"
+Write-Log "   git commit -m 'Reorganize to topic-based learning structure'" "Gray"
+Write-Log ""
+Write-Log "Log saved to: $LogFile" "Green"
+Write-Log ""
+
 Read-Host "Press Enter to exit"
-"@
+"@"
