@@ -104,13 +104,31 @@ module vision_test_chassis() {
 // ============================================================================
 
 module base_plate() {
-    // Main base plate with rounded corners
-    hull() {
-        for (x = [10, chassis_length - 10]) {
-            for (y = [10, chassis_width - 10]) {
-                translate([x, y, 0])
-                    cylinder(h = base_plate_thickness, d = 20);
+    // Main base plate with rounded corners and holes for struts
+    difference() {
+        // Main plate shape
+        hull() {
+            for (x = [10, chassis_length - 10]) {
+                for (y = [10, chassis_width - 10]) {
+                    translate([x, y, 0])
+                        cylinder(h = base_plate_thickness, d = 20);
+                }
             }
+        }
+        
+        // Holes for struts to pass through
+        // These align with the corner strut positions
+        strut_positions = [
+            [15, 15],
+            [chassis_length - 15, 15],
+            [15, chassis_width - 15],
+            [chassis_length - 15, chassis_width - 15]
+        ];
+        
+        for (pos = strut_positions) {
+            translate([pos[0], pos[1], -1])
+                cube([strut_width + 1, strut_width + 1, base_plate_thickness + 2], 
+                     center=true);
         }
     }
 }
@@ -131,19 +149,30 @@ module corner_struts() {
 }
 
 module corner_strut() {
-    // Hollow strut design for weight savings
+    // Hollow strut design with flange for base plate support
     difference() {
-        // Outer strut
-        translate([-strut_width/2, -strut_width/2, 0])
-            cube([strut_width, strut_width, strut_height]);
+        union() {
+            // Main strut extending upward
+            translate([-strut_width/2, -strut_width/2, 0])
+                cube([strut_width, strut_width, strut_height]);
+            
+            // Flange/shoulder at base plate height for support
+            // This is where the base plate will rest
+            translate([-strut_width/2 - 3, -strut_width/2 - 3, base_plate_thickness])
+                cube([strut_width + 6, strut_width + 6, 3]);
+            
+            // Extension above base plate (20mm) for camera bar mounting
+            translate([-strut_width/2, -strut_width/2, base_plate_thickness + 3])
+                cube([strut_width, strut_width, 20]);
+        }
         
         // Hollow interior
         translate([-strut_width/2 + strut_thickness, 
                   -strut_width/2 + strut_thickness, 
-                  base_plate_thickness])
+                  5])  // Start hollow section a bit above ground
             cube([strut_width - strut_thickness*2, 
                   strut_width - strut_thickness*2, 
-                  strut_height]);
+                  strut_height + 20]);
     }
 }
 
@@ -173,14 +202,16 @@ module pi5_standoffs() {
 }
 
 module camera_bar_mounts() {
-    // Two mounting bosses at front of chassis
-    mount_y_position = chassis_width - 20;
+    // Camera bar mounts on the protruding strut tops
+    // Uses the front two struts only
+    mount_positions = [
+        [15, chassis_width - 15],  // Front left strut
+        [chassis_length - 15, chassis_width - 15]  // Front right strut
+    ];
     
-    for (x = [chassis_length/2 - camera_bar_mount_spacing/2,
-              chassis_length/2 + camera_bar_mount_spacing/2]) {
-        translate([x, mount_y_position, base_plate_thickness])
-            cylinder(h = 8, d = 10);
-    }
+    // Mounting holes drilled into top of struts
+    // (These are negative space - holes for M3 screws)
+    // The actual mounting boss is the strut top itself
 }
 
 module battery_compartment_walls() {
@@ -240,14 +271,15 @@ module pi5_mounting_holes() {
 }
 
 module camera_bar_mounting_holes() {
-    // M3 holes for camera bar
-    mount_y_position = chassis_width - 20;
+    // M3 holes drilled into top of front two struts for camera bar attachment
+    mount_positions = [
+        [15, chassis_width - 15],  // Front left strut top
+        [chassis_length - 15, chassis_width - 15]  // Front right strut top
+    ];
     
-    for (x = [chassis_length/2 - camera_bar_mount_spacing/2,
-              chassis_length/2 + camera_bar_mount_spacing/2]) {
-        translate([x, mount_y_position, -1])
-            cylinder(h = base_plate_thickness + 10, 
-                    d = camera_bar_hole_diameter);
+    for (pos = mount_positions) {
+        translate([pos[0], pos[1], base_plate_thickness + 3 + 15])  // 15mm down from strut top
+            cylinder(h = 10, d = camera_bar_hole_diameter);
     }
 }
 
@@ -377,10 +409,17 @@ vision_test_chassis();  // ← Final part to print
 // 6. Connect power
 //
 // Design Philosophy:
-// - SIMPLE: Just 4 struts, no motors yet
-// - STABLE: Wide base, low center of gravity
+// - SIMPLE: Struts with printed flanges hold base plate
+// - STABLE: Wide base, low center of gravity, no extra hardware
 // - EXPANDABLE: Spot leg mounting holes already marked
 // - FOCUSED: Everything serves the vision testing goal
+//
+// Strut Design:
+// - Struts sit on ground (0mm)
+// - Printed flange at base plate height (3mm from ground)
+// - Base plate rests on flanges, struts pass through
+// - Struts extend 20mm above base plate for camera bar mounting
+// - Total strut height: base_plate + 3mm flange + 20mm extension
 //
 // Next Steps:
 // - Test vision algorithms on static platform
