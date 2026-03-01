@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.gobilda.com)",
+      "WebFetch(domain:www.servocity.com)",
+      "WebFetch(domain:core-electronics.com.au)",
+      "WebFetch(domain:www.pololu.com)",
+      "WebFetch(domain:www.robotshop.com)",
+      "WebFetch(domain:www.robotgear.com.au)"
+    ]
+  }
+}

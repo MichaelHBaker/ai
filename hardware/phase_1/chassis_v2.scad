@@ -9,7 +9,7 @@
 //           Replaced torus wheel with mecanum (simple cylinder envelope) |
 //           v2.3: Fixed motor/deck gap (0→5mm) | Bearing now inside leg (LEG_GROUND_EXTRA 15→35) |
 //                 Fixed axle too short (55→67mm) | Added bracket/bearing/collar 3D envelopes |
-//                 Switched axle support to goBILDA 1603 pillow blocks (no bearing in PLA) |
+//                 Switched axle support to goBILDA 1621-1632-0006 pillow blocks (no bearing in PLA) |
 //                 Rectangular strut flare — only Y (collar) direction flares, X stays slim
 // ============================================================================
 
@@ -33,30 +33,31 @@
 //
 // AXLE SUPPORT DESIGN — KEY DECISION
 //   Original plan: press-fit 606ZZ bearing directly into PLA hole in strut.
-//   Replaced with: goBILDA 1603 Series Face Thru-Hole Pillow Block (metal, 6mm bore).
+//   Replaced with: goBILDA 1621-1632-0006 6mm Bore Flat Pillow Block (metal, 6mm bore).
 //   Two pillow blocks per wheel — one on each face of the strut in the X (axle) direction.
-//   Four M4 through-bolts pass through both blocks and the PLA strut, clamping them
-//   together. Tightening the bolts puts the PLA in compression, strengthening it.
+//   Six M4 through-bolts (2 cols × 3 rows) pass through both blocks and the PLA strut,
+//   clamping them together. Tightening puts the PLA in compression, strengthening it.
 //   Each block houses its own bearing internally (metal housing, not PLA).
-//   goBILDA 1603: ~40mm body, 32mm bolt pattern, 6mm deep, M4 bolts, $6.99 ea.
-//   URL: gobilda.com/1603-series-face-thru-hole-pillow-block-6mm-bore/
+//   goBILDA 1621-1632-0006: 24×40mm body, 16×32mm bolt pattern, 7mm deep, M4 bolts.
+//   (Confirmed from product page + STEP file; 24mm wide × 40mm tall, 5mm body + 2mm rear lip)
 //
 // STRUT (corner_leg) SHAPE — WHY IT LOOKS LIKE IT DOES
 //   The strut is NOT square in cross-section in the collar zone:
 //     X direction (axle passes through): LEG_SIZE=20mm — stays slim throughout
-//     Y direction (front-to-back, collar bolt direction): flares to LEG_BASE_SIZE=36mm
-//   Reason: the goBILDA 32mm bolt pattern needs 36mm of PLA in Y for 2mm edge distance.
+//     Y direction (front-to-back, collar bolt direction): flares to LEG_BASE_SIZE=24mm
+//   Reason: matches 1621-1632-0006 body width (24mm) — strut face flush with block face.
+//           Bolt at ±8mm → 4mm edge distance ✓ (2× minimum).
 //           The axle direction only needs clearance for the 8mm axle hole + bolt holes.
 //   The taper (hull) between deck zones is Y-only — X stays constant at 20mm.
 //
 // DECK ASSEMBLY SEQUENCE — CRITICAL, DO NOT CHANGE THIS LOGIC
 //   The four corner legs are printed separately and the decks slide onto them:
 //     TOP DECK    slides DOWN  over the slim 20mm×20mm section, rests on LEG_TOP_FLANGE (28mm sq)
-//     BOTTOM DECK slides UP    over the flared 20×36mm section, rests on LEG_BASE_FLANGE (26×42mm)
+//     BOTTOM DECK slides UP    over the flared 20×24mm section, rests on LEG_BASE_FLANGE (26×30mm)
 //   This means:
 //     top deck cutout    = 20mm × 20mm  (square, LEG_SIZE)
-//     bottom deck cutout = 20mm × 36mm  (rectangular, LEG_SIZE × LEG_BASE_SIZE)
-//   The bottom flange (26×42mm) is LARGER than the bottom deck cutout (20×36mm) — deck rests on it.
+//     bottom deck cutout = 20mm × 24mm  (rectangular, LEG_SIZE × LEG_BASE_SIZE)
+//   The bottom flange (26×30mm) is LARGER than the bottom deck cutout (20×24mm) — deck rests on it.
 //   The top flange (28×28mm) is LARGER than the top deck cutout (20×20mm) — deck rests on it.
 //
 // PRINT SIZE CONSTRAINTS (Prusa Core One 250×220×270mm)
@@ -70,13 +71,14 @@
 //     → get actual drawing from pololu.com/product/1995
 //   - Motor gear ratio not chosen yet; MOTOR_L=52mm assumes 19:1
 //     → 30:1=56mm, 50:1=57mm; if ratio changes, update MOTOR_L, check BOTTOM_DECK_Z
-//   - goBILDA 1603 body size estimated at 40mm (COLLAR_BODY); only bolt pattern (32mm) confirmed
-//     → download STEP file from gobilda.com to verify; update COLLAR_BODY if needed
-//   - AXLE_L=67mm is calculated; verify against dry-assembly measurement
+//   - goBILDA 1621-1632-0006 dims confirmed from product page + STEP file:
+//     body 24×40mm, bolt pattern 16×32mm, depth 7mm → COLLAR_BODY_Y/Z, COLLAR_FACE_T set ✓
+//   - AXLE_L=67mm estimated; COLLAR_FACE_T now 7mm (was 6mm) → total through-span +2mm;
+//     update estimate to ~69mm and verify against dry-assembly measurement
 //
 // PENDING DECISIONS
 //   - Motor gear ratio (affects MOTOR_L, torque, speed)
-//   - Confirm goBILDA 1603 body dimension from STEP file (COLLAR_BODY parameter)
+//   - Verify AXLE_L (~69mm) against dry-assembly measurement
 //
 // ============================================================================
 
@@ -101,13 +103,13 @@
 //  4   4   Axle               6mm stainless steel linear shaft    6mm dia | ~67mm length
 //                             (generic - buy 100mm, cut to fit)   Cut to fit after dry-assembly
 //
-//  5   8   Bearing pillow blk goBILDA 1603 Face Thru-Hole         6mm bore | ~40mm body | 6mm deep
-//                             gobilda.com/1603-series-face-        32mm×32mm M4 bolt pattern | $6.99 ea
-//                             thru-hole-pillow-block-6mm-bore/    2 per wheel: one each side of strut
-//                             REPLACES: press-fit bearing in PLA  Clamped by 4× M4 through-bolts
+//  5   8   Bearing pillow blk goBILDA 1621-1632-0006 Flat         6mm bore | 24×40mm body | 7mm deep
+//                             Pillow Block (16mm×32mm pattern)    16×32mm M4 bolt pattern
+//                             2 per wheel: one each side of strut Clamped by 6× M4 through-bolts
+//                             REPLACES: press-fit bearing in PLA
 //
-//  6  16   M4 bolt + nut      M4 × ~35mm (through both collars    4 per wheel location (×4 wheels)
-//                             + 20mm PLA strut = ~32mm; use 35mm  Tightening compresses PLA strut
+//  6  24   M4 bolt + nut      M4 × ~40mm (through both collars    6 per wheel location (×4 wheels)
+//                             + 20mm PLA strut = 34mm; use 40mm   Tightening compresses PLA strut
 //                             with nut or insert on far side)
 //
 //  7   2   Mecanum wheel (L)  Studica left-slant  100mm w/6mm hub 100mm dia | 50mm wide
@@ -131,14 +133,15 @@ CAM_BAR_HOLE_D    = LEG_POST_D + 0.3;  // Slip fit over post
 
 // --- Leg / Chassis structure ---
 // Assembly: top deck slides DOWN over slim 20mm section, rests on LEG_TOP_FLANGE
-//           bottom deck slides UP over flared 36mm section, rests on LEG_BASE_FLANGE
-//           inter-deck zone: strut tapers 20mm→36mm via hull()
-// goBILDA 1603 bolt pattern: 32mm square (±16mm from axle centre)
-//   LEG_BASE_SIZE=36mm → strut edge at ±18mm → 2mm bolt edge distance ✓
+//           bottom deck slides UP over flared 24mm section, rests on LEG_BASE_FLANGE
+//           inter-deck zone: strut tapers 20mm→24mm via hull()
+// goBILDA 1621-1632-0006 bolt pattern: 16mm(Y) × 32mm(Z) rectangular
+//   Z: ±16mm from axle centre; LEG_GROUND_EXTRA keeps leg bottom below lowest bolt ✓
+//   Y: ±8mm from axle centre; LEG_SIZE=20mm → ±10mm edge → 2mm edge distance ✓
 LEG_SIZE          = 20;     // Slim upper section (above bottom deck); top deck cutout = this
-LEG_BASE_SIZE     = 36;     // Flared lower section Y dimension — collar bolt direction; bottom deck Y slot = this; X slot = LEG_SIZE
+LEG_BASE_SIZE     = 24;     // Flared lower section Y dimension — matches pillow block body width; bottom deck Y slot = this; X slot = LEG_SIZE
 LEG_TOP_FLANGE    = 28;     // Top flange width — > LEG_SIZE (20mm); top deck slides down, rests on this
-LEG_BASE_FLANGE   = 42;     // Bottom flange width — > LEG_BASE_SIZE (36mm); bottom deck slides up, rests on this
+LEG_BASE_FLANGE   = 30;     // Bottom flange width — > LEG_BASE_SIZE (24mm); bottom deck slides up, rests on this
 LEG_FLANGE_T      = 2;      // Flange thickness (both flanges)
 LEG_GROUND_EXTRA  = 45;     // Leg bottom below BOTTOM_DECK_Z; covers bearing collar zone
                              // Lowest collar bolt at AXLE_Z-16=40.5mm; leg_bottom=35mm → 5.5mm edge dist ✓
@@ -213,18 +216,17 @@ WIRE_CHANNEL_D    = 5;
 // --- Component visualization (hardware envelopes for spatial clearance check) ---
 BEARING_OD        = 12;   // 606ZZ flanged bearing OD (confirmed; lives inside purchased metal collar)
 BEARING_W         =  4;   // 606ZZ bearing race width (confirmed)
-// Purchased metal bearing collar: goBILDA 1603 Series Face Thru-Hole Pillow Block, 6mm bore
-// $6.99 ea × 8 = $55.92 — gobilda.com/1603-series-face-thru-hole-pillow-block-6mm-bore/
-// Confirmed: "32mm × 32mm Mounting Pattern" (bolt hole spacing), M4 bolts
-// Body is larger than mounting pattern — ~4mm material beyond hole centres each side → ~40mm body
-COLLAR_BODY       = 40;   // Overall block face dimension (32mm bolt pattern + ~4mm edge material each side)
-COLLAR_D          = 32;   // goBILDA 1603 bolt pattern square — keep for hole/strut calculations
-COLLAR_FACE_T     =  6;   // goBILDA 1603 housing depth along axle (~6mm)
-// Through-bolt pattern: goBILDA 32mm square (holes at corners, M4)
-// LEG_BASE_SIZE=36mm → strut edge ±18mm, bolt at ±16mm → 2mm edge distance ✓
-AXLE_CLEARANCE_D     = 8;    // Axle clearance through strut (no bearing in PLA)
-COLLAR_BOLT_D        = 4.3;  // M4 clearance (goBILDA 1603 uses M4 bolts)
-COLLAR_BOLT_SPACING  = 32;   // goBILDA 32mm bolt square: ±16mm from axle centre in Y and Z
+// Purchased metal bearing collar: goBILDA 1621-1632-0006 6mm Bore Flat Pillow Block
+// Confirmed from product page + STEP file: 24×40mm body, 16×32mm M4 bolt pattern, 7mm deep
+COLLAR_BODY_Y     = 24;   // Block face width, Y direction (front-back): confirmed from product page
+COLLAR_BODY_Z     = 40;   // Block face height, Z direction (up-down): confirmed from product page
+COLLAR_FACE_T     =  7;   // Housing depth along axle: 5mm body + 2mm rear lip (confirmed)
+// Through-bolt pattern: 16mm(Y) × 32mm(Z) rectangular, M4
+// Z: ±16mm from axle centre; Y: ±8mm from axle centre → LEG_SIZE=20mm → 2mm edge distance ✓
+AXLE_CLEARANCE_D        = 8;    // Axle clearance through strut (no bearing in PLA)
+COLLAR_BOLT_D           = 4.3;  // M4 clearance
+COLLAR_BOLT_SPACING_Z   = 32;   // Bolt hole spacing, Z direction (up-down):    ±16mm from axle centre
+COLLAR_BOLT_SPACING_Y   = 16;   // Bolt hole spacing, Y direction (front-back): ±8mm from axle centre
 // Motor bracket
 BRACKET_FACE_T    =  3;   // Pololu #1995 face/arm plate thickness (ESTIMATED)
 BRACKET_FOOT_L    = 28;   // Pololu #1995 foot length along motor axis (ESTIMATED)
@@ -295,13 +297,13 @@ module corner_leg() {
             }
 
             // Flared lower column (through bottom deck and down to leg bottom)
-            // X (axle direction) = LEG_SIZE=20mm; Y (collar direction) = LEG_BASE_SIZE=36mm
+            // X (axle direction) = LEG_SIZE=20mm; Y (collar direction) = LEG_BASE_SIZE=24mm
             translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, leg_bottom])
                 cube([LEG_SIZE, LEG_BASE_SIZE,
                       BOTTOM_DECK_Z + PLATE_THICKNESS - leg_bottom]);
 
             // Bottom flange — bottom deck slides UP, rests on bottom face (at BOTTOM_DECK_Z)
-            // X: LEG_SIZE+6=26mm (3mm ledge each side); Y: LEG_BASE_FLANGE=42mm (3mm ledge each side)
+            // X: LEG_SIZE+6=26mm (3mm ledge each side); Y: LEG_BASE_FLANGE=30mm (3mm ledge each side)
             translate([-(LEG_SIZE+6)/2, -LEG_BASE_FLANGE/2, BOTTOM_DECK_Z])
                 cube([LEG_SIZE+6, LEG_BASE_FLANGE, LEG_FLANGE_T]);
 
@@ -311,16 +313,18 @@ module corner_leg() {
         }
 
         // Axle clearance hole — must pass through both collar faces
-        // Total span = LEG_SIZE (strut) + 2×COLLAR_FACE_T (collars) + 4mm clearance = 36mm → ±18mm
+        // Total span = LEG_SIZE (strut) + 2×COLLAR_FACE_T (collars) + 4mm clearance = 38mm → ±19mm
         translate([0, 0, AXLE_Z])
             rotate([0, 90, 0])
             cylinder(d=AXLE_CLEARANCE_D, h=LEG_SIZE + 2*COLLAR_FACE_T + 4, center=true);
 
-        // Collar through-bolt holes: 4× M4 square pattern along axle axis
-        // Each bolt passes through: inboard collar (6mm) + PLA (20mm) + outboard collar (6mm) = 32mm
-        // h = LEG_SIZE + 2×COLLAR_FACE_T + 4 = 36mm → ±18mm; clears both collar faces ✓
-        for (dy = [-COLLAR_BOLT_SPACING/2, COLLAR_BOLT_SPACING/2])
-            for (dz = [-COLLAR_BOLT_SPACING/2, COLLAR_BOLT_SPACING/2])
+        // Collar through-bolt holes: 6× M4 (2 cols × 3 rows) along axle axis
+        // Each bolt passes through: inboard collar (7mm) + PLA (20mm) + outboard collar (7mm) = 34mm
+        // h = LEG_SIZE + 2×COLLAR_FACE_T + 4 = 38mm → ±19mm; clears both collar faces ✓
+        // NOTE: middle row (dz=0) puts bolt holes at axle height; wall between axle bore and bolt
+        //       hole = ~1.85mm — thin but OK: PLA is in compression, not carrying shaft load
+        for (dy = [-COLLAR_BOLT_SPACING_Y/2, COLLAR_BOLT_SPACING_Y/2])
+            for (dz = [-COLLAR_BOLT_SPACING_Z/2, 0, COLLAR_BOLT_SPACING_Z/2])
                 translate([0, dy, AXLE_Z + dz])
                     rotate([0, 90, 0])
                     cylinder(d=COLLAR_BOLT_D, h=LEG_SIZE + 2*COLLAR_FACE_T + 4, center=true);
@@ -371,15 +375,19 @@ module drivetrain_stack() {
     }
 
     // Metal bearing collars (purchased — one on each face of the 20mm slim strut section)
-    // Each collar houses one 606ZZ bearing; 4 through-bolts clamp both collars to strut
-    // goBILDA 1603: ~40×40mm body (COLLAR_BODY), 32mm bolt pattern (COLLAR_D), 6mm deep
-    // Bolt holes at ±16mm from center land 4mm inside the 40mm body edge ✓
+    // Each collar houses one 606ZZ bearing; 6 through-bolts (2×3) clamp both collars to strut
+    // goBILDA 1621-1632-0006: 24×40mm body (COLLAR_BODY_Y × COLLAR_BODY_Z), 7mm deep
+    // Bolt holes: ±8mm (Y) × ±16mm (Z) from centre ✓
     COLLAR_INBOARD_X  = MOTOR_L + MOTOR_TO_LEG_GAP;
     COLLAR_OUTBOARD_X = MOTOR_L + MOTOR_TO_LEG_GAP + LEG_SIZE;
-    for (cx = [COLLAR_INBOARD_X, COLLAR_OUTBOARD_X])
-        translate([cx, 0, 0])
-            color("Silver", 0.85)
-            cube([COLLAR_FACE_T, COLLAR_BODY, COLLAR_BODY], center=true);
+    // Inboard collar: outboard face flush with inboard strut face (x = COLLAR_INBOARD_X)
+    translate([COLLAR_INBOARD_X - COLLAR_FACE_T, -COLLAR_BODY_Y/2, -COLLAR_BODY_Z/2])
+        color("Silver", 0.85)
+        cube([COLLAR_FACE_T, COLLAR_BODY_Y, COLLAR_BODY_Z]);
+    // Outboard collar: inboard face flush with outboard strut face (x = COLLAR_OUTBOARD_X)
+    translate([COLLAR_OUTBOARD_X, -COLLAR_BODY_Y/2, -COLLAR_BODY_Z/2])
+        color("Silver", 0.85)
+        cube([COLLAR_FACE_T, COLLAR_BODY_Y, COLLAR_BODY_Z]);
 
     // Hub + wheel
     // Hub inboard face = outboard collar face + WHEEL_CLEARANCE_MM
