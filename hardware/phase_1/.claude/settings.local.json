@@ -6,7 +6,9 @@
       "WebFetch(domain:core-electronics.com.au)",
       "WebFetch(domain:www.pololu.com)",
       "WebFetch(domain:www.robotshop.com)",
-      "WebFetch(domain:www.robotgear.com.au)"
+      "WebFetch(domain:www.robotgear.com.au)",
+      "WebFetch(domain:www.studica.com)",
+      "WebFetch(domain:www.studica.co)"
     ]
   }
 }
