@@ -8,7 +8,9 @@
       "WebFetch(domain:www.robotshop.com)",
       "WebFetch(domain:www.robotgear.com.au)",
       "WebFetch(domain:www.studica.com)",
-      "WebFetch(domain:www.studica.co)"
+      "WebFetch(domain:www.studica.co)",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)"
     ]
   }
 }

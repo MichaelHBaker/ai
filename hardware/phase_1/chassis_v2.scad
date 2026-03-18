@@ -79,10 +79,11 @@
 //   - Motor: 50:1 chosen; MOTOR_L=54.7mm (can 30.7 + gearbox 24.0); encoder 15.4mm ✓
 //   - Pololu #1995 bracket: 36.8×36.8mm face, 6.5mm depth, R=15.5mm bolt circle ✓
 //   - goBILDA 1621-1632-0006: body 24×40mm, bolt pattern 16×32mm, 7mm deep ✓
-//   - Studica coupler: 12mm OD, 18.3mm long, 6mm D-shaft bore (measured from STEP file) ✓
-//   - Shaft: 6mm boss (⌀12mm, inside bracket) + 16mm free D-shaft = 22mm total from face
-//     Coupler centred on shaft tip: 9.15mm motor-side, 9.15mm axle-side engagement ✓
-//   - MOTOR_TO_LEG_GAP=40.15mm: shaft_tip(22)+half_coupler(9.15)+clearance(2)+collar(7) ✓
+//   - Chanc stainless rigid coupler: 19mm OD, 22mm long, 6mm bore
+//     Measured: encoder(15.4)+can(30.7)+gearbox(24)+shaft(22)+½coupler(11)=103mm ✓
+//     Coupler centred on shaft tip: 11mm motor-side, 11mm axle-side engagement ✓
+//   - MOTOR_TO_LEG_GAP=42mm: shaft_tip(22)+half_coupler(11)+clearance(2)+collar(7) ✓
+//   - MOTOR_GAP=5mm clear between facing motor backs → STRUT_X=210.4mm (robot now rectangular)
 //   - AXLE_L=96mm stock; ~5mm protrudes past hub — likely no cut needed ✓
 //
 // STILL TO VERIFY
@@ -165,27 +166,27 @@
 // ============================================================================
 
 // ============================================================================
-// PREVIEW MODE  — flip STATION_PREVIEW to true for fast single-station render
+// VIEW CONTROL  — one variable controls everything
 // ============================================================================
-//  STATION_PREVIEW = false  →  full 4-corner assembly, $fn=60  (slow, final check)
-//  STATION_PREVIEW = true   →  1 leg + 1 drivetrain + both decks, $fn=20  (fast iteration)
-//    · Right-rear station rendered (x=+STRUT_X/2, y=-STRUT_Y)
-//    · M3 mounting grid suppressed on decks (adds ~80% of deck render time)
-//    · Bracket holes, leg cutouts, collar holes all still present
-//    · Battery tray + camera bar suppressed (not drivetrain-related)
-STATION_PREVIEW = false;   // ← toggle here
+//  "all"                →  full 4-corner assembly                               ($fn=60)
+//  "station"            →  1 leg + drivetrain + both decks, right side          ($fn=20, fast)
+//  "leg"                →  full corner leg, base at z=0        — print-ready, standing upright
+//  "leg_lower"          →  lower strut section only            — print-ready, NO SUPPORTS ✓
+//  "deck_bottom"        →  both bottom deck halves assembled (joint check, no battery box)
+//  "deck_bottom_R"      →  right half of bottom deck, flat on bed — print-ready ✓
+//  "deck_bottom_L"      →  left  half of bottom deck, flat on bed — print-ready ✓
+//  "deck_top"           →  both top deck halves assembled (joint check)
+//  "deck_top_R"         →  right half of top deck, flat on bed    — print-ready ✓
+//  "deck_top_L"         →  left  half of top deck, flat on bed    — print-ready ✓
+//  "print_bottom"       →  both bottom deck halves side-by-side, no battery box — print layout
+//  "print_top"          →  both top    deck halves side-by-side                 — print layout
+//  "battery_box_side"   →  print one battery box side frame    — lying flat, print TWO
+//  "battery_box_end"    →  print one battery box end frame     — lying flat, print TWO (both ends identical)
+//  "battery_box_plate"  →  print one battery box top/bottom plate — lying flat, print TWO (top and bottom identical)
+//  "print_battery_box"  →  all 3 battery box part types side-by-side in print orientation — print 2 of each
+VIEW = "leg";   // ← change here
 
-// PRINT_PART: when set, overrides STATION_PREVIEW and renders one part at z=0 ready for slicing
-//  "none"        →  normal 3D preview (STATION_PREVIEW toggle active)
-//  "leg"         →  full corner leg, base at z=0, standing upright
-//  "leg_lower"   →  lower strut section, standing upright — leg-bottom on bed
-//                   Height 65mm.  Chamfer within deck zone (Z=90→98): col 12×24 → flange_w×flange_h.
-//                   Chamfer ≤45° → self-supporting, NO SUPPORTS needed. ✓
-//  "deck_bottom" →  bottom deck plate flat on bed, centred at origin
-//  "deck_top"    →  top deck plate flat on bed, centred at origin
-PRINT_PART = "leg_lower";      // ← set part name here, or "none" for preview
-
-$fn = (STATION_PREVIEW && PRINT_PART == "none") ? 20 : 60;
+$fn = (VIEW == "station") ? 20 : 60;
 
 // ============================================================================
 // PARAMETERS
@@ -207,15 +208,21 @@ CAM_BAR_HOLE_D    = LEG_POST_D + 0.3;  // Slip fit over post
 LEG_SIZE          = 12;     // Slim upper section (above bottom deck); top deck cutout = this; also = strut bore length in X
 LEG_BASE_SIZE     = 24;     // Flared lower section Y dimension — matches pillow block body width; bottom deck Y slot = this; X slot = LEG_SIZE
 LEG_TOP_FLANGE    = 36;     // Top flange sq width — 12mm ledge each side of 12mm column; top deck slides down, rests on this
-BFLANGE_OVERHANG  = 8;      // Chamfer overhang per side (mm) — 8 = exactly 45° in 8mm plate; increase for shallower
-                             //   angle = atan(PLATE_THICKNESS / BFLANGE_OVERHANG): 8→45°, 10→38.7°, 12→33.7°
-                             //   NOTE: if increased, also increase BOTTOM_DECK_OVERHANG to ≥ new flange/2 + 3mm
+LEG_TOP_CHAMFER_H = 18;    // Top flange chamfer height. Min for 45° at corners = (LEG_TOP_FLANGE-LEG_SIZE)/√2 ≈ 17mm.
+                             //   Face angle = atan(12/18) = 34°. Corner angle = atan(12√2/18) = 43°. ✓ no supports
+BFLANGE_OVERHANG  = 6;      // Chamfer overhang per side (mm).
+                             //   angle = atan(PLATE_THICKNESS / BFLANGE_OVERHANG): 6→53°, 8→45°, 10→38.7°
+                             //   53° is well within PETG self-support range (was 45° = fails in practice).
+                             //   Flange shrinks: X 28→24mm, Y 40→36mm. Screw edge distance: 4→3mm (OK for M3).
+                             //   NOTE: if increased beyond 8, also increase BOTTOM_DECK_OVERHANG to ≥ flange/2 + 3mm
+                             //   BOTTOM_DECK_OVERHANG = 23mm ≥ 18+3 = 21mm required at BFLANGE_OVERHANG=6 ✓
 LEG_BASE_FLANGE   = LEG_BASE_SIZE + BFLANGE_OVERHANG * 2;  // = 40mm at default; bottom flange Y width
 LEG_BASE_FLANGE_X = LEG_SIZE      + BFLANGE_OVERHANG * 2;  // = 28mm at default; bottom flange X width
 LEG_FLANGE_T      = 2;      // Flange thickness (both flanges)
 LEG_GROUND_EXTRA  = 55;     // Leg bottom below BOTTOM_DECK_Z; covers bearing collar zone
                              // leg_bottom = 90-55 = 35mm (unchanged); lowest collar bolt at 45.5mm → 10.5mm edge dist ✓
 MOTOR_SHAFT_FROM_FACE = 22; // Total shaft from gearbox face: boss(6mm) + free D-shaft(16mm)
+ENCODER_L         = 15.4;  // Pololu 37D encoder module depth beyond motor back face (can end)
 // MOTOR_TO_LEG_GAP defined below — after COUPLER_L and COLLAR_FACE_T (OpenSCAD 2021 does NOT resolve forward refs in variable assignments)
 LEG_CUTOUT_CLEAR  = 0.3;    // Per-side clearance for deck cutouts around legs
 // Flange securing screw positions — M3 clearance; must match deck_plate() flange_screw_rx/ry formula
@@ -226,30 +233,49 @@ TOP_FLANGE_SCREW_R     = (LEG_SIZE/2 + LEG_TOP_FLANGE/2) / 2;       // = (6+18)/
 
 // --- Deck geometry ---
 PLATE_THICKNESS        = 8;
-STRUT_X                = 170;   // Leg centre-to-centre X (reduced 180→170 for bottom deck print margin)
-STRUT_Y                = 170;   // Leg centre-to-centre Y (keep square for mecanum holonomic)
+MOTOR_GAP              = 5;     // Clear space between facing ENCODER TIPS (mm), left-right pair
+                                 // Encoder (15.4mm) extends inward past motor can — gap is at encoder tips, not can backs
+// STRUT_X derived: 2×(MOTOR_GAP/2 + ENCODER_L + MOTOR_L + MOTOR_TO_LEG_GAP + LEG_SIZE/2)
+//   = 2×(2.5 + 15.4 + 54.7 + 42 + 6) = 241.2mm  (MOTOR_GAP between encoder tips)
+//   Motor can backs at ±17.9mm; encoder tips at ±2.5mm; 5mm gap ✓
+//   NOTE: bottom deck = 241.2+46 = 287.2mm → split into 2 halves ✓ (each half 143.6mm < 250mm limit)
+//   NOTE: top deck    = 241.2+40 = 281.2mm → split into 2 halves ✓ (each half 140.6mm < 250mm limit)
+STRUT_X                = 241.2; // ← recalculate if MOTOR_GAP, ENCODER_L, or coupler changes
+STRUT_Y                = 170;   // Leg centre-to-centre Y (front-rear spacing; robot is now rectangular)
 DECK_OVERHANG          = 20;    // Top deck overhang — > LEG_TOP_FLANGE/2=18mm ✓; top deck = 210×210mm
 BOTTOM_DECK_OVERHANG   = 23;    // Must be > LEG_BASE_FLANGE/2 (=20mm at default BFLANGE_OVERHANG=8) ✓
                                  // bottom deck = (STRUT_X + 2×23) × (STRUT_Y + 2×23) = 216×216mm
                                  // Core One 220mm Y → 2mm margin each side ✓ (tight — split deck planned)
 BOTTOM_DECK_Z          = 90;    // Bottom face of lower deck plate
                                  // AXLE_Z = 90-22.3 = 67.7mm; ground clearance = 17.7mm (see AXLE_Z below)
-TOP_DECK_Z             = 135;   // Preserves 45mm inter-deck spacing (90+45)
-TOTAL_HEIGHT           = 195;   // Preserves 60mm above top deck (135+60)
+TOP_DECK_Z             = 145;   // Battery 37mm + 10mm airflow clearance = 47mm above lower deck top (98+47=145)
+                                 // Connector exits end of pack; battery slides in lengthwise from front face ✓
+TOTAL_HEIGHT           = 205;   // Placeholder — set after Pi 5 cooler height confirmed (TOP_DECK_Z + 60mm)
 
-// Derived deck dimensions (top deck — bottom deck dimensions computed inside deck_plate())
-DECK_W = STRUT_X + DECK_OVERHANG * 2;          // = 210mm top deck
-DECK_D = STRUT_Y + DECK_OVERHANG * 2;          // = 210mm top deck
+// Derived deck dimensions
+DECK_W          = STRUT_X + DECK_OVERHANG * 2;          // = 281.2mm top deck (full width — split into 2 halves)
+DECK_D          = STRUT_Y + DECK_OVERHANG * 2;          // = 210mm top deck depth
+BOTTOM_DECK_W   = STRUT_X + BOTTOM_DECK_OVERHANG * 2;  // = 287.2mm bottom deck (full width — split into 2 halves)
+BOTTOM_DECK_D   = STRUT_Y + BOTTOM_DECK_OVERHANG * 2;  // = 216mm bottom deck depth
 
 // Deck Y center (legs span y=0 to y=-STRUT_Y)
 DECK_Y_CENTER = -STRUT_Y / 2;
+
+// --- Split deck lap joint ---
+// Each deck is printed as two halves joined at X=0 with a ship-lap joint.
+// Overlap zone centred on X=0 (battery box centre): x=−LAP_OVERLAP/2 → +LAP_OVERLAP/2.
+// RIGHT half: main body x=+hl→right_edge + lower leaf x=−hl→+hl (z=deck_bot → deck_mid)
+// LEFT  half: main body x=left_edge→−hl + upper notch x=−hl→+hl (upper half only, 20mm bridge)
+// Lap bolts: M3 at X=0 (joint centreline), spaced LAP_BOLT_SPACING along Y.
+LAP_OVERLAP      = 20;   // Leaf/notch depth from joint centreline (mm); wider = stronger joint
+LAP_BOLT_SPACING = 50;   // Y spacing between M3 lap joint bolts
 
 // --- Drivetrain ---
 MOTOR_D           = 37;   // actual: 34.8mm can / 36.8mm gearbox face flange (≈37 for clearance calc)
 MOTOR_L           = 54.7; // = motor can (30.7) + gearbox body L (24.0mm, 50:1); confirmed from drawing
                            // Does NOT include output section (22.0mm) or encoder (15.4mm)
-COUPLER_D         = 12;   // Studica 6mm D-Shaft Coupling — OD 12mm (confirmed from STEP file)
-COUPLER_L         = 18.3; // Studica 6mm D-Shaft Coupling — length 18.3mm (measured in Onshape)
+COUPLER_D         = 19;   // Chanc stainless steel rigid coupler — OD 19mm (6mm bore)
+COUPLER_L         = 22;   // Chanc coupler — measured: encoder(15.4)+can(30.7)+gearbox(24)+shaft(22)+½L=103mm → L≈22mm
 AXLE_D            = 6;
 AXLE_L            = 96;   // Stock length of purchased Studica D-shaft (6-pack, 96mm)
                            // Calc physical axle needed ≈ 91mm; ~5mm protrusion past hub
@@ -276,28 +302,50 @@ CAM_LENS_Z        = 15;     // Height of lens center within housing
 BAR_WIDTH         = 25;
 BAR_THICKNESS     = 8;
 
-// --- Battery channel (integral to bottom deck top surface) ---
-// !! BATT_L / BATT_W / BATT_H are PLACEHOLDERS — measure Zeee 5200mAh hardcase before printing deck !!
-// !! If BATT_H > 37mm (= TOP_DECK_Z − BOTTOM_DECK_Z − PLATE_THICKNESS), increase TOP_DECK_Z     !!
-// Battery slides in from the robot +Y (front) face; connector exits at the open front end.
-BATT_L            = 140;    // LiPo pack length (Y, slides in this direction)    ← VERIFY
-BATT_W            = 50;     // LiPo pack width  (X, across channel)              ← VERIFY
-BATT_H            = 30;     // LiPo pack height (Z, standing up)                 ← VERIFY
-BATT_RAIL_T       = 4;      // Channel rail wall thickness
-BATT_RAIL_H       = 12;     // Rail height above deck — retains battery laterally (less than BATT_H)
-BATT_CLEAR        = 0.5;    // Per-side X clearance between battery face and rail inner face
-BATT_STRAP_W      = 20;     // Velcro strap slot width cut through each rail near open end
+// --- Battery retention frames (SEPARATE printable parts — structural, tie both decks together) ---
+// Zeee 5200mAh hardcase — all dims confirmed. Connector exits from top of one short end.
+// Battery slides in from robot +Y (front) face. All 4 frame sides are identical closed rectangles.
+//
+// Two hollow rectangular FRAMES, one each side of battery at ±X.
+// Frame spans full inter-deck height: lower deck top → upper deck bottom = 47mm.
+// 4mm border on all four sides; centre is open (light + stiff; battery visible through frame).
+// Frame depth = BATT_RAIL_T (4mm) — thin wall between battery and frame exterior.
+//
+// PRINT ORIENTATION: lying flat (4mm face on bed) — 47mm × 139mm footprint, 4mm tall.
+//   All four 90° corners in print XY plane → no supports needed. ✓
+//   Hollow cutout through print Z — no bridging (open both sides). ✓
+//   Deck bolt holes are short horizontal tunnels (3.2mm ∅ × 4mm deep) — FDM bridges fine. ✓
+//
+// STRUCTURAL ROLE: bolted to BOTH decks — ties lower and upper decks together at battery midline.
+//   2× M3×20 SHCS per frame into lower deck (through bottom frame rail + lower deck plate).
+//   2× M3×20 SHCS per frame into upper deck (through top frame rail + upper deck plate).
+//   Nuts: M3 nyloc, accessible inside hollow during assembly.
+//   Bolt centre X in world: ±(BATT_W/2 + BATT_CLEAR + BATT_RAIL_T/2) = ±26mm.
+//
+BATT_L              = 139;  // LiPo pack length (Y, slides in)           ✓ measured
+BATT_W              = 47;   // LiPo pack width  (X, across frames)       ✓ measured
+BATT_H              = 37;   // LiPo pack height (Z, standing up)         ✓ measured
+BATT_RAIL_T         = 4;    // Frame wall thickness (all four sides)
+BATT_FRAME_H        = TOP_DECK_Z - BOTTOM_DECK_Z - PLATE_THICKNESS;
+                             // = 145-90-8 = 47mm — full inter-deck clear height
+BATT_CLEAR          = 0.5;  // Per-side clearance between battery face and frame inner face
+BATT_RAIL_BOLT_D    = 3.2;  // M3 clearance hole
+BATT_RAIL_BOLT_INSET = 20;  // Y distance from each frame end to bolt hole centreline
 
-// --- Mounting hole grid (M3) ---
+// Derived box dimensions
+BATT_W_INNER        = BATT_W + 2 * BATT_CLEAR;         // = 48mm inner X
+BATT_L_INNER        = BATT_L + 2 * BATT_CLEAR;         // = 140mm inner Y
+BATT_W_OUTER        = BATT_W_INNER + 2 * BATT_RAIL_T;  // = 56mm outer X (end frame footprint Y)
+BATT_L_OUTER        = BATT_L_INNER + 2 * BATT_RAIL_T;  // = 148mm outer Y (side frame footprint Y)
+BATT_PLATE_T        = BATT_RAIL_T;   // top/bottom plate thickness (4mm, same stock)
+BATT_UPRIGHT_H      = BATT_FRAME_H - 2 * BATT_PLATE_T;
+                             // frame upright height — plates occupy top/bottom 4mm each
+
+// --- Mounting holes (M3) ---
 MOUNT_HOLE_D      = 3.2;    // M3 clearance through-hole
-MOUNT_GRID        = 20;     // Grid spacing mm
 M3_CSK_D          = 6.5;    // M3 flat-head (DIN 7991) countersink pocket dia
                              //   DIN 7991 head = 5.5mm; +1mm FDM tolerance
 // M3_TAP_D removed — all holes are clearance (MOUNT_HOLE_D); no threading into plastic
-
-// --- Wiring channel ---
-WIRE_CHANNEL_W    = 8;
-WIRE_CHANNEL_D    = 5;
 
 // --- Component visualization (hardware envelopes for spatial clearance check) ---
 BEARING_OD        = 12;   // 606ZZ flanged bearing OD (confirmed; lives inside purchased metal collar)
@@ -309,7 +357,7 @@ COLLAR_BODY_Z     = 40;   // Block face height, Z direction (up-down): confirmed
 COLLAR_FACE_T     =  7;   // Housing depth along axle: 5mm body + 2mm rear lip (confirmed)
 // MOTOR_TO_LEG_GAP placed here so COUPLER_L (above) and COLLAR_FACE_T (above) are both defined first
 MOTOR_TO_LEG_GAP  = MOTOR_SHAFT_FROM_FACE + COUPLER_L/2 + 2 + COLLAR_FACE_T;
-                             // Coupler centred on shaft tip: shaft_tip(22) + half_coupler(9.15) + gap(2) + collar(7) = 40.15mm
+                             // Coupler centred on shaft tip: shaft_tip(22) + half_coupler(11) + gap(2) + collar(7) = 42mm
 // Through-bolt pattern: 16mm(Y) × 32mm(Z) rectangular, M4
 // Z: ±16mm from axle centre; Y: ±8mm from axle centre → LEG_SIZE=20mm → 2mm edge distance ✓
 AXLE_CLEARANCE_D        = 8;    // Axle clearance through strut (no bearing in PLA)
@@ -393,14 +441,14 @@ module corner_leg() {
             translate([-LEG_SIZE/2, -LEG_SIZE/2, TOP_DECK_Z])
                 cube([LEG_SIZE, LEG_SIZE, TOTAL_HEIGHT - TOP_DECK_Z]);
 
-            // Top flange — 45° chamfer on underside; flat top at TOP_DECK_Z for deck to rest on.
-            // Hull: slim column width (12×12mm) 12mm below flange bottom → full flange (36×36mm).
+            // Top flange — chamfered underside; flat top at TOP_DECK_Z for deck to rest on.
+            // Hull: slim column width (12×12mm) LEG_TOP_CHAMFER_H below flange bottom → full flange (36×36mm).
             // Top deck slides down slim column (above TOP_DECK_Z) and stops on flat top — chamfer
             // is in the inter-deck zone below, which the top deck never enters. ✓
-            // Chamfer h = (36-12)/2 = 12mm = overhang → 45°. ✓
+            // Face angle = atan(12/18) = 34°. Corner angle = atan(12√2/18) = 43°. No supports needed. ✓
             hull() {
                 translate([-LEG_SIZE/2, -LEG_SIZE/2,
-                           TOP_DECK_Z - LEG_FLANGE_T - (LEG_TOP_FLANGE - LEG_SIZE)/2])
+                           TOP_DECK_Z - LEG_FLANGE_T - LEG_TOP_CHAMFER_H])
                     cube([LEG_SIZE, LEG_SIZE, 0.01]);
                 translate([-LEG_TOP_FLANGE/2, -LEG_TOP_FLANGE/2, TOP_DECK_Z - LEG_FLANGE_T])
                     cube([LEG_TOP_FLANGE, LEG_TOP_FLANGE, LEG_FLANGE_T]);
@@ -472,15 +520,15 @@ module corner_leg() {
         // Nut sits at Z≈121mm in inter-deck space (23mm above bottom deck top) — accessible
         //   from any side through the 37mm inter-deck gap with a thin wrench or pliers.
         // No nut pocket in printed part → no supports needed. ✓
-        // tch = (LEG_TOP_FLANGE-LEG_SIZE)/2 = 12mm chamfer height.
-        // Z start: 1mm below chamfer bottom (TOP_DECK_Z - LEG_FLANGE_T - tch - 1 = Z120).
-        // Height:  tch(12) + LEG_FLANGE_T(2) + 2 = 16mm → exits at Z136 (flat top face). ✓
+        // tch = LEG_TOP_CHAMFER_H = 18mm chamfer height.
+        // Z start: 1mm below chamfer bottom (TOP_DECK_Z - LEG_FLANGE_T - tch - 1 = Z124).
+        // Height:  tch(18) + LEG_FLANGE_T(2) + 2 = 22mm → exits at Z146 (1mm past flat top face). ✓
         for (sx = [-TOP_FLANGE_SCREW_R, TOP_FLANGE_SCREW_R])
-            translate([sx, 0, TOP_DECK_Z - LEG_FLANGE_T - (LEG_TOP_FLANGE - LEG_SIZE)/2 - 1])
-                cylinder(d=MOUNT_HOLE_D, h=(LEG_TOP_FLANGE - LEG_SIZE)/2 + LEG_FLANGE_T + 2);
+            translate([sx, 0, TOP_DECK_Z - LEG_FLANGE_T - LEG_TOP_CHAMFER_H - 1])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_TOP_CHAMFER_H + LEG_FLANGE_T + 2);
         for (sy = [-TOP_FLANGE_SCREW_R, TOP_FLANGE_SCREW_R])
-            translate([0, sy, TOP_DECK_Z - LEG_FLANGE_T - (LEG_TOP_FLANGE - LEG_SIZE)/2 - 1])
-                cylinder(d=MOUNT_HOLE_D, h=(LEG_TOP_FLANGE - LEG_SIZE)/2 + LEG_FLANGE_T + 2);
+            translate([0, sy, TOP_DECK_Z - LEG_FLANGE_T - LEG_TOP_CHAMFER_H - 1])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_TOP_CHAMFER_H + LEG_FLANGE_T + 2);
     }
 }
 
@@ -534,7 +582,13 @@ module motor_bracket() {
 // Origin: motor back face, shaft points in +X
 // Left-side: translate to position then rotate([0,0,180])
 module drivetrain_stack() {
-    // Motor body
+    // Encoder module — extends inboard (x = -ENCODER_L → 0) past motor back face
+    // Shows the physical depth that sets MOTOR_GAP: encoder tips should be 5mm apart
+    color("DarkOliveGreen")
+        translate([-ENCODER_L, 0, 0])
+        rotate([0, 90, 0]) cylinder(d=MOTOR_D * 0.82, h=ENCODER_L);
+
+    // Motor body (can + gearbox, shaft toward +X)
     color("DimGray")
         rotate([0, 90, 0]) cylinder(d=MOTOR_D, h=MOTOR_L);
 
@@ -608,7 +662,7 @@ module drivetrain_stack() {
 // leg_flange    : Y flange width this deck rests on (36mm top, 40mm bottom)
 // leg_flange_x  : X flange width (default=leg_flange for square; LEG_BASE_FLANGE_X=36mm for bottom deck)
 // deck_overhang : extension beyond strut centres (top=DECK_OVERHANG, bottom=BOTTOM_DECK_OVERHANG)
-module deck_plate(z_center, mount_holes=true, wire_channel=false,
+module deck_plate(z_center,
                   leg_cutout=LEG_SIZE, leg_cutout_y=0,
                   leg_flange=LEG_TOP_FLANGE, leg_flange_x=0,
                   deck_overhang=DECK_OVERHANG, leg_chamfer=false) {
@@ -624,13 +678,16 @@ module deck_plate(z_center, mount_holes=true, wire_channel=false,
         for (x = [-STRUT_X/2, STRUT_X/2])
             for (y = [STRUT_Y/2, -STRUT_Y/2]) {
                 if (leg_chamfer) {
-                    // Chamfered cutout: narrow at top (column width), wide at bottom (flange width).
-                    // Matches strut chamfer zone — deck and strut both self-supporting, no supports. ✓
+                    // Chamfered cutout: wide at top (flange width), narrow at bottom (column width).
+                    // TOP face wide: deck slides DOWN over leg from above — flange clears the top opening. ✓
+                    // BOTTOM face narrow: matches column width at z=BOTTOM_DECK_Z. ✓
+                    // Print orientation (deck flat on bed): hole grows wider each layer → self-supporting. ✓
+                    // Matches strut chamfer (narrow at deck bottom, wide at deck top). ✓
                     hull() {
                         translate([x, y,  PLATE_THICKNESS/2 + 0.5])
-                            cube([leg_cutout+LEG_CUTOUT_CLEAR, lcy+LEG_CUTOUT_CLEAR, 0.01], center=true);
-                        translate([x, y, -PLATE_THICKNESS/2 - 0.5])
                             cube([lfx+LEG_CUTOUT_CLEAR, leg_flange+LEG_CUTOUT_CLEAR, 0.01], center=true);
+                        translate([x, y, -PLATE_THICKNESS/2 - 0.5])
+                            cube([leg_cutout+LEG_CUTOUT_CLEAR, lcy+LEG_CUTOUT_CLEAR, 0.01], center=true);
                     }
                 } else {
                     translate([x, y, 0])
@@ -649,69 +706,363 @@ module deck_plate(z_center, mount_holes=true, wire_channel=false,
                         cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 1, center=true);
             }
 
-        // M3 mounting hole grid (avoids leg zones)
-        if (mount_holes) {
-            for (xi = [-4:4]) for (yi = [-4:4]) {
-                gx = xi * MOUNT_GRID;
-                gy = yi * MOUNT_GRID;
-                // Skip holes that land inside or too close to a leg cutout
-                leg_clear = leg_cutout/2 + 5;
-                if (!( (abs(gx - STRUT_X/2) < leg_clear || abs(gx + STRUT_X/2) < leg_clear) &&
-                       (abs(gy - STRUT_Y/2) < leg_clear || abs(gy + STRUT_Y/2) < leg_clear) ))
-                    translate([gx, gy, 0])
-                        cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 1, center=true);
-            }
-        }
-
-        // Wiring channel - runs front-to-back along centerline
-        if (wire_channel)
-            cube([WIRE_CHANNEL_W, dd - LEG_SIZE*2, WIRE_CHANNEL_D], center=true);
     }
 }
 
-// --- Battery channel (integral to bottom deck top surface) ---
-// !! BATT_L/W/H are PLACEHOLDERS — update when Zeee 5200mAh hardcase arrives !!
+// --- Battery box frames (4× SEPARATE printable parts — structural, tie both decks together) ---
+// Zeee 5200mAh hardcase — all dims confirmed. Connector exits from top of one short end.
+// Battery sits INSIDE the box; box is open top and bottom (decks close those faces).
+// 4 frames: 2× side (long, ±X), 2× end (short, ±Y) — all four are identical closed rectangles.
 //
-// Battery slides along Y from the robot front (+Y face), connector exits at open end.
-// Two rails (±X sides) grip the battery laterally; closed wall at −Y end stops it.
-// Velcro strap threads through slots cut in both rails near the open (+Y) end.
+// PRINT ORIENTATION: all frames lie flat (4mm face on bed).
+//   Side frames:  BATT_FRAME_H(47mm) × BATT_L_INNER(140mm) footprint, 4mm tall.  ← inner span only
+//   End frames:   BATT_FRAME_H(47mm) × BATT_W_OUTER(56mm)  footprint, 4mm tall.  ← full outer width
+//   End frames define the corners; side frames fit between them — NO shared corners. ✓
+//   All 90° corners in print XY → no supports needed. ✓
+//   Hollow cutout through print Z → no bridging. ✓
 //
-// Channel sits directly on deck top surface — no floor, no separate fasteners.
-// This module is unioned with deck_plate() so it prints as one piece.
+// PRINT COORDINATE CONVENTION (for all three print modules):
+//   print Z = 4mm  (thin direction; becomes installed X for side frames, installed Y for end frames)
+//   print X = BATT_FRAME_H = 47mm  (becomes installed Z — the inter-deck height direction)
+//   print Y = frame length (BATT_L_INNER or BATT_W_OUTER)
+//   Bolt holes: horizontal tunnels through bottom rail (print X=0→4) and top rail (print X=43→47)
 //
-// Geometry (local coords after translate to deck centre, deck top surface):
-//   Battery slot:  X = ±BATT_W/2,  Y = −BATT_L/2 → +BATT_L/2 (open at +Y)
-//   −X rail:       X = −(BATT_W/2+BATT_CLEAR) − BATT_RAIL_T → −(BATT_W/2+BATT_CLEAR)
-//   +X rail:       X = +(BATT_W/2+BATT_CLEAR) → +(BATT_W/2+BATT_CLEAR+BATT_RAIL_T)
-//   Closed end:    Y = −(BATT_L/2+BATT_RAIL_T) → −BATT_L/2  (full outer X width)
-//   Strap slots:   20mm wide × 5mm tall notch through each rail, 10mm from open end
-module battery_channel() {
-    half_l  = BATT_L / 2;
-    inner_x = BATT_W / 2 + BATT_CLEAR;       // inner half-width (with clearance)
-    outer_x = inner_x + BATT_RAIL_T;         // outer half-width (incl. rail wall)
+// STRUCTURAL: 4 bolts per frame (2 lower deck + 2 upper deck) — ties both decks together.
+//   Bolt centre in installed world: see _battery_box_side_upright / _battery_box_end_upright.
 
-    translate([0, DECK_Y_CENTER, BOTTOM_DECK_Z + PLATE_THICKNESS])
+// Side-frame bolt Y positions measured from frame -Y end (local frame coords, print Y axis).
+// Two bolt holes per deck rail, BATT_RAIL_BOLT_INSET from each end.
+// Side frames span BATT_L_INNER (not BATT_L_OUTER) — they fit between end frames, no shared corners.
+function _side_bolt_y(i)  = (i == 0) ? BATT_RAIL_BOLT_INSET : BATT_L_INNER - BATT_RAIL_BOLT_INSET;
+// End-frame bolt X positions measured from frame -X end (local print Y axis for end frames).
+function _end_bolt_x(i)   = (i == 0) ? BATT_RAIL_BOLT_INSET : BATT_W_OUTER - BATT_RAIL_BOLT_INSET;
+
+// --- PRINT module: battery box side frame (long sides, ±X in installed). Print TWO. ---
+// Footprint: BATT_FRAME_H(47) × BATT_L_INNER(140mm), 4mm tall.
+// Side frames span the INNER length only — they fit between the end frames so no corners are shared.
+module battery_box_side() {
+    t = BATT_RAIL_T;  // 4mm border
     difference() {
+        cube([BATT_UPRIGHT_H, BATT_L_INNER, t]);
+        // Hollow centre — 4mm border on all sides, cut through full Z
+        translate([t, t, -1])
+            cube([BATT_UPRIGHT_H - 2*t, BATT_L_INNER - 2*t, t + 2]);
+        // Lower deck bolt holes — horizontal tunnels through bottom rail (print X 0→t)
+        for (i = [0:1])
+            translate([-1, _side_bolt_y(i), t/2])
+                rotate([0, 90, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Upper deck bolt holes — horizontal tunnels through top rail
+        for (i = [0:1])
+            translate([BATT_UPRIGHT_H - t - 1, _side_bolt_y(i), t/2])
+                rotate([0, 90, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Corner tie bolts — clearance holes through each end face at mid-height.
+        // Bolt comes from outside the end frame; nut sits in the hollow interior (accessible from top).
+        translate([BATT_UPRIGHT_H/2, -1, t/2])
+            rotate([-90, 0, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        translate([BATT_UPRIGHT_H/2, BATT_L_INNER + 1, t/2])
+            rotate([90, 0, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+    }
+}
+
+// --- PRINT module: battery box end frame (short ends, ±Y in installed). Print TWO. ---
+// Footprint: BATT_FRAME_H(47) × BATT_W_OUTER(56mm), 4mm tall.
+// Both end frames are identical — no slot needed; connectors exit from battery top, not the frame.
+module battery_box_end() {
+    t = BATT_RAIL_T;
+    difference() {
+        cube([BATT_UPRIGHT_H, BATT_W_OUTER, t]);
+        // Hollow centre
+        translate([t, t, -1])
+            cube([BATT_UPRIGHT_H - 2*t, BATT_W_OUTER - 2*t, t + 2]);
+        // Lower deck bolt holes
+        for (i = [0:1])
+            translate([-1, _end_bolt_x(i), t/2])
+                rotate([0, 90, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Upper deck bolt holes
+        for (i = [0:1])
+            translate([BATT_UPRIGHT_H - t - 1, _end_bolt_x(i), t/2])
+                rotate([0, 90, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Corner tie bolts — clearance holes through end frame wall (print Z direction = installed Y wall).
+        // Positioned at corners: print Y = t/2 and BATT_W_OUTER−t/2, at mid-height.
+        for (cy = [t/2, BATT_W_OUTER - t/2])
+            translate([BATT_UPRIGHT_H/2, cy, -1])
+                cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+    }
+}
+
+// --- PRINT module: battery box top/bottom plate. Print TWO (one top, one bottom). ---
+// Footprint: BATT_W_OUTER(56) × BATT_L_OUTER(148mm), BATT_PLATE_T(4mm) thick.
+// Closes top and bottom of battery box — converts open frame to closed rectangular tube.
+// Torsional stiffness improvement: ~300× (Bredt-Batho closed-section vs open frames).
+// Bolt holes align with all 4 frame rails so the same M3 bolt goes deck→plate→frame rail.
+// Print orientation: flat (4mm face on bed). Holes through Z — no bridging needed.
+// One plate design serves for both top and bottom (fully symmetric).
+module battery_box_plate() {
+    t = BATT_RAIL_T;
+    difference() {
+        cube([BATT_W_OUTER, BATT_L_OUTER, BATT_PLATE_T]);
+        // Side frame bolt holes — 2 per side × 2 sides = 4 holes
+        // local X = t/2 or BATT_W_OUTER−t/2 (side frame wall centrelines in X)
+        // local Y = t + _side_bolt_y(i)       (offset by end frame thickness)
+        for (sx = [t/2, BATT_W_OUTER - t/2])
+            for (i = [0:1])
+                translate([sx, t + _side_bolt_y(i), -1])
+                    cylinder(d=BATT_RAIL_BOLT_D, h=BATT_PLATE_T + 2);
+        // End frame bolt holes — 2 per end × 2 ends = 4 holes
+        // local Y = t/2 or BATT_L_OUTER−t/2  (end frame wall centrelines in Y)
+        // local X = _end_bolt_x(i)            (bolt positions across end frame width)
+        for (ey = [t/2, BATT_L_OUTER - t/2])
+            for (i = [0:1])
+                translate([_end_bolt_x(i), ey, -1])
+                    cylinder(d=BATT_RAIL_BOLT_D, h=BATT_PLATE_T + 2);
+    }
+}
+
+// Installed plate helper — placed centred at X=0, Y=DECK_Y_CENTER, bottom face at z.
+module _battery_box_plate_installed(z) {
+    translate([-BATT_W_OUTER/2, DECK_Y_CENTER - BATT_L_OUTER/2, z])
+        battery_box_plate();
+}
+
+// --- INSTALLED module: side frame upright, inner face at X=0. ---
+// X: 0→BATT_RAIL_T.  Y: 0→BATT_L_INNER.  Z: 0→BATT_FRAME_H.
+// Side frames span BATT_L_INNER (inner Y span only) so they fit between end frames — no shared corners.
+// Bolt holes vertical through bottom rail (Z=0→t) and top rail (Z=(BATT_FRAME_H-t)→BATT_FRAME_H).
+module _battery_box_side_upright() {
+    t = BATT_RAIL_T;
+    difference() {
+        cube([t, BATT_L_INNER, BATT_UPRIGHT_H]);
+        // Hollow centre (open through X)
+        translate([-1, t, t])
+            cube([t + 2, BATT_L_INNER - 2*t, BATT_UPRIGHT_H - 2*t]);
+        // Lower deck bolts — vertical through bottom rail
+        for (i = [0:1])
+            translate([t/2, _side_bolt_y(i), -1])
+                cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Upper deck bolts — vertical through top rail
+        for (i = [0:1])
+            translate([t/2, _side_bolt_y(i), BATT_UPRIGHT_H - t - 1])
+                cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Corner tie bolt clearance holes — through each end face at mid-height.
+        // Nut sits in hollow interior (accessible from open top); bolt comes from outside end frame.
+        translate([t/2, -1, BATT_UPRIGHT_H/2])
+            rotate([-90, 0, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        translate([t/2, BATT_L_INNER + 1, BATT_UPRIGHT_H/2])
+            rotate([90, 0, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+    }
+}
+
+// --- INSTALLED module: end frame upright, inner face at Y=0. ---
+// Y: 0→BATT_RAIL_T.  X: −BATT_W_OUTER/2→+BATT_W_OUTER/2 (centred).  Z: 0→BATT_FRAME_H.
+// Both end frames are identical closed rectangles — print TWO of battery_box_end().
+module _battery_box_end_upright() {
+    t = BATT_RAIL_T;
+    translate([-BATT_W_OUTER/2, 0, 0])
+    difference() {
+        cube([BATT_W_OUTER, t, BATT_UPRIGHT_H]);
+        // Hollow centre (open through Y)
+        translate([t, -1, t])
+            cube([BATT_W_OUTER - 2*t, t + 2, BATT_UPRIGHT_H - 2*t]);
+        // Lower deck bolts
+        for (i = [0:1])
+            translate([_end_bolt_x(i), t/2, -1])
+                cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Upper deck bolts
+        for (i = [0:1])
+            translate([_end_bolt_x(i), t/2, BATT_UPRIGHT_H - t - 1])
+                cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+        // Corner tie bolt clearance holes — through wall in Y direction at each corner, mid-height.
+        // Local X = t/2 and BATT_W_OUTER−t/2 (corner post centres before the translate).
+        for (cx = [t/2, BATT_W_OUTER - t/2])
+            translate([cx, -1, BATT_UPRIGHT_H/2])
+                rotate([-90, 0, 0]) cylinder(d=BATT_RAIL_BOLT_D, h=t + 2);
+    }
+}
+
+// --- Place all 4 frames + top/bottom plates in world position for assembly views. ---
+// End frames define the corners (full BATT_W_OUTER wide). Side frames fit between them (BATT_L_INNER long).
+// Side inner face at X = ±(BATT_W/2 + BATT_CLEAR) = ±24mm.
+// Z base: BOTTOM_DECK_Z + PLATE_THICKNESS (lower deck top surface).
+// Bottom plate sits at z0; frames sit on plate at z0+BATT_PLATE_T; top plate at z0+BATT_PLATE_T+BATT_UPRIGHT_H.
+module battery_box_assembled() {
+    inner_x     = BATT_W / 2 + BATT_CLEAR;
+    end_y_front = DECK_Y_CENTER + BATT_L / 2 + BATT_CLEAR;  // front end inner face (+Y)
+    end_y_rear  = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR;  // rear end inner face (−Y)
+    side_y0     = end_y_rear;
+    z0          = BOTTOM_DECK_Z + PLATE_THICKNESS;           // lower deck top surface
+    zf          = z0 + BATT_PLATE_T;                         // frames sit on bottom plate
+    color("DimGray") {
+        // Bottom plate
+        _battery_box_plate_installed(z0);
+        // Top plate
+        _battery_box_plate_installed(zf + BATT_UPRIGHT_H);
+        // +X side frame
+        translate([ inner_x,                 side_y0, zf]) _battery_box_side_upright();
+        // −X side frame
+        translate([-(inner_x + BATT_RAIL_T), side_y0, zf]) _battery_box_side_upright();
+        // Front end frame (+Y)
+        translate([0, end_y_front,             zf]) _battery_box_end_upright();
+        // Rear end frame (−Y)
+        translate([0, end_y_rear - BATT_RAIL_T, zf]) _battery_box_end_upright();
+    }
+}
+
+// --- Split deck helpers ---
+//
+// Ship-lap joint at X=0, overlap zone centred on joint (±LAP_OVERLAP/2).
+// Both halves print without supports:
+//   RIGHT half: lower leaf (z=BOTTOM_DECK_Z → +PLATE_T/2) spans x=-LAP_OVERLAP/2 → +LAP_OVERLAP/2 ✓
+//   LEFT  half: upper notch same X range — 20mm bridge at mid-height ✓
+// Lap bolt holes at X=0 (joint centreline = battery box centreline). ✓
+//
+// Lap bolt holes run vertically through the overlap zone at LAP_BOLT_SPACING intervals in Y.
+//
+// Usage pattern:
+//   intersection() { <full_deck_solid>; _deck_half_clip_bottom("R"or"L"); }
+//
+// Clip shapes are intentionally oversized (large Z range) so intersection() trims cleanly.
+
+module _deck_half_clip_bottom(side) {
+    dz0  = BOTTOM_DECK_Z - 2;
+    dz1  = BOTTOM_DECK_Z + PLATE_THICKNESS + 40;
+    dmid = BOTTOM_DECK_Z + PLATE_THICKNESS / 2;
+    dy0  = DECK_Y_CENTER - BOTTOM_DECK_D / 2 - 2;
+    dy1  = DECK_Y_CENTER + BOTTOM_DECK_D / 2 + 2;
+    dd   = dy1 - dy0;
+    hw   = BOTTOM_DECK_W / 2 + 2;
+    hl   = LAP_OVERLAP / 2;  // half overlap — zone is −hl → +hl, centred on joint at X=0
+
+    if (side == "R") {
         union() {
-            // −X rail (full channel length + closed end wall overhang)
-            translate([-outer_x, -(half_l + BATT_RAIL_T), 0])
-                cube([BATT_RAIL_T, BATT_L + BATT_RAIL_T, BATT_RAIL_H]);
-
-            // +X rail
-            translate([inner_x, -(half_l + BATT_RAIL_T), 0])
-                cube([BATT_RAIL_T, BATT_L + BATT_RAIL_T, BATT_RAIL_H]);
-
-            // Closed end wall (−Y end, spans full outer X width)
-            translate([-outer_x, -(half_l + BATT_RAIL_T), 0])
-                cube([outer_x * 2, BATT_RAIL_T, BATT_RAIL_H]);
+            // Main right body: x=+hl → right_edge, full height
+            translate([hl, dy0, dz0]) cube([hw - hl, dd, dz1 - dz0]);
+            // Lower leaf: x=−hl → +hl, lower half thickness only
+            translate([-hl, dy0, dz0]) cube([LAP_OVERLAP, dd, dmid - dz0]);
         }
+    } else {
+        union() {
+            // Main left body: x=left_edge → −hl, full height
+            translate([-hw, dy0, dz0]) cube([hw - hl, dd, dz1 - dz0]);
+            // Upper notch: x=−hl → +hl, upper half only (20mm bridge when printed)
+            translate([-hl, dy0, dmid]) cube([LAP_OVERLAP, dd, dz1 - dmid]);
+        }
+    }
+}
 
-        // Strap slots — 20mm wide × 5mm tall notch through each rail wall
-        // Positioned 10mm inboard from open (+Y) end, vertically centred in rail
-        slot_z = (BATT_RAIL_H - 5) / 2;
-        for (rx = [-outer_x, inner_x])        // base X of each rail
-            translate([rx - 1, half_l - 10 - BATT_STRAP_W, slot_z])
-                cube([BATT_RAIL_T + 2, BATT_STRAP_W, 5]);
+module _deck_half_clip_top(side) {
+    dz0 = TOP_DECK_Z - 2;
+    dz1 = TOP_DECK_Z + PLATE_THICKNESS + 2;
+    dmid = TOP_DECK_Z + PLATE_THICKNESS / 2;
+    dy0 = DECK_Y_CENTER - DECK_D / 2 - 2;
+    dy1 = DECK_Y_CENTER + DECK_D / 2 + 2;
+    dd  = dy1 - dy0;
+    hw  = DECK_W / 2 + 2;
+    hl  = LAP_OVERLAP / 2;
+
+    if (side == "R") {
+        union() {
+            translate([hl, dy0, dz0]) cube([hw - hl, dd, dz1 - dz0]);
+            translate([-hl, dy0, dz0]) cube([LAP_OVERLAP, dd, dmid - dz0]);
+        }
+    } else {
+        union() {
+            translate([-hw, dy0, dz0]) cube([hw - hl, dd, dz1 - dz0]);
+            translate([-hl, dy0, dmid]) cube([LAP_OVERLAP, dd, dz1 - dmid]);
+        }
+    }
+}
+
+// Lap joint bolt holes — at X=0 (joint centreline = centre of overlap zone = battery centre).
+// 5 bolts centred on DECK_Y_CENTER at LAP_BOLT_SPACING intervals — symmetric margins each end.
+//   Bottom deck: 216mm span, 5×50mm=200mm covered → 8mm margin each end.
+//   Top deck:    210mm span, 5×50mm=200mm covered → 5mm margin each end.
+module _lap_bolt_holes_bottom() {
+    for (i = [0:4])
+        translate([0, DECK_Y_CENTER + 2*LAP_BOLT_SPACING - i*LAP_BOLT_SPACING, BOTTOM_DECK_Z - 1])
+            cylinder(d = MOUNT_HOLE_D, h = PLATE_THICKNESS + 2);
+}
+module _lap_bolt_holes_top() {
+    for (i = [0:4])
+        translate([0, DECK_Y_CENTER + 2*LAP_BOLT_SPACING - i*LAP_BOLT_SPACING, TOP_DECK_Z - 1])
+            cylinder(d = MOUNT_HOLE_D, h = PLATE_THICKNESS + 2);
+}
+
+// Full bottom deck solid (both halves assembled — used as intersection source)
+// Battery channel walls are NO LONGER integral — they are separate battery_rail() parts.
+module _bottom_deck_full() {
+    // Side frame bolt X = ±(BATT_W/2 + BATT_CLEAR + BATT_RAIL_T/2) = ±26mm
+    _sfx  = BATT_W / 2 + BATT_CLEAR + BATT_RAIL_T / 2;
+    _sfy0 = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR;  // side frame south end (matches battery_box_assembled)
+    // End frame bolt X = ±(BATT_W_OUTER/2 − BATT_RAIL_BOLT_INSET) = ±8mm
+    _efx   = BATT_W_OUTER / 2 - BATT_RAIL_BOLT_INSET;
+    _efy_f = DECK_Y_CENTER + BATT_L / 2 + BATT_CLEAR + BATT_RAIL_T / 2;  // front end wall centre
+    _efy_r = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR - BATT_RAIL_T / 2;  // rear  end wall centre
+    difference() {
+        deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS / 2,
+                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
+                   leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
+                   deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
+        // Motor bracket holes
+        for (sx = [-1, 1])
+            for (sy = [0, -STRUT_Y])
+                for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
+                    translate([sx * BRACKET_DECK_X, sy + dy, BOTTOM_DECK_Z - 1])
+                        cylinder(d = MOUNT_HOLE_D, h = PLATE_THICKNESS + 2);
+        // Lap bolt holes
+        _lap_bolt_holes_bottom();
+        // Side frame bolt holes — 2 per side frame × 2 frames = 4 holes
+        for (sx = [-1, 1])
+            for (i = [0:1])
+                translate([sx * _sfx, _sfy0 + _side_bolt_y(i), BOTTOM_DECK_Z - 1])
+                    cylinder(d = BATT_RAIL_BOLT_D, h = PLATE_THICKNESS + 2);
+        // End frame bolt holes — 2 per end frame × 2 frames = 4 holes
+        for (ex = [-_efx, _efx])
+            for (ey = [_efy_r, _efy_f])
+                translate([ex, ey, BOTTOM_DECK_Z - 1])
+                    cylinder(d = BATT_RAIL_BOLT_D, h = PLATE_THICKNESS + 2);
+    }
+}
+
+// One printable half of the bottom deck.
+// side = "R" or "L".  Assembly: right half lower leaf slots into left half notch.
+// Print orientation: both halves printed bottom-face-down (battery rails face up).
+//   Right half: no overhangs (leaf on bed).
+//   Left half:  20mm bridge at mid-height in lap zone — within PETG bridging capability ✓
+module bottom_deck_half(side="R") {
+    intersection() {
+        _bottom_deck_full();
+        _deck_half_clip_bottom(side);
+    }
+}
+
+// Battery frame bolt holes through upper deck — matches frame top rail bolt positions.
+module _frame_bolt_holes_top() {
+    _sfx  = BATT_W / 2 + BATT_CLEAR + BATT_RAIL_T / 2;          // = 26mm side frame X
+    _sfy0 = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR;            // side frame south end
+    _efx   = BATT_W_OUTER / 2 - BATT_RAIL_BOLT_INSET;           // = 8mm end frame X (±)
+    _efy_f = DECK_Y_CENTER + BATT_L / 2 + BATT_CLEAR + BATT_RAIL_T / 2;  // front end wall centre
+    _efy_r = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR - BATT_RAIL_T / 2;  // rear end wall centre
+    // Side frame bolt holes — 2 per side × 2 sides = 4 holes
+    for (sx = [-1, 1])
+        for (i = [0:1])
+            translate([sx * _sfx, _sfy0 + _side_bolt_y(i), TOP_DECK_Z - 1])
+                cylinder(d = BATT_RAIL_BOLT_D, h = PLATE_THICKNESS + 2);
+    // End frame bolt holes — 2 per end frame × 2 frames = 4 holes
+    for (ex = [-_efx, _efx])
+        for (ey = [_efy_r, _efy_f])
+            translate([ex, ey, TOP_DECK_Z - 1])
+                cylinder(d = BATT_RAIL_BOLT_D, h = PLATE_THICKNESS + 2);
+}
+
+// One printable half of the top deck.
+module top_deck_half(side="R") {
+    intersection() {
+        difference() {
+            deck_plate(TOP_DECK_Z + PLATE_THICKNESS / 2);
+            _lap_bolt_holes_top();
+            _frame_bolt_holes_top();
+        }
+        _deck_half_clip_top(side);
     }
 }
 
@@ -740,59 +1091,114 @@ module camera_bar() {
 // ASSEMBLY
 // ============================================================================
 
-if (PRINT_PART != "none") {
+_leg_bot = BOTTOM_DECK_Z - LEG_GROUND_EXTRA;           // = 35mm world Z
+_lower_h = BOTTOM_DECK_Z + PLATE_THICKNESS + LEG_FLANGE_T - _leg_bot;
+           // = 90+8+2-35 = 65mm (column + chamfer-within-deck + ledge)
 
-    // ── PRINT MODE: single part at z=0 ready for slicing ─────────────────────
+if (VIEW == "leg") {
+    // Full corner leg standing upright, base at z=0
+    translate([0, 0, -_leg_bot])
+        corner_leg();
 
-    _leg_bot   = BOTTOM_DECK_Z - LEG_GROUND_EXTRA;          // = 35mm world Z
-    _lower_h   = BOTTOM_DECK_Z + PLATE_THICKNESS + LEG_FLANGE_T - _leg_bot;
-                 // = 90+8+2-35 = 65mm (column + chamfer-within-deck + ledge; chamfer no longer above deck)
-
-    if (PRINT_PART == "leg") {
-        // Full corner leg standing upright, base at z=0
-        translate([0, 0, -_leg_bot])
+} else if (VIEW == "leg_lower") {
+    // Lower strut section (world Z=35..100), standing upright — leg-bottom on bed.
+    // Height: _lower_h = 65mm.  Column 12×24mm → chamfer within deck zone → ledge at top.
+    // Chamfer (Z=90→98) grows each layer wider ≤45° → self-supporting, NO SUPPORTS needed. ✓
+    // Axle bore (8 mm) and collar bolt holes (4.3 mm) horizontal — small dia, bridge fine.
+    translate([0, 0, -_leg_bot])
+        intersection() {
             corner_leg();
-
-    } else if (PRINT_PART == "leg_lower") {
-        // Lower strut section (world Z=35..100), standing upright — leg-bottom on bed.
-        // Height: _lower_h = 65mm.  Column 12×24mm → chamfer within deck zone → ledge at top.
-        // Chamfer (Z=90→98) grows each layer wider ≤45° → self-supporting, NO SUPPORTS needed. ✓
-        // Axle bore (8 mm) and collar bolt holes (4.3 mm) horizontal — small dia, bridge fine.
-        translate([0, 0, -_leg_bot])
-            intersection() {
-                corner_leg();
-                translate([-50, -50, _leg_bot])
-                    cube([100, 100, _lower_h]);
-            }
-
-    } else if (PRINT_PART == "deck_bottom") {
-        // Bottom deck flat on bed, centred at origin
-        // battery_channel() is unioned with deck — prints as one piece
-        translate([0, STRUT_Y/2, -BOTTOM_DECK_Z])
-        difference() {
-            union() {
-                deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
-                           mount_holes=true, wire_channel=true,
-                           leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
-                           leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
-                           deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
-                battery_channel();
-            }
-            for (sx = [-1, 1])
-                for (sy = [0, -STRUT_Y])
-                    for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
-                        translate([sx * BRACKET_DECK_X, sy + dy, BOTTOM_DECK_Z - 1])
-                            cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 2);
+            translate([-50, -50, _leg_bot])
+                cube([100, 100, _lower_h]);
         }
 
-    } else if (PRINT_PART == "deck_top") {
-        // Top deck flat on bed, centred at origin
-        translate([0, STRUT_Y/2, -TOP_DECK_Z])
-            deck_plate(TOP_DECK_Z + PLATE_THICKNESS/2,
-                       mount_holes=true, wire_channel=false);
-    }
+} else if (VIEW == "deck_bottom") {
+    // Both bottom deck halves in assembled position
+    color("Goldenrod")     bottom_deck_half("R");
+    color("DarkGoldenrod") bottom_deck_half("L");
+    battery_box_assembled();
 
-} else if (STATION_PREVIEW) {
+} else if (VIEW == "deck_bottom_R") {
+    // RIGHT half — print-ready: bottom face on bed. Piece spans x=−hl to +BOTTOM_DECK_W/2.
+    _r_cx = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    translate([-_r_cx, STRUT_Y / 2, -BOTTOM_DECK_Z])
+        bottom_deck_half("R");
+
+} else if (VIEW == "deck_bottom_L") {
+    // LEFT half — print-ready: mirrored so leaf is on same side as R half for easy inspection.
+    _l_cx = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    translate([-_l_cx, STRUT_Y / 2, -BOTTOM_DECK_Z])
+        mirror([1, 0, 0]) bottom_deck_half("L");
+
+} else if (VIEW == "deck_top") {
+    // Both top deck halves in assembled position — joint check view
+    color("Silver")        top_deck_half("R");
+    color("DarkGray", 0.8) top_deck_half("L");
+
+} else if (VIEW == "deck_top_R") {
+    _r_cx = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    translate([-_r_cx, STRUT_Y / 2, -TOP_DECK_Z])
+        top_deck_half("R");
+
+} else if (VIEW == "deck_top_L") {
+    _l_cx = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    translate([-_l_cx, STRUT_Y / 2, -TOP_DECK_Z])
+        mirror([1, 0, 0]) top_deck_half("L");
+
+} else if (VIEW == "print_bottom") {
+    // Both bottom deck halves in print orientation, side by side, no battery box.
+    _cx = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _sep = BOTTOM_DECK_W / 2 + 20;  // offset so halves don't overlap
+    color("Goldenrod")
+        translate([-_cx - _sep/2, STRUT_Y / 2, -BOTTOM_DECK_Z]) bottom_deck_half("R");
+    color("DarkGoldenrod")
+        translate([-_cx + _sep/2, STRUT_Y / 2, -BOTTOM_DECK_Z]) mirror([1, 0, 0]) bottom_deck_half("L");
+
+} else if (VIEW == "print_top") {
+    // Both top deck halves in print orientation, side by side.
+    _cx = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _sep = DECK_W / 2 + 20;
+    color("Silver")
+        translate([-_cx - _sep/2, STRUT_Y / 2, -TOP_DECK_Z]) top_deck_half("R");
+    color("DarkGray", 0.8)
+        translate([-_cx + _sep/2, STRUT_Y / 2, -TOP_DECK_Z]) mirror([1, 0, 0]) top_deck_half("L");
+
+} else if (VIEW == "print_battery_box") {
+    // All 3 battery box part types in print orientation — one of each, print 2× per type.
+    // Side frame (39×140mm), end frame (39×56mm), plate (56×148mm) — all 4mm tall.
+    // Laid out left-to-right with 20mm gaps; centred at origin.
+    _bbgap = 20;
+    _sf_w = BATT_UPRIGHT_H;   // = 39mm  (print X footprint of side frame)
+    _ef_w = BATT_UPRIGHT_H;   // = 39mm  (print X footprint of end frame)
+    _pl_w = BATT_W_OUTER;     // = 56mm  (print X footprint of plate)
+    _total_w = _sf_w + _bbgap + _ef_w + _bbgap + _pl_w;  // = 174mm
+    _cx = _total_w / 2;
+    color("SteelBlue")
+        translate([-_cx, 0, 0])
+            battery_box_side();   // 39×140×4mm  — print TWO
+    color("CornflowerBlue")
+        translate([-_cx + _sf_w + _bbgap, 0, 0])
+            battery_box_end();    // 39×56×4mm   — print TWO
+    color("LightSteelBlue")
+        translate([-_cx + _sf_w + _bbgap + _ef_w + _bbgap, 0, 0])
+            battery_box_plate();  // 56×148×4mm  — print TWO
+
+} else if (VIEW == "battery_box_side") {
+    // Single side frame in print orientation — lying flat, 4mm face on bed.
+    // Print TWO. Footprint: BATT_UPRIGHT_H(39) × BATT_L_INNER(140mm), 4mm tall.
+    battery_box_side();
+
+} else if (VIEW == "battery_box_end") {
+    // Single end frame in print orientation — lying flat, 4mm face on bed.
+    // Print TWO (both ends are identical). Footprint: BATT_UPRIGHT_H × BATT_W_OUTER(56mm), 4mm tall.
+    battery_box_end();
+
+} else if (VIEW == "battery_box_plate") {
+    // Single top/bottom plate in print orientation — lying flat, 4mm face on bed.
+    // Print TWO (top and bottom are identical). Footprint: BATT_W_OUTER(56) × BATT_L_OUTER(148mm), 4mm tall.
+    battery_box_plate();
+
+} else if (VIEW == "station") {
 
     // ── STATION PREVIEW: right-rear corner (x=+STRUT_X/2, y=-STRUT_Y) ────────
     // One leg
@@ -806,28 +1212,24 @@ if (PRINT_PART != "none") {
     // Bottom deck — full plate, leg slots + bracket holes present, M3 grid OFF for speed
     color("SlateGray", 0.6)
     difference() {
-        union() {
-            deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
-                       mount_holes=false, wire_channel=false,
-                       leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
-                       leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
-                       deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
-            battery_channel();
-        }
+        deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
+                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
+                   leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
+                   deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
         // Bracket holes for this one motor only
         for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
             translate([BRACKET_DECK_X, -STRUT_Y + dy, BOTTOM_DECK_Z - 1])
                 cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 2);
     }
+    battery_box_assembled();
 
     // Top deck — full plate, no holes needed for drivetrain check
     color("Silver", 0.6)
-        deck_plate(TOP_DECK_Z + PLATE_THICKNESS/2,
-                   mount_holes=false, wire_channel=false);
+        deck_plate(TOP_DECK_Z + PLATE_THICKNESS/2);
 
 } else {
 
-    // ── FULL ASSEMBLY: all 4 corners ─────────────────────────────────────────
+    // ── FULL ASSEMBLY ("all"): all 4 corners ──────────────────────────────────
 
     // Corner legs + drivetrain
     for (x = [-STRUT_X/2, STRUT_X/2]) {
@@ -844,30 +1246,14 @@ if (PRINT_PART != "none") {
         }
     }
 
-    // Bottom deck: 12×24mm slot (axle×collar), 28×40mm flange stop, 216×216mm plate
-    // Bracket holes: 3× M3 clearance per motor × 4 motors = 12 holes at X=±BRACKET_DECK_X
-    // Battery channel integral — slides in from robot +Y (front) face
-    color("SlateGray", 0.6)
-    difference() {
-        union() {
-            deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
-                       mount_holes=true, wire_channel=true,
-                       leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
-                       leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
-                       deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
-            battery_channel();
-        }
-        for (sx = [-1, 1])
-            for (sy = [0, -STRUT_Y])
-                for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
-                    translate([sx * BRACKET_DECK_X, sy + dy, BOTTOM_DECK_Z - 1])
-                        cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 2);
-    }
+    // Bottom deck — split into R and L halves, joined by ship-lap at X=0
+    color("SlateGray",     0.6) bottom_deck_half("R");
+    color("SlateGray",     0.6) bottom_deck_half("L");
+    battery_box_assembled();
 
-    // Top deck: 20mm cutout, 28mm flange stop, 202×202mm plate
-    color("Silver", 0.6)
-        deck_plate(TOP_DECK_Z + PLATE_THICKNESS/2,
-                   mount_holes=true, wire_channel=false);
+    // Top deck — split into R and L halves
+    color("Silver",        0.6) top_deck_half("R");
+    color("Silver",        0.6) top_deck_half("L");
 
     // Camera bar
     camera_bar();
