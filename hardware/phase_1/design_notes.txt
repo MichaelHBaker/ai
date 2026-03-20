@@ -1,2 +1,3 @@
-find battery and confirm correct spacing between decks
-motor d shaft through the pillow, with coupler inside bore in leg. this one is 22mm https://www.amazon.com/CHANCS-Motor-Sleeve-Coupling-Accessories/dp/B0B76YTV96?pd_rd_w=9XZ0D&content-id=amzn1.sym.e7d77f83-4d42-48ed-825c-e0597e1533d7&pf_rd_p=e7d77f83-4d42-48ed-825c-e0597e1533d7&pf_rd_r=QT3PVWA1ETRFNGMPA2QR&pd_rd_wg=f98Hi&pd_rd_r=27972251-39b3-4203-9466-4d6837c3377e&ref_=sspa_dk_detail_gen_ai_img_1&sp_csd=d2lkZ2V0TmFtZT1zcF9kZXRhaWxfdGhlbWF0aWM&th=1
+Use threaded inserts for the deck joint bolts? should they be m4 instead of M3
+print partial deck to test fit for upper and lower deck
+make the flanges larger so there is more room to work in assembly, this should also reduce the chamfer angle
