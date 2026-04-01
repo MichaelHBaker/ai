@@ -10,7 +10,8 @@
       "WebFetch(domain:www.studica.com)",
       "WebFetch(domain:www.studica.co)",
       "Bash(python3 -c \":*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "WebFetch(domain:shop.thevirtualfoundry.com)"
     ]
   }
 }

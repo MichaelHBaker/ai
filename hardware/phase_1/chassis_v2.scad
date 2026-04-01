@@ -207,21 +207,24 @@ CAM_BAR_HOLE_D    = LEG_POST_D + 0.3;  // Slip fit over post
 //   Y: ±8mm from axle centre; LEG_SIZE=20mm → ±10mm edge → 2mm edge distance ✓
 LEG_SIZE          = 12;     // Column X dimension (axle direction) throughout; top & bottom deck cutout X = this; also = strut bore length in X
 LEG_BASE_SIZE     = 24;     // Flared lower section Y dimension — matches pillow block body width; bottom deck Y slot = this; X slot = LEG_SIZE
-// Both flanges OD = LEG_BASE_FLANGE_X(22) × LEG_BASE_FLANGE(34mm) — geometrically identical. ✓
-// Column is uniform 12×24mm throughout (inter-deck + slim above top deck) — no taper.
-// Both flanges: base 12×24mm, 5mm overhang each side, PLATE_THICKNESS chamfer height.
-// Top deck slot = 12×24mm (matches slim column). Both flanges use same SCREW_RX and SCREW_RY.
-// X bolt: BOTTOM_FLANGE_SCREW_RX = 8.5mm.  Y bolt: BOTTOM_FLANGE_SCREW_RY = 14.5mm.
-BFLANGE_OVERHANG  = 5;      // Chamfer overhang per side (mm).
-                             //   Face angle from horizontal = atan(PLATE_THICKNESS/BFLANGE_OVERHANG): 5→58°, 6→53°, 8→45°.
-                             //   Corner angle from horizontal = atan(PLATE_THICKNESS/(BFLANGE_OVERHANG×√2)): 5→48.5°, 6→43°.
-                             //   45° from horizontal = empirical PETG fail threshold. Corners need BFLANGE_OVERHANG ≤ 5.6mm.
-                             //   At 6mm: face=53° ✓ but corner=43° ✗ (corner failures observed in print).
-                             //   At 5mm: face=58° ✓  corner=48.5° ✓  no supports needed.
-                             //   NOTE: BOTTOM_DECK_OVERHANG must be ≥ LEG_BASE_FLANGE/2 + 3mm = 20mm. Current=23mm ✓
-LEG_BASE_FLANGE   = LEG_BASE_SIZE + BFLANGE_OVERHANG * 2;  // = 34mm (24 + 2×5); bottom flange Y width
-LEG_BASE_FLANGE_X = LEG_SIZE      + BFLANGE_OVERHANG * 2;  // = 22mm (12 + 2×5); bottom flange X width
-LEG_FLANGE_T      = 2;      // Flange thickness (both flanges)
+// Both flanges: hang-down design — rim top face flush with deck bottom face; chamfer hangs below into clear air.
+// Column uniform 12×24mm. Both decks: simple 12×24mm rectangular slots (no chamfer in deck needed).
+// Deck slides up (bottom) or down (top) over column, stops when deck bottom hits rim top. ✓
+// M3 inserts in DECK from deck bottom face. Bolt from below rim, through rim clearance, into deck insert.
+// Bolt head on flat rim bottom face. M3×10 bolt. No protrusion into inter-deck space. ✓
+// OD = 32×44mm. Chamfer h=20mm, overhang=10mm → corner angle = atan(20/(10×√2)) = 54.7° ✓
+// X bolt: BOTTOM_FLANGE_SCREW_RX = 11mm.  Y bolt: BOTTOM_FLANGE_SCREW_RY = 17mm.
+BFLANGE_OVERHANG  = 10;     // Chamfer overhang per side (mm).
+                             //   Face angle = atan(BFLANGE_CHAMFER_H/BFLANGE_OVERHANG) = atan(20/10) = 63.4° ✓
+                             //   Corner angle = atan(BFLANGE_CHAMFER_H/(BFLANGE_OVERHANG×√2)) = 54.7° ✓
+                             //   45° from horizontal = empirical PETG fail threshold. Both angles well clear. ✓
+                             //   NOTE: BOTTOM_DECK_OVERHANG must be ≥ LEG_BASE_FLANGE/2 + 3mm = 25mm. ✓
+BFLANGE_CHAMFER_H = 20;     // Flange chamfer height (mm). Increased for steeper angle (54.7° corners). ✓
+LEG_BASE_FLANGE   = LEG_BASE_SIZE + BFLANGE_OVERHANG * 2;  // = 44mm (24 + 2×10); flange Y width
+LEG_BASE_FLANGE_X = LEG_SIZE      + BFLANGE_OVERHANG * 2;  // = 32mm (12 + 2×10); flange X width
+LEG_FLANGE_T      = 5;      // Flat rim thickness below each deck. M3 socket head (3mm) seats on rim bottom face.
+FLANGE_INSERT_D   = 3.9;    // M3 heat-set insert press hole dia (insert knurl OD≈4.2mm; melts in at 3.9mm).
+FLANGE_INSERT_DEPTH = 5;    // Insert depth in deck (mm). Deck=8mm thick → 3mm solid above insert. ✓
 LEG_GROUND_EXTRA  = 55;     // Leg bottom below BOTTOM_DECK_Z; covers bearing collar zone
                              // leg_bottom = 90-55 = 35mm (unchanged); lowest collar bolt at 45.5mm → 10.5mm edge dist ✓
 MOTOR_SHAFT_FROM_FACE = 22; // Total shaft from gearbox face: boss(6mm) + free D-shaft(16mm)
@@ -230,9 +233,9 @@ ENCODER_L         = 15.4;  // Pololu 37D encoder module depth beyond motor back 
 LEG_CUTOUT_CLEAR  = 0.3;    // Per-side clearance for deck cutouts around legs
 // Flange securing screw positions — M3 clearance; must match deck_plate() flange_screw_rx/ry formula
 // Each position is the midpoint between the column edge and the flange edge in that direction
-BOTTOM_FLANGE_SCREW_RX = (LEG_SIZE/2 + LEG_BASE_FLANGE_X/2) / 2;    // = (6+11)/2 =  8.5mm  X-pair; 3mm rim-to-edge
-BOTTOM_FLANGE_SCREW_RY = (LEG_BASE_SIZE/2 + LEG_BASE_FLANGE/2) / 2; // = (12+17)/2 = 14.5mm  Y-pair; 3mm rim-to-edge
-// Top flange identical to bottom — X holes at BOTTOM_FLANGE_SCREW_RX=8.5mm, Y holes at BOTTOM_FLANGE_SCREW_RY=14.5mm.
+BOTTOM_FLANGE_SCREW_RX = (LEG_SIZE/2 + LEG_BASE_FLANGE_X/2) / 2;    // = (6+16)/2 = 11mm  X-pair; 5mm rim-to-edge
+BOTTOM_FLANGE_SCREW_RY = (LEG_BASE_SIZE/2 + LEG_BASE_FLANGE/2) / 2; // = (12+22)/2 = 17mm  Y-pair; 5mm rim-to-edge
+// Top flange identical to bottom — same SCREW_RX=11mm, SCREW_RY=17mm. Both flanges hang-down. ✓
 
 // --- Deck geometry ---
 PLATE_THICKNESS        = 8;
@@ -245,10 +248,10 @@ MOTOR_GAP              = 5;     // Clear space between facing ENCODER TIPS (mm),
 //   NOTE: top deck    = 241.2+40 = 281.2mm → split into 2 halves ✓ (each half 140.6mm < 250mm limit)
 STRUT_X                = 241.2; // ← recalculate if MOTOR_GAP, ENCODER_L, or coupler changes
 STRUT_Y                = 170;   // Leg centre-to-centre Y (front-rear spacing; robot is now rectangular)
-DECK_OVERHANG          = 20;    // Top deck overhang — > LEG_BASE_FLANGE/2=17mm ✓; top deck = 210×210mm
-BOTTOM_DECK_OVERHANG   = 23;    // Must be ≥ LEG_BASE_FLANGE/2 + 3mm (=17+3=20mm at BFLANGE_OVERHANG=5) ✓
-                                 // bottom deck = (STRUT_X + 2×23) × (STRUT_Y + 2×23) = 216×216mm
-                                 // Core One 220mm Y → 2mm margin each side ✓ (tight — split deck planned)
+DECK_OVERHANG          = 25;    // Top deck overhang — ≥ LEG_BASE_FLANGE/2+3mm = 22+3=25mm ✓
+BOTTOM_DECK_OVERHANG   = 25;    // Must be ≥ LEG_BASE_FLANGE/2 + 3mm (=22+3=25mm at BFLANGE_OVERHANG=10) ✓
+                                 // bottom deck = (STRUT_X + 2×25) × (STRUT_Y + 2×25) = 291×220mm (split planned)
+                                 // Each half ≈ 145.6mm < 250mm bed limit ✓
 BOTTOM_DECK_Z          = 90;    // Bottom face of lower deck plate
                                  // AXLE_Z = 90-22.3 = 67.7mm; ground clearance = 17.7mm (see AXLE_Z below)
 TOP_DECK_Z             = 145;   // Battery 37mm + 10mm airflow clearance = 47mm above lower deck top (98+47=145)
@@ -425,59 +428,56 @@ module camera_housing() {
 // Origin: leg XY centre at z=0 (ground level)
 //
 // Shape (bottom to top):
-//   Flared column  12×24mm  z = leg_bottom → BOTTOM_DECK_Z          (collar zone; uniform)
-//   Bot. chamfer   12×24 → flange_w×flange_h  z = BOTTOM_DECK_Z → +PLATE_THICKNESS  (within deck; self-supporting ≤45°)
-//   Bot. ledge     flange_w×flange_h  z = BOTTOM_DECK_Z+PLATE_THICKNESS → +LEG_FLANGE_T  (stop above deck)
-//   Inter-deck     12×24mm  z = BOTTOM_DECK_Z+PLATE_THICKNESS+LEG_FLANGE_T → TOP_DECK_Z-LEG_FLANGE_T-PLATE_THICKNESS
-//   Top chamfer    12×24 → 22×34mm  z → TOP_DECK_Z-LEG_FLANGE_T  (identical proportions to bottom chamfer)
-//   Top ledge      22×34mm  z = TOP_DECK_Z-LEG_FLANGE_T → TOP_DECK_Z    (top deck rests here)
-//   Slim column    12×24mm  z = TOP_DECK_Z → TOTAL_HEIGHT               (same Y as inter-deck; no taper)
-//   Post           10mm  z = TOTAL_HEIGHT → TOTAL_HEIGHT+LEG_POST_H     (camera bar mount)
+//   Column         12×24mm  z = leg_bottom → TOTAL_HEIGHT               (continuous; uniform)
+//   Bot. flange    12×24→32×44mm chamfer + 5mm rim.  Rim TOP = BOTTOM_DECK_Z (flush with deck bottom face).
+//                  Chamfer: z = BOTTOM_DECK_Z-LEG_FLANGE_T-BFLANGE_CHAMFER_H → BOTTOM_DECK_Z-LEG_FLANGE_T
+//                             = z = 65mm → 85mm (entirely below deck; free air; self-supporting ✓)
+//                  Rim:      z = 85mm → 90mm (BOTTOM_DECK_Z). Bolt clearance holes through rim.
+//   Top flange     12×24→32×44mm chamfer + 5mm rim.  Rim TOP = TOP_DECK_Z (flush with top deck bottom face).
+//                  Chamfer: z = TOP_DECK_Z-LEG_FLANGE_T-BFLANGE_CHAMFER_H → TOP_DECK_Z-LEG_FLANGE_T
+//                             = z = 120mm → 140mm (entirely in inter-deck space; self-supporting ✓)
+//                  Rim:      z = 140mm → 145mm (TOP_DECK_Z). Bolt clearance holes through rim.
+//   Post           10mm dia  z = TOTAL_HEIGHT → +LEG_POST_H
 //
-// Assembly:  top deck (12×24mm cutout) slides DOWN over slim section, stops on top flange
-//            bottom deck (12×24mm cutout) slides UP over flared section, stops on bottom flange
+// Both flanges: ZERO protrusion into inter-deck space. Corner angle = atan(20/(10×√2)) = 54.7° ✓
+// Assembly:  bottom deck slides UP — 12×24mm slot over column, deck bottom hits bot. rim top (Z=90mm) ✓
+//            top deck slides DOWN — 12×24mm slot over column, deck bottom hits top rim top (Z=145mm) ✓
+//            Neither deck slot needs to pass over 32×44mm flange OD. ✓
+// Fasteners: M3 inserts in DECK bottom face (pressed from below). Bolt from below flange rim into insert.
+//            Bolt head on flat rim bottom face. M3×10. ✓
 module corner_leg() {
     leg_bottom = BOTTOM_DECK_Z - LEG_GROUND_EXTRA;   // = 80 - 45 = 35mm
 
     difference() {
         union() {
-            // Slim upper column (top deck level → camera post) — 12×24mm, same Y as inter-deck column.
-            // Top deck slot = 12×24mm (matches column snugly). Flange bolt Y = BOTTOM_FLANGE_SCREW_RY. ✓
-            translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, TOP_DECK_Z])
-                cube([LEG_SIZE, LEG_BASE_SIZE, TOTAL_HEIGHT - TOP_DECK_Z]);
+            // Main column — continuous 12×24mm from leg bottom to TOTAL_HEIGHT.
+            // Passes through both deck slots (simple rectangular cutouts — no chamfer in deck needed).
+            translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, leg_bottom])
+                cube([LEG_SIZE, LEG_BASE_SIZE, TOTAL_HEIGHT - leg_bottom]);
 
-            // Top flange — geometrically identical to bottom flange.
-            // Base = 12×24mm (inter-deck column full width). OD = 22×34mm. 5mm overhang each side.
-            // Chamfer height = PLATE_THICKNESS = 8mm. Face=58°. Corner=48.5°. No supports. ✓
+            // Bottom flange — hang-down, rim TOP flush with BOTTOM_DECK_Z (deck bottom face).
+            // Chamfer entirely below deck (Z=65→85mm); rim Z=85→90mm. NO inter-deck protrusion. ✓
+            // Deck slides UP: simple 12×24mm slot, deck bottom hits rim top at BOTTOM_DECK_Z. ✓
+            // Insert in DECK bottom face. Bolt from below rim through clearance hole into deck insert.
             hull() {
                 translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2,
-                           TOP_DECK_Z - LEG_FLANGE_T - PLATE_THICKNESS])
+                           BOTTOM_DECK_Z - LEG_FLANGE_T - BFLANGE_CHAMFER_H])
                     cube([LEG_SIZE, LEG_BASE_SIZE, 0.01]);
-                translate([-LEG_BASE_FLANGE_X/2, -LEG_BASE_FLANGE/2, TOP_DECK_Z - LEG_FLANGE_T])
+                translate([-LEG_BASE_FLANGE_X/2, -LEG_BASE_FLANGE/2,
+                           BOTTOM_DECK_Z - LEG_FLANGE_T])
                     cube([LEG_BASE_FLANGE_X, LEG_BASE_FLANGE, LEG_FLANGE_T]);
             }
 
-            // Inter-deck column — uniform 12×24mm throughout (no taper).
-            // X stays LEG_SIZE=12mm (axle direction). Y = LEG_BASE_SIZE=24mm throughout.
-            // Top flange chamfer base matches column width → identical proportions to bottom flange. ✓
-            translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, BOTTOM_DECK_Z + PLATE_THICKNESS])
-                cube([LEG_SIZE, LEG_BASE_SIZE, TOP_DECK_Z - LEG_FLANGE_T - PLATE_THICKNESS
-                                               - (BOTTOM_DECK_Z + PLATE_THICKNESS)]);
-
-            // Flared lower column (through bottom deck and down to leg bottom)
-            // X (axle direction) = LEG_SIZE=12mm; Y (collar direction) = LEG_BASE_SIZE=24mm
-            translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, leg_bottom])
-                cube([LEG_SIZE, LEG_BASE_SIZE,
-                      BOTTOM_DECK_Z + PLATE_THICKNESS - leg_bottom]);
-
-            // Bottom flange — chamfer WITHIN deck zone (Z=BOTTOM_DECK_Z → +PLATE_THICKNESS).
-            // Narrow (column dims) at deck bottom face, wide (flange dims) at deck top face.
-            // Each printed layer wider than last → self-supporting at BFLANGE_OVERHANG/PLATE_THICKNESS angle. ✓
-            // Deck slides up, chamfer seats into matching chamfered cutout; ledge (LEG_FLANGE_T) is stop.
+            // Top flange — same hang-down design as bottom flange.
+            // Chamfer Z=120→140mm (inter-deck space). Rim Z=140→145mm, rim top flush with TOP_DECK_Z. ✓
+            // Deck slides DOWN: simple 12×24mm slot, deck bottom hits rim top at TOP_DECK_Z. ✓
+            // Insert in TOP DECK bottom face. Bolt from below rim into deck insert.
             hull() {
-                translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2, BOTTOM_DECK_Z])
+                translate([-LEG_SIZE/2, -LEG_BASE_SIZE/2,
+                           TOP_DECK_Z - LEG_FLANGE_T - BFLANGE_CHAMFER_H])
                     cube([LEG_SIZE, LEG_BASE_SIZE, 0.01]);
-                translate([-LEG_BASE_FLANGE_X/2, -LEG_BASE_FLANGE/2, BOTTOM_DECK_Z + PLATE_THICKNESS])
+                translate([-LEG_BASE_FLANGE_X/2, -LEG_BASE_FLANGE/2,
+                           TOP_DECK_Z - LEG_FLANGE_T])
                     cube([LEG_BASE_FLANGE_X, LEG_BASE_FLANGE, LEG_FLANGE_T]);
             }
 
@@ -502,30 +502,24 @@ module corner_leg() {
                     rotate([0, 90, 0])
                     cylinder(d=COLLAR_BOLT_D, h=LEG_SIZE + 2*COLLAR_FACE_T + 4, center=true);
 
-        // ── Bottom flange securing holes — vertical clearance holes through chamfer zone ──
-        // Positions: midway between column edge and flange edge (matches deck_plate flange_screw_rx/ry).
-        // TODO: fastener arrangement to be finalised — flat-head countersinks no longer appropriate;
-        //       bolt head/nut access through chamfer zone to be decided (v2.7).
+        // ── Bottom flange — 4× M3 clearance holes through flat rim (Z=85→90mm) ──
+        // Bolt head on flat rim bottom face (Z=85mm). Bolt up through rim into deck insert. ✓
+        // Deck insert holes (FLANGE_INSERT_D × FLANGE_INSERT_DEPTH from deck bottom) in deck_plate(). ✓
         for (sx = [-BOTTOM_FLANGE_SCREW_RX, BOTTOM_FLANGE_SCREW_RX])
-            translate([sx, 0, BOTTOM_DECK_Z - 2])
-                cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + LEG_FLANGE_T + 3);
+            translate([sx, 0, BOTTOM_DECK_Z - LEG_FLANGE_T - 0.5])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_FLANGE_T + 1);
         for (sy = [-BOTTOM_FLANGE_SCREW_RY, BOTTOM_FLANGE_SCREW_RY])
-            translate([0, sy, BOTTOM_DECK_Z - 2])
-                cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + LEG_FLANGE_T + 3);
+            translate([0, sy, BOTTOM_DECK_Z - LEG_FLANGE_T - 0.5])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_FLANGE_T + 1);
 
-        // ── Top flange securing holes — 4× M3 clearance, nyloc nut in inter-deck space ──
-        // Top flange OD = LEG_BASE_FLANGE_X(22) × LEG_BASE_FLANGE(34mm) — same as bottom flange OD.
-        // X bolts reuse BOTTOM_FLANGE_SCREW_RX (same X column = LEG_SIZE both flanges).
-        // Top flange identical to bottom — same SCREW_RX, SCREW_RY, chamfer height, Z extents.
-        // Slim column = 12×24mm → column edge at ±12mm → bolt Y=14.5mm clears column → visible on slope ✓
-        // Z start: 1mm below chamfer bottom = TOP_DECK_Z - LEG_FLANGE_T - PLATE_THICKNESS - 1 = Z134.
-        // Height:  PLATE_THICKNESS(8) + LEG_FLANGE_T(2) + 2 = 12mm → exits 1mm past flat top face. ✓
+        // ── Top flange — 4× M3 clearance holes through flat rim (Z=140→145mm) ──
+        // Same arrangement as bottom flange. Deck insert holes in deck_plate(). ✓
         for (sx = [-BOTTOM_FLANGE_SCREW_RX, BOTTOM_FLANGE_SCREW_RX])
-            translate([sx, 0, TOP_DECK_Z - LEG_FLANGE_T - PLATE_THICKNESS - 1])
-                cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + LEG_FLANGE_T + 2);
+            translate([sx, 0, TOP_DECK_Z - LEG_FLANGE_T - 0.5])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_FLANGE_T + 1);
         for (sy = [-BOTTOM_FLANGE_SCREW_RY, BOTTOM_FLANGE_SCREW_RY])
-            translate([0, sy, TOP_DECK_Z - LEG_FLANGE_T - PLATE_THICKNESS - 1])
-                cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + LEG_FLANGE_T + 2);
+            translate([0, sy, TOP_DECK_Z - LEG_FLANGE_T - 0.5])
+                cylinder(d=MOUNT_HOLE_D, h=LEG_FLANGE_T + 1);
     }
 }
 
@@ -692,15 +686,17 @@ module deck_plate(z_center,
                              center=true);
                 }
 
-                // Flange securing holes — M3 cross pattern, midway between cutout edge and flange edge
+                // Flange insert holes — M3 heat-set from deck BOTTOM face going UP.
+                // Matches bolt positions in corner_leg() flange rim. Bolt M3×10 from below rim into insert.
+                // Positions: midway between column edge and flange OD edge (matches flange_screw formula).
                 flange_screw_rx = (leg_cutout/2 + lfx/2) / 2;
                 flange_screw_ry = (lcy/2 + leg_flange/2) / 2;
                 for (sx = [-flange_screw_rx, flange_screw_rx])
-                    translate([x + sx, y, 0])
-                        cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 1, center=true);
+                    translate([x + sx, y, -PLATE_THICKNESS/2])
+                        cylinder(d=FLANGE_INSERT_D, h=FLANGE_INSERT_DEPTH + 0.5);
                 for (sy = [-flange_screw_ry, flange_screw_ry])
-                    translate([x, y + sy, 0])
-                        cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 1, center=true);
+                    translate([x, y + sy, -PLATE_THICKNESS/2])
+                        cylinder(d=FLANGE_INSERT_D, h=FLANGE_INSERT_DEPTH + 0.5);
             }
 
     }
@@ -998,7 +994,7 @@ module _bottom_deck_full() {
         deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS / 2,
                    leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
                    leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
-                   deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
+                   deck_overhang=BOTTOM_DECK_OVERHANG);  // simple slot: flange hangs below deck ✓
         // Motor bracket holes
         for (sx = [-1, 1])
             for (sy = [0, -STRUT_Y])
@@ -1091,8 +1087,8 @@ module camera_bar() {
 // ============================================================================
 
 _leg_bot = BOTTOM_DECK_Z - LEG_GROUND_EXTRA;           // = 35mm world Z
-_lower_h = BOTTOM_DECK_Z + PLATE_THICKNESS + LEG_FLANGE_T - _leg_bot;
-           // = 90+8+2-35 = 65mm (column + chamfer-within-deck + ledge)
+_lower_h = BOTTOM_DECK_Z - _leg_bot;
+           // = 90-35 = 55mm (column only; flange now hangs below deck, outside this section)
 
 if (VIEW == "leg") {
     // Full corner leg standing upright, base at z=0
@@ -1101,8 +1097,8 @@ if (VIEW == "leg") {
 
 } else if (VIEW == "leg_lower") {
     // Lower strut section (world Z=35..100), standing upright — leg-bottom on bed.
-    // Height: _lower_h = 65mm.  Column 12×24mm → chamfer within deck zone → ledge at top.
-    // Chamfer (Z=90→98) grows each layer wider ≤45° → self-supporting, NO SUPPORTS needed. ✓
+    // Height: _lower_h = 55mm.  Column 12×24mm; bottom flange chamfer Z=82→98 (partly below deck, partly within).
+    // Chamfer widens UPWARD — self-supporting, NO SUPPORTS needed. ✓
     // Axle bore (8 mm) and collar bolt holes (4.3 mm) horizontal — small dia, bridge fine.
     translate([0, 0, -_leg_bot])
         intersection() {
@@ -1214,7 +1210,7 @@ if (VIEW == "leg") {
         deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
                    leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
                    leg_flange=LEG_BASE_FLANGE, leg_flange_x=LEG_BASE_FLANGE_X,
-                   deck_overhang=BOTTOM_DECK_OVERHANG, leg_chamfer=true);
+                   deck_overhang=BOTTOM_DECK_OVERHANG);  // simple slot: flange hangs below deck ✓
         // Bracket holes for this one motor only
         for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
             translate([BRACKET_DECK_X, -STRUT_Y + dy, BOTTOM_DECK_Z - 1])
