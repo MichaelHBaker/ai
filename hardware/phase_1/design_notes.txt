@@ -1,4 +1,0 @@
-Use threaded inserts for the deck joint bolts? should they be m4 instead of M3
-print partial deck to test fit for upper and lower deck
-make the flanges larger so there is more room to work in assembly, this should also reduce the chamfer angle
-flange holes can't be through, they need a place for the nut to sit and it needs enough material to hold

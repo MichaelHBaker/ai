@@ -7,7 +7,7 @@
 //           Each side box: 50mm(X) × 200mm(Y) × 47mm(Z) open interior.
 //           Constructed like battery box: 2 rail frames (±X walls, 8mm thick, long in Y)
 //           + 2 end caps (±Y walls, 8mm thick, short). NO top/bottom plates —
-//           8mm walls carry M4 heat-set inserts directly, decks bear on rail edges.
+//           8mm walls carry M3 heat-set inserts directly, decks bear on rail edges.
 //           Corner legs simplified: 12×24mm column below bottom deck,
 //           12×12mm square stub above bottom deck (captured inside side box).
 //           Result: 3× parallel closed box beams (left side box + battery box
@@ -57,15 +57,15 @@
 //   Z: BOTTOM_DECK_Z (90mm) → TOP_DECK_Z (145mm) → 55mm total, 47mm open interior.
 //   Construction (NO plates — thick-wall frame only):
 //     2× rail frames: ±X walls, 8mm thick in X, 184mm long (inner), 47mm tall [print 2/box]
-//                     Outer rail has M4 heat-set inserts top+bottom + leg stub notch slots.
+//                     Both rails have M3 heat-set inserts top+bottom (3/face). Outer rail also has leg stub notch slots.
 //     2× end caps:   ±Y walls, full 50mm wide in X, 8mm thick, 47mm tall [print 2/box]
 //     NO top/bottom plates — deck skins bear directly on frame top/bottom edges.
-//   Deck bolts: M4 through deck (8mm) into insert in rail top/bottom edge. M4×16.
+//   Deck bolts: M3 through deck (8mm) into insert in rail top/bottom edge. M3×16.
 //   Deck bolt Y positions: SIDE_BOX_BOLT_INSET(40mm) from each box Y end,
 //                          centre bolt at DECK_Y_CENTER (−85mm)
 //                          = −25mm, −85mm, −145mm  (3 per box per deck face)
 //   Leg stub notch slots: 12.6×12.6mm routed into outer rail at each end — stub captured inside.
-//   Corner tie bolts: M4 at each of 4 corners, through end cap into rail frame, nut in hollow.
+//   Corner tie bolts: M3 at each of 4 corners, through end cap into rail frame, nut in hollow.
 //
 // STRUCTURAL LOAD PATH
 //   Ground → wheel → axle → pillow blocks → leg column → motor bracket → bottom deck
@@ -98,7 +98,7 @@
 //   8   2+2  Mecanum wheel           Studica 100mm Slim Mecanum (2L + 2R)
 //   9     4  Wheel hub               Studica Clamping 6mm D-Shaft Hub
 //  10     2  Battery                 Zeee 3S 5200mAh 80C Hardcase, 11.1V
-//  10a    1  Battery adapter         T-connector (Deans) to XT60F
+//  10a    1  Power dist. adapter     BFRC XT60-to-XT60 parallel board (1 battery in → 2× XT60 out to motor drivers)
 //  11     1  Battery charger         SkyRC iMAX B6AC V2 AC/DC balance charger
 //  12     1  Main fuse + holder      25A resettable ATC blade fuse, 10 AWG holder
 //  13     1  Buck converter 5V/5A    Pololu D24V50F5
@@ -127,15 +127,17 @@
 //  "battery_box_end"   → battery box end frame             — print TWO
 //  "battery_box_plate" → battery box top/bottom plate      — print TWO
 //  "print_battery_box" → all 3 battery box types together  — print layout
-//  "side_box_rail"     → side box inner rail (long wall)    — print FOUR (2/box × 2 boxes)
-//  "side_box_rail_outer" → outer rail with deck inserts + leg notch — print TWO (flip for left)
+//  "side_box_rail"       → inner rail (no Cytron holes, no notch)   — print FOUR (2/box × 2 boxes)
+//  "side_box_rail_outer" → outer rail: deck inserts (top+bottom edges) + Cytron M3 inserts (top edge) — print TWO (flip for left)
 //  "side_box_end"      → side box end cap                  — print FOUR
 //  "side_box_plate"    → side box plate (OBSOLETE — no longer used)
 //  "print_side_box"    → side box part types together      — print layout
+//  "side_box_assembly" → one assembled side box at z=0     — inspection view
+//  "battery_box_assembly" → assembled battery box at z=0   — inspection view
 //  "camera_bar_R"      → right half of camera bar          — print ONE  (140.6×37mm, 8mm tall)
 //  "camera_bar_L"      → left  half of camera bar          — print ONE
 //  "print_camera_bar"  → both camera bar halves side-by-side — print layout
-VIEW = "deck_bottom_R";   // ← change here
+VIEW = "side_box_assembly";   // ← change here
 
 $fn = (VIEW == "station") ? 20 : 60;
 
@@ -189,12 +191,15 @@ BOTTOM_DECK_W   = STRUT_X + BOTTOM_DECK_OVERHANG_X * 2;
 BOTTOM_DECK_D   = STRUT_Y + BOTTOM_DECK_OVERHANG * 2;
 DECK_Y_CENTER   = -STRUT_Y / 2;   // = -85mm
 
-// --- Split deck lap joint ---
-LAP_OVERLAP      = 20;
-LAP_BOLT_INSET   = 15;  // Y inset from deck front/rear edge to lap bolt centre
-                          // Front bolt: DECK_Y_CENTER + DECK_D/2 - LAP_BOLT_INSET = +5mm
-                          // Rear  bolt: DECK_Y_CENTER - DECK_D/2 + LAP_BOLT_INSET = -175mm
-                          // Both 12mm clear of battery box outer faces (-7 / -163mm) ✓
+// --- Deck joint alignment stubs (replaces lap joint) ---
+// R half: 5mm pins project from X=0 face into L half. L half: matching blind holes.
+// Battery box bolts provide all structural tie — stubs are assembly-alignment only.
+// No lap step → both halves print flat face down, same surface quality, no bolt heads in surface.
+ALIGN_STUB_D     = 5.0;   // pin diameter
+ALIGN_STUB_L     = 8.0;   // pin protrusion length
+ALIGN_STUB_CLEAR = 0.3;   // radial clearance for hole (hole dia = ALIGN_STUB_D + 2×CLEAR = 5.6mm)
+ALIGN_STUB_YF    = DECK_Y_CENTER + DECK_D / 2 - 20;  // front pin ≈ Y=0mm
+ALIGN_STUB_YR    = DECK_Y_CENTER - DECK_D / 2 + 20;  // rear  pin ≈ Y=−170mm
 
 // --- Drivetrain ---
 MOTOR_D           = 37;
@@ -223,13 +228,13 @@ BAR_WIDTH         = 25;
 BAR_THICKNESS     = 8;
 
 // --- Battery retention box (unchanged from v2) ---
-BATT_L              = 149;   // inner Y = 150mm (battery 139mm + 11mm wire clearance at end)
-BATT_W              = 49;   // inner X = 50mm (battery 47mm wide lying flat + 3mm clearance)
-BATT_H              = 37;   // battery Z height lying flat — fits in end frame hole (40mm) with 3mm clearance
-BATT_RAIL_T         = 8;    // frame wall thickness — thick enough for M4 insert in top/bottom edge
-BATT_FRAME_H        = TOP_DECK_Z - BOTTOM_DECK_Z - PLATE_THICKNESS;  // = 47mm
-BATT_CLEAR          = 0.5;
-BATT_RAIL_BOLT_D    = 4.3;  // M4 clearance — corner tie nyloc bolts through end faces
+BATT_L              = 138.34; // inner Y = 139.14mm (battery 138.34mm + 0.4mm per side — wires exit front upper corner, no end clearance needed)
+BATT_W              = 46.6; // inner X = 47.4mm (battery 46.60mm + 0.4mm per side snug fit)
+BATT_H              = 36.55; // battery Z height lying flat (measured) — fits in end frame hole (40mm) with 3.45mm clearance
+BATT_RAIL_T         = 8;    // frame wall thickness — thick enough for M3 insert in top/bottom edge
+BATT_FRAME_H        = TOP_DECK_Z - BOTTOM_DECK_Z - PLATE_THICKNESS;  // = 56mm (154−90−8)
+BATT_CLEAR          = 0.25; // per-side clearance — 0.5mm total gap (measured 2mm at 0.8, printer runs ~0.4mm oversize on opening)
+BATT_RAIL_BOLT_D    = 3.4;  // M3 clearance — corner tie nyloc bolts through end faces
 BATT_RAIL_BOLT_INSET = 20;  // Y inset for side-frame deck bolt inserts (3 per rail)
 BATT_END_BOLT_INSET  = 8;   // X inset for end-frame deck bolt inserts.
                               // world X = ±(BATT_W_OUTER/2 − 8) = ±24mm — 14mm past
@@ -243,6 +248,55 @@ BATT_L_OUTER        = BATT_L_INNER + 2 * BATT_RAIL_T;
 BATT_PLATE_T        = 0;    // plates eliminated — deck IS the flange (structurally superior)
 BATT_UPRIGHT_H      = BATT_FRAME_H - 2 * BATT_PLATE_T;  // = 47mm (full inter-deck height)
 
+// --- XT60 adapter holder (sits on top of bottom deck, right half from camera perspective) ---
+// Pens in the BFRC XT60-to-XT60 parallel adapter board. 0.5mm play baked into inner dims.
+// Oriented with 54mm dim along Y, 28.5mm dim along X (rotated 90° to fit between battery
+// box outer face at X=+33mm and motor bracket holes at X=75.85mm).
+XT60_CX = 54;     // world X centre: right side; outer X = 37.75–70.25mm (5mm/4mm clearances)
+XT60_CY = -157;   // world Y centre: outer Y = -186 to -128mm (4mm inside deck rear edge)
+XT60_IW = 53.4;   // inner long dim (along Y after rotation)
+XT60_ID = 28.1;   // inner short dim (along X after rotation)
+XT60_T  = 2.0;    // wall thickness → outer 58×32.5mm (in Y×X)
+XT60_H  = 6.0;    // wall height
+
+// --- PCB board standoffs — tapered friction-fit pins ---
+STANDOFF_H        = 5.0;   // pedestal height — clears M3 socket-cap bolt heads (3mm) at lap joint
+PIN_H             = 4.0;   // pin height above pedestal top
+
+// Raspberry Pi 5 — RP-008347-DS-1 mechanical drawing
+// Long axis (85mm) along Y, short axis (56mm) along X.
+// Centred on deck joint (X=0) — board straddles both halves, 2 pins per half.
+// 4 × M2.5 holes, 49.0mm(X) × 58.0mm(Y) centre-to-centre.
+PI5_HOLE_D        = 2.75;  // PCB hole diameter
+PI5_HOLE_X        = 49.0;  // hole spacing along X (short axis, board 56mm wide)
+PI5_HOLE_Y        = 58.0;  // hole spacing along Y (long axis, board 85mm deep)
+PI5_CX            = 0;     // centred on joint — board spans X = −28 to +28mm
+PI5_CY            = -25.0; // board centre Y — front edge at +17.5mm (~2.5mm from deck leading edge)
+                            // Pi sits under camera bar; front legs at Y=0, deck leading edge at Y=+20mm
+
+// Pololu D24V50F5 (item 2851) — 5V/5A step-down regulator on centreline behind Pi 5.
+// 2 × M2 holes (diagonally opposite), 13.46mm(X) × 16.0mm(Y) centre-to-centre. Board 17.8mm(X) × 20.3mm(Y).
+REG_HOLE_D        = 2.18;  // PCB hole diameter
+REG_HOLE_X        = 13.46; // hole spacing along X (diagonal pair)
+REG_HOLE_Y        = 16.0;  // hole spacing along Y (diagonal pair)
+REG_CX            = 0;     // on centreline — straddles deck joint, 1 pin per half
+REG_CY            = PI5_CY - 85.0/2 - 10 - 20.3/2;
+                            // 10mm gap behind Pi 5 rear edge (Pi 85mm in Y) → centre ≈ −88mm
+
+// Wire clearance holes flanking regulator (one per side, through deck thickness)
+WIRE_HOLE_D       = 14.0;  // diameter
+WIRE_HOLE_X       = 16.0;  // X offset from centreline — symmetric either side of joint, 2mm gap from regulator body
+WIRE_HOLE_Y       = REG_CY - 20.3/2 - 15;
+                            // 15mm rearward of regulator rear edge → ≈ −113mm
+                            // (battery side-rail bolts are at X=±29mm, no conflict with holes at X=±16mm)
+
+// --- Encoder cable holes (through bottom deck, one per side) ---
+// 8mm diameter holes just outside battery box outer walls, centred fore/aft.
+// Encoder wire bundles (connectors removed) route from under-deck to Cytron boards above.
+ENCODER_HOLE_D  = 8;    // hole diameter
+// Centre X: 2mm outside battery box outer face (BATT_W_OUTER/2 = 31.55mm) + hole radius
+ENCODER_HOLE_CX = BATT_W_OUTER/2 + ENCODER_HOLE_D/2 + 2;  // = 37.55mm
+
 // --- Side boxes (v3 new) ---
 //
 // Two boxes: left (x_center=−STRUT_X/2) and right (x_center=+STRUT_X/2).
@@ -255,12 +309,12 @@ BATT_UPRIGHT_H      = BATT_FRAME_H - 2 * BATT_PLATE_T;  // = 47mm (full inter-de
 // Box Z height = SIDE_BOX_H = BATT_FRAME_H = 47mm (full inter-deck clear height).
 //
 // Construction (NO plates — thick-wall frame only):
-//   SIDE_BOX_T = 8mm wall → thick enough for M4 insert in top/bottom edge (INSERT_DEPTH=4.3mm).
+//   SIDE_BOX_T = 8mm wall → thick enough for M3 insert in top/bottom edge (INSERT_DEPTH=4.3mm).
 //   SIDE_BOX_PLATE_T = 0 (no plates).
 //   SIDE_BOX_WALL_H = 47mm full inter-deck height (rails sit directly on bottom deck, top deck sits on rails).
 //   Rail frames (2/box): SIDE_BOX_T(8) × SIDE_BOX_L_INNER(184) × SIDE_BOX_WALL_H(47).
-//     Outer rail: M4 inserts top+bottom edge (3/face) + leg stub notch slots. Print lying flat, footprint 47×184mm. ✓
-//     Inner rail: M4 inserts top+bottom edge (3/face). Print lying flat, footprint 47×184mm. ✓
+//     Outer rail: M3 inserts top+bottom edge (3/face) + leg stub notch slots. Print lying flat, footprint 47×184mm. ✓
+//     Inner rail: M3 inserts top+bottom edge (3/face). Print lying flat, footprint 47×184mm. ✓
 //   End caps  (2/box): SIDE_BOX_W(50) × SIDE_BOX_T(8) × SIDE_BOX_WALL_H(47).
 //     Print lying flat, footprint 47×50mm. ✓
 //   No plates — 2 prints/box (rails only) + 2 end caps = 4 parts/box.
@@ -269,12 +323,12 @@ BATT_UPRIGHT_H      = BATT_FRAME_H - 2 * BATT_PLATE_T;  // = 47mm (full inter-de
 //                                DECK_Y_CENTER = −85mm,
 //                                −(STRUT_Y+SIDE_BOX_OVER)+SIDE_BOX_BOLT_INSET = −155mm.
 // SIDE_BOX_BOLT_INSET = 40mm clears leg stubs (stubs at SIDE_BOX_OVER=15mm, bolts at 15±40). ✓
-// Deck bolt X: ±SIDE_BOX_RAIL_X (outer rail centre). Insert in rail edge, clearance in deck. M4×16.
+// Deck bolt X: ±SIDE_BOX_RAIL_X (outer rail centre). Insert in rail edge, clearance in deck. M3×16.
 //
 SIDE_BOX_W        = 50;    // X width of each side box
                              // Outer face at STRUT_X/2 + DECK_OVERHANG_X = 127.6mm → 3mm from wheel ✓
                              // Box is offset 13mm inboard so outer face stays within deck edge.
-SIDE_BOX_T        = 8;     // Frame wall thickness — thick enough for M4 insert in top/bottom edge
+SIDE_BOX_T        = 8;     // Frame wall thickness — thick enough for M3 insert in top/bottom edge
 SIDE_BOX_OVER     = 15;    // Y extension past each leg centre (each end)
 SIDE_BOX_L        = STRUT_Y + 2 * SIDE_BOX_OVER;  // = 200mm Y length
 SIDE_BOX_H        = BATT_FRAME_H;                  // = 47mm
@@ -292,6 +346,11 @@ SIDE_BOX_LEG_LOCAL_X = SIDE_BOX_W - DECK_OVERHANG_X;  // = 38mm from inner face 
 // Outer rail centre world X — deck clearance holes target this for each box:
 //   = box centre + half box width − half wall thickness = 102.6 + 25 − 4 = 123.6mm
 SIDE_BOX_RAIL_X  = SIDE_BOX_X + SIDE_BOX_W/2 - SIDE_BOX_T/2;
+// Inner rail centre world X — deck clearance holes also needed here:
+//   = box centre − half box width + half wall thickness = 102.6 − 25 + 4 = 81.6mm
+SIDE_BOX_RAIL_X_INNER = SIDE_BOX_X - SIDE_BOX_W/2 + SIDE_BOX_T/2;
+CYTRON_HOLE_SPACING = 78.25;  // hole-to-hole centre distance along board long axis (Y direction)
+CYTRON_HOLE_D       = 3.2;   // Cytron MDD10A PCB mounting hole diameter (M3 clearance)
 INSERT_D          = 3.7;   // M3 heat-set insert press hole dia (3.9mm OD narrow end − 0.2mm interference)
 INSERT_DEPTH      = 6.0;   // Insert depth in frame edge (5.7mm insert + 0.3mm buffer)
 M3_CLEAR_D        = 3.4;   // M3 clearance hole in deck plates and lap joints
@@ -299,6 +358,8 @@ M3_CLEAR_D        = 3.4;   // M3 clearance hole in deck plates and lap joints
 // Derived side box dimensions
 SIDE_BOX_L_INNER  = SIDE_BOX_L - 2 * SIDE_BOX_T;          // = 184mm rail frame Y length
 SIDE_BOX_WALL_H   = SIDE_BOX_H - 2 * SIDE_BOX_PLATE_T;    // = 47mm frame upright height (full inter-deck)
+// Cytron MDD10A mounting — M3 inserts in top edge of outer rail (installed top face, print X=WALL_H face).
+// Screws go down (installed -Z) from Cytron board into these inserts. Centred on rail thickness (t/2).
 
 // Bolt positions in plate local Y (origin at rear Y face of plate):
 // plate local Y=0 → world Y = -(STRUT_Y+SIDE_BOX_OVER) = -185 (rear)
@@ -493,7 +554,7 @@ module deck_plate(z_center,
 }
 
 // ============================================================================
-// BATTERY BOX MODULES (updated v3: M4 inserts, 8mm walls, no plates, 3 side bolts)
+// BATTERY BOX MODULES (updated v3: M3 inserts, 8mm walls, no plates, 3 side bolts)
 // ============================================================================
 
 function _side_bolt_y(i)  =
@@ -507,12 +568,12 @@ module battery_box_side() {
     difference() {
         cube([BATT_UPRIGHT_H, BATT_L_INNER, t]);
         translate([t, t, -1]) cube([BATT_UPRIGHT_H-2*t, BATT_L_INNER-2*t, t+2]);
-        // M4 insert holes at each deck-facing end (print X=0 = bottom deck, X=BATT_UPRIGHT_H = top deck)
+        // M3 insert holes at each deck-facing end (print X=0 = bottom deck, X=BATT_UPRIGHT_H = top deck)
         for (i = [0:2]) translate([-1, _side_bolt_y(i), t/2])
             rotate([0,90,0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
         for (i = [0:2]) translate([BATT_UPRIGHT_H-INSERT_DEPTH, _side_bolt_y(i), t/2])
             rotate([0,90,0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 corner tie clearance holes at each Y end
+        // M3 corner tie clearance holes at each Y end
         translate([BATT_UPRIGHT_H/2, -1, t/2])
             rotate([-90,0,0]) cylinder(d=M3_CLEAR_D, h=t+2);
         translate([BATT_UPRIGHT_H/2, BATT_L_INNER+1, t/2])
@@ -525,12 +586,12 @@ module battery_box_end() {
     difference() {
         cube([BATT_UPRIGHT_H, BATT_W_OUTER, t]);
         translate([t, t, -1]) cube([BATT_UPRIGHT_H-2*t, BATT_W_OUTER-2*t, t+2]);
-        // M4 insert holes at each deck-facing end
+        // M3 insert holes at each deck-facing end
         for (i = [0:1]) translate([-1, _end_bolt_x(i), t/2])
             rotate([0,90,0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
         for (i = [0:1]) translate([BATT_UPRIGHT_H-INSERT_DEPTH, _end_bolt_x(i), t/2])
             rotate([0,90,0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 corner tie insert holes from inner face (print Z=0 = installed battery-interior side).
+        // M3 corner tie insert holes from inner face (print Z=0 = installed battery-interior side).
         // Bolt passes through side-rail clearance hole and threads into these inserts.
         for (cy = [t/2, BATT_W_OUTER-t/2])
             translate([BATT_UPRIGHT_H/2, cy, -1])
@@ -563,13 +624,13 @@ module _battery_box_side_upright() {
     difference() {
         cube([t, BATT_L_INNER, BATT_UPRIGHT_H]);
         translate([-1, t, t]) cube([t+2, BATT_L_INNER-2*t, BATT_UPRIGHT_H-2*t]);
-        // M4 insert holes — bottom deck face (bolt enters from below)
+        // M3 insert holes — bottom deck face (bolt enters from below)
         for (i = [0:2]) translate([t/2, _side_bolt_y(i), -1])
             cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 insert holes — top deck face (bolt enters from above)
+        // M3 insert holes — top deck face (bolt enters from above)
         for (i = [0:2]) translate([t/2, _side_bolt_y(i), BATT_UPRIGHT_H-INSERT_DEPTH])
             cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 corner tie clearance holes at each Y end
+        // M3 corner tie clearance holes at each Y end
         translate([t/2, -1, BATT_UPRIGHT_H/2])
             rotate([-90,0,0]) cylinder(d=M3_CLEAR_D, h=t+2);
         translate([t/2, BATT_L_INNER+1, BATT_UPRIGHT_H/2])
@@ -579,17 +640,20 @@ module _battery_box_side_upright() {
 
 module _battery_box_end_upright() {
     t = BATT_RAIL_T;
+    // Centred void: window = BATT_UPRIGHT_H − 2×t = 56 − 16 = 40mm tall × BATT_W_INNER wide.
+    // Battery (36.55mm) fits with 3.45mm height clearance; 8mm base ledge means ~3.3° tilt to insert.
+    // ~19mm open air above battery (wire routing / XT60 lead space).
     translate([-BATT_W_OUTER/2, 0, 0])
     difference() {
         cube([BATT_W_OUTER, t, BATT_UPRIGHT_H]);
         translate([t, -1, t]) cube([BATT_W_OUTER-2*t, t+2, BATT_UPRIGHT_H-2*t]);
-        // M4 insert holes — bottom deck face
+        // M3 insert holes — bottom deck face (bolt enters from below)
         for (i = [0:1]) translate([_end_bolt_x(i), t/2, -1])
             cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 insert holes — top deck face
+        // M3 insert holes — top deck face
         for (i = [0:1]) translate([_end_bolt_x(i), t/2, BATT_UPRIGHT_H-INSERT_DEPTH])
             cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
-        // M4 corner tie insert holes from inner face (local Y=0 = battery-interior side).
+        // M3 corner tie insert holes from inner face (local Y=0 = battery-interior side).
         // Bolt passes through side-rail clearance hole and threads into these inserts.
         for (cx = [t/2, BATT_W_OUTER-t/2])
             translate([cx, -1, BATT_UPRIGHT_H/2])
@@ -608,7 +672,7 @@ module battery_box_assembled() {
         translate([ inner_x,                 side_y0, zf]) _battery_box_side_upright();
         translate([-(inner_x + BATT_RAIL_T), side_y0, zf]) _battery_box_side_upright();
         translate([0, end_y_front,             zf]) _battery_box_end_upright();
-        translate([0, end_y_rear - BATT_RAIL_T, zf]) _battery_box_end_upright();
+        translate([0, end_y_rear,              zf]) mirror([0, 1, 0]) _battery_box_end_upright();
     }
 }
 
@@ -618,11 +682,11 @@ module battery_box_assembled() {
 //
 // Structure (no plates — thick-wall only):
 //   Rail frames  (±X faces, long in Y): 8mm thick in X, SIDE_BOX_L_INNER(184mm) in Y, SIDE_BOX_WALL_H(47mm) tall.
-//     Outer rail: M4 inserts top+bottom edge + leg stub notch slots.
-//     Inner rail: M4 inserts top+bottom edge only.
+//     Outer rail: M3 inserts top+bottom edge + leg stub notch slots.
+//     Inner rail: M3 inserts top+bottom edge only.
 //   End caps     (±Y faces, short):     SIDE_BOX_W(50mm) in X, 8mm thick, 47mm tall.
 //   NO top/bottom plates — decks bear directly on rail top/bottom edges.
-//   Corner tie bolts at each of 4 corners: M4 through end cap into rail frame, nut in hollow.
+//   Corner tie bolts at each of 4 corners: M3 through end cap into rail frame, nut in hollow.
 //
 // Print modules use lying-flat orientation (thin dimension = print Z = bed height):
 //   side_box_rail():  print Z=8mm,  footprint 47×184mm — print FOUR (2/box × 2 boxes)
@@ -633,34 +697,41 @@ module battery_box_assembled() {
 // x_center = ±STRUT_X/2; boxes run Y from -(STRUT_Y+SIDE_BOX_OVER) to +SIDE_BOX_OVER.
 
 // --- PRINT module: rail frame (long ±X-face wall). ---
-// outer=false (inner rail): no deck inserts, no leg notch. Print TWO per box × 2 boxes = 4 total.
-// outer=true  (outer rail): M4 deck insert holes at each deck face + leg stub notch on Z=0 face.
+// outer=false (inner rail): M3 deck insert holes at each deck face. Print TWO per box × 2 boxes = 4 total.
+// outer=true  (outer rail): M3 deck insert holes at each deck face + leg stub notch on Z=0 face.
 //             Print TWO outer rails total (one per box) — flip one over for the left-box outer rail.
 // Footprint: SIDE_BOX_WALL_H(47) × SIDE_BOX_L_INNER(184) mm, SIDE_BOX_T(8)mm tall.
 module side_box_rail(outer=false) {
     t  = SIDE_BOX_T;
     ls = LEG_SIZE + 2 * LEG_STUB_CLEAR;   // = 12.6mm stub slot
-    difference() {
-        cube([SIDE_BOX_WALL_H, SIDE_BOX_L_INNER, t]);
-        // Hollow interior
-        translate([t, t, -1])
-            cube([SIDE_BOX_WALL_H - 2*t, SIDE_BOX_L_INNER - 2*t, t + 2]);
-        // M4 corner tie clearance holes at each Y-end face
-        translate([SIDE_BOX_WALL_H/2, -1, t/2])
-            rotate([-90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
-        translate([SIDE_BOX_WALL_H/2, SIDE_BOX_L_INNER + 1, t/2])
-            rotate([90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
-        if (outer) {
-            // M4 deck insert holes at bottom deck face (print X=0) and top deck face (print X=WALL_H)
+    union() {
+        difference() {
+            cube([SIDE_BOX_WALL_H, SIDE_BOX_L_INNER, t]);
+            // Hollow interior
+            translate([t, t, -1])
+                cube([SIDE_BOX_WALL_H - 2*t, SIDE_BOX_L_INNER - 2*t, t + 2]);
+            // M3 corner tie clearance holes at each Y-end face
+            translate([SIDE_BOX_WALL_H/2, -1, t/2])
+                rotate([-90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
+            translate([SIDE_BOX_WALL_H/2, SIDE_BOX_L_INNER + 1, t/2])
+                rotate([90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
+            // M3 deck insert holes at bottom deck face (print X=0) and top deck face (print X=WALL_H)
             for (i = [0:2]) {
                 translate([-1, _sbox_bolt_ly(i) - SIDE_BOX_T, t/2])
                     rotate([0, 90, 0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
                 translate([SIDE_BOX_WALL_H-INSERT_DEPTH, _sbox_bolt_ly(i) - SIDE_BOX_T, t/2])
                     rotate([0, 90, 0]) cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
             }
-            // Leg stub notch slots on print Z=0 face (2mm deep, full height)
-            for (ny = [SIDE_BOX_OVER - SIDE_BOX_T, STRUT_Y + SIDE_BOX_OVER - SIDE_BOX_T])
-                translate([0, ny - ls/2, -1]) cube([SIDE_BOX_WALL_H, ls, 3]);
+        }
+        if (outer) {
+            // Cytron MDD10A tapered friction-fit pins — project from inner hollow wall face (print X=t).
+            // In installed orientation (print-X → world-Z) pins project upward from bottom bar top face.
+            // 3mm pedestal clears board back-side components; tapered pin locks board ~1.5mm above pedestal.
+            // NOTE: pins are horizontal in print orientation — short 4mm span, print as bridges without support.
+            for (py = [SIDE_BOX_L_INNER/2 - CYTRON_HOLE_SPACING/2,
+                       SIDE_BOX_L_INNER/2 + CYTRON_HOLE_SPACING/2])
+                translate([t, py, t/2]) rotate([0, 90, 0])
+                    tapered_pin_standoff(d_hole=CYTRON_HOLE_D, h_ped=3, h_pin=PIN_H);
         }
     }
 }
@@ -676,7 +747,7 @@ module side_box_end() {
         // Hollow interior
         translate([t, t, -1])
             cube([SIDE_BOX_WALL_H - 2*t, SIDE_BOX_W - 2*t, t + 2]);
-        // M4 corner tie insert holes from inner face (print Z=0 = installed box-interior side)
+        // M3 corner tie insert holes from inner face (print Z=0 = installed box-interior side)
         for (cy = [t/2, SIDE_BOX_W - t/2])
             translate([SIDE_BOX_WALL_H/2, cy, -1])
                 cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
@@ -696,7 +767,7 @@ module side_box_plate() {
         for (ly = [SIDE_BOX_OVER, SIDE_BOX_L - SIDE_BOX_OVER])
             translate([SIDE_BOX_LEG_LOCAL_X - ls/2, ly - ls/2, -1])
                 cube([ls, ls, SIDE_BOX_PLATE_T + 2]);
-        // M4 deck insert holes — from Z=0 (deck-facing) side, 3 per plate
+        // M3 deck insert holes — from Z=0 (deck-facing) side, 3 per plate
         for (i = [0:2])
             translate([SIDE_BOX_W/2, _sbox_bolt_ly(i), -1])
                 cylinder(d=INSERT_D, h=INSERT_DEPTH + 1);
@@ -705,30 +776,36 @@ module side_box_plate() {
 
 // --- INSTALLED upright helpers (world coords) ---
 // Rail upright: thin in X (SIDE_BOX_T), long in Y (SIDE_BOX_L_INNER), tall in Z (SIDE_BOX_WALL_H).
-// outer=true  → outer (wheel-side) rail: adds M4 deck insert holes top+bottom + leg stub notch.
+// outer=true  → outer (wheel-side) rail: adds M3 deck insert holes top+bottom + leg stub notch.
 // notch_at_high_x → notch on X=t face instead of X=0 (needed for left-box outer rail).
 module _side_box_rail_upright(outer=false, notch_at_high_x=false) {
     t  = SIDE_BOX_T;
     ls = LEG_SIZE + 2 * LEG_STUB_CLEAR;   // = 12.6mm
-    difference() {
-        cube([t, SIDE_BOX_L_INNER, SIDE_BOX_WALL_H]);
-        translate([-1, t, t])
-            cube([t + 2, SIDE_BOX_L_INNER - 2*t, SIDE_BOX_WALL_H - 2*t]);
-        // M4 corner tie clearance holes at each Y end
-        translate([t/2, -1, SIDE_BOX_WALL_H/2])
-            rotate([-90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
-        translate([t/2, SIDE_BOX_L_INNER + 1, SIDE_BOX_WALL_H/2])
-            rotate([90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
-        if (outer) {
-            // M4 deck insert holes at bottom face (deck bolt from below) and top face (from above)
-            // Local Y = _sbox_bolt_ly(i) - SIDE_BOX_T  (upright local origin = rear_y + t)
+    union() {
+        difference() {
+            cube([t, SIDE_BOX_L_INNER, SIDE_BOX_WALL_H]);
+            translate([-1, t, t])
+                cube([t + 2, SIDE_BOX_L_INNER - 2*t, SIDE_BOX_WALL_H - 2*t]);
+            // M3 corner tie clearance holes at each Y end
+            translate([t/2, -1, SIDE_BOX_WALL_H/2])
+                rotate([-90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
+            translate([t/2, SIDE_BOX_L_INNER + 1, SIDE_BOX_WALL_H/2])
+                rotate([90, 0, 0]) cylinder(d=M3_CLEAR_D, h=t + 2);
+            // M3 deck insert holes at bottom face (deck bolt from below) and top face (from above)
             for (i = [0:2]) {
                 translate([t/2, _sbox_bolt_ly(i) - SIDE_BOX_T, -1])
                     cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
                 translate([t/2, _sbox_bolt_ly(i) - SIDE_BOX_T, SIDE_BOX_WALL_H - INSERT_DEPTH])
                     cylinder(d=INSERT_D, h=INSERT_DEPTH+1);
             }
-            // No leg stub notch needed — DECK_OVERHANG_X=16mm gives 2mm clearance between stub and rail inner face.
+        }
+        if (outer) {
+            // Cytron MDD10A tapered friction-fit pins — project upward (+Z) from bottom bar top face (Z=t=8mm).
+            // 3mm pedestal clears board back-side components; tapered pin locks board ~1.5mm above pedestal.
+            for (dy = [SIDE_BOX_L_INNER/2 - CYTRON_HOLE_SPACING/2,
+                       SIDE_BOX_L_INNER/2 + CYTRON_HOLE_SPACING/2])
+                translate([t/2, dy, t])
+                    tapered_pin_standoff(d_hole=CYTRON_HOLE_D, h_ped=3, h_pin=PIN_H);
         }
     }
 }
@@ -741,7 +818,7 @@ module _side_box_end_upright() {
         cube([SIDE_BOX_W, t, SIDE_BOX_WALL_H]);
         translate([t, -1, t])
             cube([SIDE_BOX_W - 2*t, t + 2, SIDE_BOX_WALL_H - 2*t]);
-        // M4 corner tie insert holes from inner face (local Y=0 = box-interior side).
+        // M3 corner tie insert holes from inner face (local Y=0 = box-interior side).
         // Bolt passes through rail clearance hole and threads into these inserts.
         for (cx = [t/2, SIDE_BOX_W - t/2])
             translate([cx, -1, SIDE_BOX_WALL_H/2])
@@ -777,7 +854,7 @@ module _side_box_plate_installed(x_center, z, insert_side="bottom") {
 // x_center = ±SIDE_BOX_X (= ±102.6mm, offset 13mm inboard so outer face clears wheel).
 // Box runs Y from -(STRUT_Y+SIDE_BOX_OVER) to +SIDE_BOX_OVER.
 // Frames sit directly on deck (no plates). z0 = BOTTOM_DECK_Z + PLATE_THICKNESS = 98mm.
-// Outer rail (wheel-side): has M4 deck inserts top+bottom + leg stub notch.
+// Outer rail (wheel-side): has M3 deck inserts top+bottom + leg stub notch.
 //   Right box (x_center>0): outer = +X rail. Left box (x_center<0): outer = -X rail.
 module side_box_assembled(x_center) {
     t      = SIDE_BOX_T;
@@ -794,9 +871,9 @@ module side_box_assembled(x_center) {
         translate([x_center + SIDE_BOX_W/2 - t, rear_y + t, zf])
             _side_box_rail_upright(outer=(x_center > 0), notch_at_high_x=false);
 
-        // Rear end cap
-        translate([x_center, rear_y, zf])
-            _side_box_end_upright();
+        // Rear end cap — mirrored so insert holes face box interior (not exterior)
+        translate([x_center, rear_y + t, zf])
+            mirror([0, 1, 0]) _side_box_end_upright();
         // Front end cap
         translate([x_center, front_y - t, zf])
             _side_box_end_upright();
@@ -807,76 +884,115 @@ module side_box_assembled(x_center) {
 // DECK SPLIT HELPERS
 // ============================================================================
 
+// Simple butt-joint clip — clean split at X=0, no overlap step.
 module _deck_half_clip_bottom(side) {
-    dz0  = BOTTOM_DECK_Z - 2;
-    dz1  = BOTTOM_DECK_Z + PLATE_THICKNESS + 40;
-    dmid = BOTTOM_DECK_Z + PLATE_THICKNESS / 2;
-    dy0  = DECK_Y_CENTER - BOTTOM_DECK_D / 2 - 2;
-    dy1  = DECK_Y_CENTER + BOTTOM_DECK_D / 2 + 2;
-    dd   = dy1 - dy0;
-    hw   = BOTTOM_DECK_W / 2 + 2;
-    hl   = LAP_OVERLAP / 2;
-    if (side == "R") {
-        union() {
-            translate([hl,  dy0, dz0]) cube([hw-hl, dd, dz1-dz0]);
-            translate([-hl, dy0, dz0]) cube([LAP_OVERLAP, dd, dmid-dz0]);
-        }
-    } else {
-        union() {
-            translate([-hw, dy0, dz0]) cube([hw-hl, dd, dz1-dz0]);
-            translate([-hl, dy0, dmid]) cube([LAP_OVERLAP, dd, dz1-dmid]);
-        }
-    }
+    dz0 = BOTTOM_DECK_Z - 2;
+    dz1 = BOTTOM_DECK_Z + PLATE_THICKNESS + 40;
+    dy0 = DECK_Y_CENTER - BOTTOM_DECK_D / 2 - 2;
+    dd  = BOTTOM_DECK_D + 4;
+    hw  = BOTTOM_DECK_W / 2 + 2;
+    if (side == "R") translate([0,   dy0, dz0]) cube([hw, dd, dz1-dz0]);
+    else             translate([-hw, dy0, dz0]) cube([hw, dd, dz1-dz0]);
 }
 
 module _deck_half_clip_top(side) {
-    dz0  = TOP_DECK_Z - 2;
-    dz1  = TOP_DECK_Z + PLATE_THICKNESS + 2;
-    dmid = TOP_DECK_Z + PLATE_THICKNESS / 2;
-    dy0  = DECK_Y_CENTER - DECK_D / 2 - 2;
-    dy1  = DECK_Y_CENTER + DECK_D / 2 + 2;
-    dd   = dy1 - dy0;
-    hw   = DECK_W / 2 + 2;
-    hl   = LAP_OVERLAP / 2;
-    if (side == "R") {
-        union() {
-            translate([hl,  dy0, dz0]) cube([hw-hl, dd, dz1-dz0]);
-            translate([-hl, dy0, dz0]) cube([LAP_OVERLAP, dd, dmid-dz0]);
-        }
-    } else {
-        union() {
-            translate([-hw, dy0, dz0]) cube([hw-hl, dd, dz1-dz0]);
-            translate([-hl, dy0, dmid]) cube([LAP_OVERLAP, dd, dz1-dmid]);
-        }
-    }
+    dz0 = TOP_DECK_Z - 2;
+    dz1 = TOP_DECK_Z + PLATE_THICKNESS + 2;
+    dy0 = DECK_Y_CENTER - DECK_D / 2 - 2;
+    dd  = DECK_D + 4;
+    hw  = DECK_W / 2 + 2;
+    if (side == "R") translate([0,   dy0, dz0]) cube([hw, dd, dz1-dz0]);
+    else             translate([-hw, dy0, dz0]) cube([hw, dd, dz1-dz0]);
 }
 
-// Lap joint bolt clearance holes — 2 bolts only, outside battery box.
-// Inset LAP_BOLT_INSET(15mm) from each deck Y edge → Y = +5mm (front), -175mm (rear).
-// Through-bolt + nyloc; battery box structure ties the halves across the middle.
-module _lap_bolt_holes(z) {
-    _half_d = DECK_D / 2;
-    for (ly = [DECK_Y_CENTER + _half_d - LAP_BOLT_INSET,
-               DECK_Y_CENTER - _half_d + LAP_BOLT_INSET])
-        translate([0, ly, z - 1])
-            cylinder(d=M3_CLEAR_D, h=PLATE_THICKNESS + 2);
+// Alignment stubs at deck joint (X=0 face).
+// side="R" → union pins projecting in −X; side="L" → subtract blind holes in −X.
+module _align_stubs(deck_z, side) {
+    sz = deck_z + PLATE_THICKNESS / 2;
+    for (sy = [ALIGN_STUB_YF, ALIGN_STUB_YR])
+        translate([0, sy, sz]) rotate([0, -90, 0])
+            if (side == "R")
+                cylinder(d=ALIGN_STUB_D, h=ALIGN_STUB_L, $fn=32);
+            else
+                cylinder(d=ALIGN_STUB_D + 2*ALIGN_STUB_CLEAR, h=ALIGN_STUB_L + 1, $fn=32);
 }
 
 // Side box deck bolt clearance holes.
-// world X = ±SIDE_BOX_RAIL_X (outer rail centres, 123.6mm from robot centre), world Y from _sbox_bolt_ly(i).
+// Both rails (inner and outer) have M3 inserts in their top/bottom edges — deck needs clearance holes for both.
+// Outer rail centres: ±SIDE_BOX_RAIL_X       = ±123.6mm
+// Inner rail centres: ±SIDE_BOX_RAIL_X_INNER = ±81.6mm
 // world_Y = _sbox_bolt_ly(i) - (STRUT_Y + SIDE_BOX_OVER) → -155, -85, -15.
 module _side_box_bolt_holes_deck(z) {
     rear_offset = STRUT_Y + SIDE_BOX_OVER;   // = 185
-    for (bx = [-SIDE_BOX_RAIL_X, SIDE_BOX_RAIL_X])
+    for (bx = [-SIDE_BOX_RAIL_X,       SIDE_BOX_RAIL_X,
+               -SIDE_BOX_RAIL_X_INNER, SIDE_BOX_RAIL_X_INNER])
         for (i = [0:2])
             translate([bx, _sbox_bolt_ly(i) - rear_offset, z - 1])
                 cylinder(d=M3_CLEAR_D, h=PLATE_THICKNESS + 2);
 }
 
+// XT60 adapter holder — four walls, open top and bottom, unions into bottom_deck_half("L").
+// Board rests on deck surface; walls pen it in. No fasteners required.
+module _xt60_holder() {
+    ow = XT60_IW + 2 * XT60_T;   // 58mm — long dim, runs along Y after rotation
+    od = XT60_ID + 2 * XT60_T;   // 32.5mm — short dim, runs along X after rotation
+    translate([XT60_CX, XT60_CY, BOTTOM_DECK_Z + PLATE_THICKNESS])
+        rotate([0, 0, 90])        // 54mm dim → Y axis; 28.5mm dim → X axis
+        difference() {
+            translate([-ow/2, -od/2, 0]) cube([ow, od, XT60_H]);
+            translate([-XT60_IW/2, -XT60_ID/2, -1]) cube([XT60_IW, XT60_ID, XT60_H + 2]);
+        }
+}
+
+// ============================================================================
+// PCB STANDOFFS — tapered friction-fit pins
+// ============================================================================
+// Pedestal (4mm dia) raises board above deck for component clearance.
+// Tapered pin: d_tip < hole_dia < d_base → board locks by friction as pressed onto pin.
+// Board sits at height where taper dia = hole dia (typically ~1.5mm above pedestal).
+
+module tapered_pin_standoff(d_hole=2.75, h_ped=STANDOFF_H, h_pin=PIN_H) {
+    d_tip  = d_hole * 0.73;   // narrower than hole — guides entry
+    d_base = d_hole * 1.16;   // wider than hole — friction lock
+    union() {
+        cylinder(d=4.0, h=h_ped, $fn=32);
+        translate([0, 0, h_ped])
+            cylinder(d1=d_base, d2=d_tip, h=h_pin, $fn=32);
+    }
+}
+
+// Raspberry Pi 5 — 2 standoffs per deck half (board straddles joint at X=0).
+// side="R" → right pair (sx=+1);  side="L" → left pair (sx=−1).
+module pi5_standoffs(side="R") {
+    sx = (side == "R") ? 1 : -1;
+    for (sy = [-1, 1])
+        translate([PI5_CX + sx * PI5_HOLE_X / 2,
+                   PI5_CY + sy * PI5_HOLE_Y / 2,
+                   TOP_DECK_Z + PLATE_THICKNESS])
+            tapered_pin_standoff(d_hole=PI5_HOLE_D);
+}
+
+// Pololu D24V50F5 (item 2851) — 1 standoff per deck half (diagonal hole pair straddles X=0).
+// side="R" → pin at (+REG_HOLE_X/2, +REG_HOLE_Y/2);  side="L" → pin at (−REG_HOLE_X/2, −REG_HOLE_Y/2).
+module pololu2851_standoffs(side="R") {
+    sx = (side == "R") ? 1 : -1;
+    translate([REG_CX + sx * REG_HOLE_X / 2,
+               REG_CY + sx * REG_HOLE_Y / 2,
+               TOP_DECK_Z + PLATE_THICKNESS])
+        tapered_pin_standoff(d_hole=REG_HOLE_D);
+}
+
+// Wire clearance holes through top deck — symmetric at X=±WIRE_HOLE_X, rearward of regulator.
+module _reg_wire_holes(z) {
+    for (sx = [-1, 1])
+        translate([sx * WIRE_HOLE_X, WIRE_HOLE_Y, z - 1])
+            cylinder(d=WIRE_HOLE_D, h=PLATE_THICKNESS + 2);
+}
+
 // ============================================================================
 // BOTTOM DECK (v3)
 // ============================================================================
-// 12×24mm leg slots (column slides up from below — same as v2).
+// 12×12mm leg slots (same as top deck).
 // No flange insert holes. Side box + battery box clearance holes.
 
 module _bottom_deck_full() {
@@ -888,7 +1004,7 @@ module _bottom_deck_full() {
 
     difference() {
         deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS / 2,
-                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
+                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
                    deck_overhang=BOTTOM_DECK_OVERHANG);
 
         // Motor bracket holes (3 per motor × 4 motors)
@@ -898,10 +1014,7 @@ module _bottom_deck_full() {
                     translate([sx * BRACKET_DECK_X, sy + dy, BOTTOM_DECK_Z - 1])
                         cylinder(d=MOUNT_HOLE_D, h=PLATE_THICKNESS + 2);
 
-        // Lap joint bolt holes (2 — outside battery box)
-        _lap_bolt_holes(BOTTOM_DECK_Z);
-
-        // Battery box bolt holes (M4 clearance — deck bolt into insert in frame bottom edge)
+        // Battery box bolt holes (M3 clearance — deck bolt into insert in frame bottom edge)
         for (sx = [-1, 1])
             for (i = [0:2])
                 translate([sx * _sfx, _sfy0 + _side_bolt_y(i), BOTTOM_DECK_Z - 1])
@@ -913,13 +1026,32 @@ module _bottom_deck_full() {
 
         // Side box deck bolt clearance holes (from below, 3 per side × 2 sides = 6)
         _side_box_bolt_holes_deck(BOTTOM_DECK_Z);
+
+        // Encoder cable holes — 8mm diameter through deck, one per side at fore/aft centre
+        for (sx = [-1, 1])
+            translate([sx * ENCODER_HOLE_CX, DECK_Y_CENTER, BOTTOM_DECK_Z - 1])
+                cylinder(d=ENCODER_HOLE_D, h=PLATE_THICKNESS + 2);
     }
 }
 
 module bottom_deck_half(side="R") {
-    intersection() {
-        _bottom_deck_full();
-        _deck_half_clip_bottom(side);
+    if (side == "R") {
+        union() {
+            intersection() {
+                _bottom_deck_full();
+                _deck_half_clip_bottom("R");
+            }
+            _xt60_holder();
+            _align_stubs(BOTTOM_DECK_Z, "R");
+        }
+    } else {
+        difference() {
+            intersection() {
+                _bottom_deck_full();
+                _deck_half_clip_bottom("L");
+            }
+            _align_stubs(BOTTOM_DECK_Z, "L");
+        }
     }
 }
 
@@ -934,7 +1066,7 @@ module _frame_bolt_holes_top() {
     _efx   = BATT_W_OUTER / 2 - BATT_END_BOLT_INSET;
     _efy_f = DECK_Y_CENTER + BATT_L / 2 + BATT_CLEAR + BATT_RAIL_T / 2;
     _efy_r = DECK_Y_CENTER - BATT_L / 2 - BATT_CLEAR - BATT_RAIL_T / 2;
-    // M4 clearance — deck bolt through top deck into insert in frame top edge
+    // M3 clearance — deck bolt through top deck into insert in frame top edge
     for (sx = [-1, 1])
         for (i = [0:2])
             translate([sx * _sfx, _sfy0 + _side_bolt_y(i), TOP_DECK_Z - 1])
@@ -945,19 +1077,34 @@ module _frame_bolt_holes_top() {
                 cylinder(d=M3_CLEAR_D, h=PLATE_THICKNESS + 2);
 }
 
+module _top_deck_base() {
+    difference() {
+        deck_plate(TOP_DECK_Z + PLATE_THICKNESS / 2,
+                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
+                   deck_overhang=DECK_OVERHANG);
+        _frame_bolt_holes_top();
+        _side_box_bolt_holes_deck(TOP_DECK_Z);
+        _reg_wire_holes(TOP_DECK_Z);
+    }
+}
+
 module top_deck_half(side="R") {
-    intersection() {
-        difference() {
-            // Top deck — 12×12mm square slots for leg stub passing through to camera bar
-            deck_plate(TOP_DECK_Z + PLATE_THICKNESS / 2,
-                       leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
-                       deck_overhang=DECK_OVERHANG);
-            _lap_bolt_holes(TOP_DECK_Z);
-            _frame_bolt_holes_top();
-            // Side box deck bolt clearance holes (from above)
-            _side_box_bolt_holes_deck(TOP_DECK_Z);
+    if (side == "R") {
+        union() {
+            intersection() { _top_deck_base(); _deck_half_clip_top("R"); }
+            pi5_standoffs("R");
+            pololu2851_standoffs("R");
+            _align_stubs(TOP_DECK_Z, "R");
         }
-        _deck_half_clip_top(side);
+    } else {
+        difference() {
+            union() {
+                intersection() { _top_deck_base(); _deck_half_clip_top("L"); }
+                pi5_standoffs("L");
+                pololu2851_standoffs("L");
+            }
+            _align_stubs(TOP_DECK_Z, "L");
+        }
     }
 }
 
@@ -1031,11 +1178,11 @@ if (VIEW == "leg") {
     side_box_assembled( SIDE_BOX_X);
 
 } else if (VIEW == "deck_bottom_R") {
-    _r_cx = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _r_cx = BOTTOM_DECK_W / 4;
     translate([-_r_cx, STRUT_Y / 2, -BOTTOM_DECK_Z]) bottom_deck_half("R");
 
 } else if (VIEW == "deck_bottom_L") {
-    _l_cx = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _l_cx = BOTTOM_DECK_W / 4;
     translate([-_l_cx, STRUT_Y / 2, -BOTTOM_DECK_Z]) mirror([1,0,0]) bottom_deck_half("L");
 
 } else if (VIEW == "deck_top") {
@@ -1043,15 +1190,15 @@ if (VIEW == "leg") {
     color("DarkGray", 0.8) top_deck_half("L");
 
 } else if (VIEW == "deck_top_R") {
-    _r_cx = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _r_cx = DECK_W / 4;
     translate([-_r_cx, STRUT_Y / 2, -TOP_DECK_Z]) top_deck_half("R");
 
 } else if (VIEW == "deck_top_L") {
-    _l_cx = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _l_cx = DECK_W / 4;
     translate([-_l_cx, STRUT_Y / 2, -TOP_DECK_Z]) mirror([1,0,0]) top_deck_half("L");
 
 } else if (VIEW == "print_bottom") {
-    _cx  = (BOTTOM_DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _cx  = BOTTOM_DECK_W / 4;
     _sep = BOTTOM_DECK_W / 2 + 20;
     color("Goldenrod")
         translate([-_cx - _sep/2, STRUT_Y/2, -BOTTOM_DECK_Z]) bottom_deck_half("R");
@@ -1059,7 +1206,7 @@ if (VIEW == "leg") {
         translate([-_cx + _sep/2, STRUT_Y/2, -BOTTOM_DECK_Z]) mirror([1,0,0]) bottom_deck_half("L");
 
 } else if (VIEW == "print_top") {
-    _cx  = (DECK_W / 2 - LAP_OVERLAP / 2) / 2;
+    _cx  = DECK_W / 4;
     _sep = DECK_W / 2 + 20;
     color("Silver")
         translate([-_cx - _sep/2, STRUT_Y/2, -TOP_DECK_Z]) top_deck_half("R");
@@ -1091,8 +1238,8 @@ if (VIEW == "leg") {
     side_box_rail();
 
 } else if (VIEW == "side_box_rail_outer") {
-    // Outer (wheel-side) rail — has M4 deck insert holes + leg stub notch on one face.
-    // Print TWO total (one per box). Flip one over when installing on left box.
+    // Outer rail — deck inserts (top+bottom edges) + Cytron M3 inserts on top edge (print X=WALL_H face).
+    // Print TWO (one per box, flip for left). No leg notch — DECK_OVERHANG_X=16 gives 2mm clearance.
     side_box_rail(outer=true);
 
 } else if (VIEW == "side_box_end") {
@@ -1123,21 +1270,30 @@ if (VIEW == "leg") {
         translate([ _sep/2, 0, 0]) mirror([1,0,0]) camera_bar_half("L");
 
 } else if (VIEW == "print_side_box") {
-    // All 3 side box part types in print orientation — one of each shown.
-    // Print 4× of each type total (2 per box × 2 boxes).
+    // Side box parts in print orientation — one of each type shown.
+    // Row 1 (Y=0):  inner rail (×4) | end cap (×4)
+    // Row 2 (Y=-gap-SIDE_BOX_T): outer rail (×2) — Cytron holes on bed face (Z=0)
     _gap = 20;
-    _rw  = SIDE_BOX_WALL_H;     // = 47mm (print X of rail and end cap)
-    _rl  = SIDE_BOX_L_INNER;    // = 184mm (print Y of rail)
+    _rl  = SIDE_BOX_L_INNER;    // = 184mm (print Y of both rail types)
     _el  = SIDE_BOX_W;          // = 50mm  (print Y of end cap)
-    _pw  = SIDE_BOX_W;          // = 50mm  (print X of plate)
-    // Lay out: rail | gap | end cap | gap | plate
-    _total = _rl + _gap + _el + _gap + _pw;
+    // Row 1: inner rail + end cap
     color("Peru")
-        translate([-_total/2, 0, 0]) side_box_rail();
+        translate([-_rl/2 - _gap/2 - _el/2, 0, 0]) side_box_rail();
     color("Chocolate")
-        translate([-_total/2 + _rl + _gap, 0, 0]) side_box_end();
+        translate([ _rl/2 + _gap/2 - _el/2, 0, 0]) side_box_end();
+    // Row 2: outer rail (shifted in Y so it doesn't overlap)
     color("SaddleBrown")
-        translate([-_total/2 + _rl + _gap + _el + _gap, 0, 0]) side_box_plate();
+        translate([-_rl/2, -SIDE_BOX_WALL_H - _gap, 0]) side_box_rail(outer=true);
+
+} else if (VIEW == "side_box_assembly") {
+    // One assembled side box (right), translated to z=0 and centred at X=0 for inspection.
+    translate([-SIDE_BOX_X, STRUT_Y/2 + SIDE_BOX_OVER, -(BOTTOM_DECK_Z + PLATE_THICKNESS)])
+        side_box_assembled(SIDE_BOX_X);
+
+} else if (VIEW == "battery_box_assembly") {
+    // Assembled battery box, translated to z=0 and centred at Y=0 for inspection.
+    translate([0, -DECK_Y_CENTER, -(BOTTOM_DECK_Z + PLATE_THICKNESS)])
+        battery_box_assembled();
 
 } else if (VIEW == "station") {
     // Right-rear corner preview
@@ -1147,7 +1303,7 @@ if (VIEW == "leg") {
     color("SlateGray", 0.6)
     difference() {
         deck_plate(BOTTOM_DECK_Z + PLATE_THICKNESS/2,
-                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_BASE_SIZE,
+                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
                    deck_overhang=BOTTOM_DECK_OVERHANG);
         for (dy = [-BRACKET_MOUNT_SPACING, 0, BRACKET_MOUNT_SPACING])
             translate([BRACKET_DECK_X, -STRUT_Y + dy, BOTTOM_DECK_Z - 1])
