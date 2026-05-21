@@ -40,3 +40,6 @@ build/
 
 # Pytest cache
 .pytest_cache
+
+hardware/phase_1/.claude/
+chase
