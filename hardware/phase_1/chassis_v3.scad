@@ -172,6 +172,12 @@
 //             Left half:  5V bus + GND bus — sensor GND distribution + LC757_L HV power.
 //             ⚠ Do NOT use Wago 221 clips with Dupont wire — Wago min 26 AWG (0.14mm²);
 //             Dupont wire = 28 AWG (0.08mm²), below Wago's rated minimum → intermittent faults.
+//  18     1  USB microphone          DUNGZDUZ plug-and-play mini USB mic (high sensitivity)
+//             Mounts on camera bar via printed clip. 1ft USB-A cable to Pi USB-A port.
+//  19     1  USB speaker             Dual Modes Mini Portable USB Speaker, USB-A plug-and-play mode
+//             Mounts on camera bar via printed clip. 1ft USB-A cable to Pi USB-A port.
+//             Note: speaker also has Bluetooth — USB mode used (no pairing required, powered by Pi).
+//  20     2  USB-A cable 1ft         Mic to Pi + speaker to Pi
 //
 // ============================================================================
 
@@ -345,7 +351,7 @@
 //  "camera_bar_L"      → left  half of camera bar          — print ONE
 //  "print_camera_bar"  → both camera bar halves side-by-side — print layout
 //  "print_test_clips"  → fit-test plate: #757 clip + TB clip + Pi pins + buck pin — print ONE
-VIEW = "deck_top_L";   // ← change here
+VIEW = "leg";   // ← change here
 
 $fn = (VIEW == "deck_placement") ? 20 : 60;
 
@@ -434,6 +440,22 @@ CAM_LENS_D        = 16;
 CAM_LENS_Z        = 15;
 BAR_WIDTH         = 25;
 BAR_THICKNESS     = 8;
+
+// --- Camera bar mic + speaker mounts ---
+// ⚠ Placeholder dimensions — measure physical devices before printing clips.
+CAM_MIC_W      = 25.4;   // mic body width  (X) — 1 inch
+CAM_MIC_T      =  2.0;   // mic body thickness (Y)
+CAM_MIC_H      =  8.0;   // mic body height (Z)
+CAM_MIC_L      = 15.0;   // mic body length — clip depth (Y) matches this
+CAM_MIC_CLIP_T =  2.0;   // clip wall thickness
+CAM_MIC_CLR    =  0.3;   // per-side clearance
+CAM_MIC_CX     = 35.0;   // placeholder X centre on bar (between cameras at ±75mm)
+
+CAM_SPK_D      = 20.0;   // speaker body outer diameter
+CAM_SPK_CLIP_T =  2.0;   // clip wall thickness
+CAM_SPK_H      =  8.0;   // clip height
+CAM_SPK_CLR    =  0.3;   // radial clearance
+CAM_SPK_CX     =  0.0;   // placeholder X centre on bar (centred between cameras)
 
 // --- Battery retention box (unchanged from v2) ---
 BATT_L              = 138.34; // inner Y = 139.14mm (battery 138.34mm + 0.4mm per side — wires exit front upper corner, no end clearance needed)
@@ -1731,6 +1753,30 @@ module _sonar_mount_holes_top() {
 // Print orientation: flat (8mm face on bed). Footprint ~140.6×37mm. No supports needed. ✓
 // Print ONE of each — "camera_bar_R" and "camera_bar_L". Or use "print_camera_bar" for both.
 
+// Two-wall mic clip on camera bar front face — mic slides in from ±Y.
+// Walls grip mic X-width (25.4mm / 1 inch). Placed at Y = BAR_WIDTH/2 (front bar face).
+module _cam_bar_mic_clip() {
+    _iw = CAM_MIC_W + 2 * CAM_MIC_CLR;
+    _ow = _iw + 2 * CAM_MIC_CLIP_T;
+    translate([CAM_MIC_CX - _ow/2, BAR_WIDTH/2, 0]) {
+        cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
+        translate([_iw + CAM_MIC_CLIP_T, 0, 0])
+            cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
+    }
+}
+
+// Circular ring clip on camera bar front face — speaker drops in from above.
+// Ring back face tangent to bar front face; speaker seats inside ring.
+module _cam_bar_spk_clip() {
+    _ir = CAM_SPK_D / 2 + CAM_SPK_CLR;
+    _or = _ir + CAM_SPK_CLIP_T;
+    translate([CAM_SPK_CX, BAR_WIDTH/2 + _or, 0])
+        difference() {
+            cylinder(r=_or, h=CAM_SPK_H);
+            translate([0, 0, -1]) cylinder(r=_ir, h=CAM_SPK_H + 2);
+        }
+}
+
 // Solid camera bar geometry at z=0 (used by both assembly and print views).
 module _camera_bar_solid() {
     difference() {
@@ -1743,6 +1789,8 @@ module _camera_bar_solid() {
     for (x = [-CAM_BASELINE/2, CAM_BASELINE/2])
         translate([x, BAR_WIDTH/2, 0])
             camera_housing();
+    _cam_bar_mic_clip();
+    _cam_bar_spk_clip();
 }
 
 // One printable half — lying flat, base at z=0, split at X=0.
