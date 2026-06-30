@@ -34,7 +34,7 @@
 //  ULTRASONIC SUBSYSTEM  — mechanical mount notes (wiring → PIN ASSIGNMENTS)
 //  SENSOR MOUNT MODULES  — sonar_mount(), _sonar_mount_installed()
 //  BOUNDING BOX VIZ      — _component_bbox() for deck_placement view
-//  CAMERA BAR            — _camera_bar_solid(), camera_bar_half()
+//  CAMERA BAR            — _camera_bar_solid(), camera_bar()
 //  ASSEMBLY              — VIEW dispatcher (if/else chain, renders all modes)
 // ============================================================================
 
@@ -178,6 +178,8 @@
 //             Mounts on camera bar via printed clip. 1ft USB-A cable to Pi USB-A port.
 //             Note: speaker also has Bluetooth — USB mode used (no pairing required, powered by Pi).
 //  20     2  USB-A cable 1ft         Mic to Pi + speaker to Pi
+//  21     2  Camera module           Raspberry Pi Camera Module 3 Wide (stereo pair)
+//             Mounted on camera bar at ±75mm (150mm baseline). CSI ribbon cable to Pi.
 //
 // ============================================================================
 
@@ -223,7 +225,7 @@
 // MASTER PIN TABLE
 //   Pin  GPIO      Dir  Signal                Path
 //   ---  --------  ---  --------------------  -------------------------------------------
-//     1  3.3V      OUT  3.3V bus              Pi → encoder VCC (4× blue) + LC757_L LV + LC757_R LV
+//     1  3.3V      OUT  Encoder VCC bus        5-wire splice: 4× blue → pin 1 via single Dupont + LC757_L LV + LC757_R LV
 //     2  5V        IN   Pi power              buck OUT → Pi
 //     3  GPIO  2   —    *reserved*            I²C SDA — future IMU
 //     4  5V        IN   Pi power              buck OUT → Pi
@@ -231,52 +233,57 @@
 //     6  GND       IN   Pi GND                buck GND → Pi
 //     7  GPIO  4   OUT  us_f Trig             Pi → LC757_L A1 → B1 → us_f Trig
 //     8  GPIO 14   OUT  us_b Trig             Pi → LC757_L A2 → B2 → us_b Trig
-//     9  GND       OUT  Encoder GND bus       Pi → 4× green (encoder GND, all 4 motors)
+//     9  GND       OUT  Encoder GND bus        5-wire splice: 4× green → pin 9 via single Dupont
 //    10  GPIO 15   IN   us_b Echo             us_b Echo → LC757_R B2 → A2 → Pi
 //    11  GPIO 17   OUT  mtr_l_f DIR           Pi → MDD10A_L DIR1
 //    12  GPIO 18   OUT  mtr_r_f PWM           Pi → MDD10A_R PWM1
 //    13  GPIO 27   OUT  mtr_l_b DIR           Pi → MDD10A_L DIR2
 //    14  GND       OUT  Ultrasonic+LC757 GND  Pi → both LC757 GND pins + 4× HC-SR04 GND
-//    15  GPIO 22   IN   mtr_l_b encoder B     mtr_l_b white → Pi
+//    15  GPIO 22   IN   mtr_r_b encoder B     mtr_r_b white → Pi
 //    16  GPIO 23   OUT  mtr_r_f DIR           Pi → MDD10A_R DIR1
 //    17  3.3V      OUT  spare 3.3V            available
 //    18  GPIO 24   OUT  mtr_r_b DIR           Pi → MDD10A_R DIR2
 //    19  GPIO 10   OUT  us_r Trig             Pi → LC757_L A3 → B3 → us_r Trig
-//    20  GND       —    spare GND             —
+//    20  GND       IN   MDD10A_R signal GND   MDD10A_R logic GND
 //    21  GPIO  9   IN   us_l Echo             us_l Echo → LC757_R B3 → A3 → Pi
-//    22  GPIO 25   IN   mtr_l_b encoder A     mtr_l_b yellow → Pi
+//    22  GPIO 25   IN   mtr_r_b encoder A     mtr_r_b yellow → Pi
 //    23  GPIO 11   IN   us_r Echo             us_r Echo → LC757_R B4 → A4 → Pi
 //    24  GPIO  8   OUT  us_l Trig             Pi → LC757_L A4 → B4 → us_l Trig
-//    25  GND       —    spare GND             —
+//    25  GND       —    spare GND             available
 //    26  GPIO  7   IN   us_f Echo             us_f Echo → LC757_R B1 → A1 → Pi
 //    27  GPIO  0   —    NEVER USE             HAT EEPROM SDA
 //    28  GPIO  1   —    NEVER USE             HAT EEPROM SCL
 //    29  GPIO  5   IN   mtr_r_f encoder A     mtr_r_f yellow → Pi
-//    30  GND       —    spare GND             —
+//    30  GND       IN   MDD10A_L signal GND   MDD10A_L logic GND
 //    31  GPIO  6   IN   mtr_r_f encoder B     mtr_r_f white → Pi
 //    32  GPIO 12   OUT  mtr_l_f PWM           Pi → MDD10A_L PWM1
 //    33  GPIO 13   OUT  mtr_l_b PWM           Pi → MDD10A_L PWM2
-//    34  GND       —    spare GND             —
+//    34  GND       —    spare GND             available
 //    35  GPIO 19   OUT  mtr_r_b PWM           Pi → MDD10A_R PWM2
-//    36  GPIO 16   IN   mtr_r_b encoder A     mtr_r_b yellow → Pi
-//    37  GPIO 26   IN   mtr_r_b encoder B     mtr_r_b white → Pi
+//    36  GPIO 16   IN   mtr_l_b encoder A     mtr_l_b yellow → Pi
+//    37  GPIO 26   IN   mtr_l_b encoder B     mtr_l_b white → Pi
 //    38  GPIO 20   IN   mtr_l_f encoder A     mtr_l_f yellow → Pi
-//    39  GND       —    spare GND             —
+//    39  GND       —    spare GND             available
 //    40  GPIO 21   IN   mtr_l_f encoder B     mtr_l_f white → Pi
 //
 // MOTORS (8 GPIO)
-//   mtr_r_f   PWM pin 12 (GPIO 18)   DIR pin 16 (GPIO 23)   MDD10A_R CH1
-//   mtr_r_b   PWM pin 35 (GPIO 19)   DIR pin 18 (GPIO 24)   MDD10A_R CH2
-//   mtr_l_f   PWM pin 32 (GPIO 12)   DIR pin 11 (GPIO 17)   MDD10A_L CH1
-//   mtr_l_b   PWM pin 33 (GPIO 13)   DIR pin 13 (GPIO 27)   MDD10A_L CH2
+//   mtr_r_f   PWM pin 12 (GPIO 18)   DIR pin 16 (GPIO 23)   MDD10A_R CH1   forward_dir=1
+//   mtr_r_b   PWM pin 35 (GPIO 19)   DIR pin 18 (GPIO 24)   MDD10A_R CH2   forward_dir=1
+//   mtr_l_f   PWM pin 32 (GPIO 12)   DIR pin 11 (GPIO 17)   MDD10A_L CH1   forward_dir=0 (mirror)
+//   mtr_l_b   PWM pin 33 (GPIO 13)   DIR pin 13 (GPIO 27)   MDD10A_L CH2   forward_dir=0 (mirror)
 //   All 4 PWM pins are Pi 5 hardware-PWM-capable (independent channels via RP1).
+//   Signal GND: MDD10A_R → pin 20,  MDD10A_L → pin 30
 //
 // ENCODERS (8 GPIO + shared 3.3V/GND — direct to Pi, NOT through MDD10A)
 //   mtr_r_f   A pin 29 (GPIO  5) yellow    B pin 31 (GPIO  6) white
-//   mtr_r_b   A pin 36 (GPIO 16) yellow    B pin 37 (GPIO 26) white
+//   mtr_r_b   A pin 22 (GPIO 25) yellow    B pin 15 (GPIO 22) white
 //   mtr_l_f   A pin 38 (GPIO 20) yellow    B pin 40 (GPIO 21) white
-//   mtr_l_b   A pin 22 (GPIO 25) yellow    B pin 15 (GPIO 22) white
-//   Shared: blue VCC → pin 1 (3.3V),  green GND → pin 9 (GND)
+//   mtr_l_b   A pin 36 (GPIO 16) yellow    B pin 37 (GPIO 26) white
+//   VCC: 4× blue → pin 1 (3.3V) via 5-wire solder splice, single Dupont at header.
+//   GND: 4× green → pin 9 (GND) via 5-wire solder splice, single Dupont at header.
+//   Mid-deck JST connectors eliminated — all encoder pigtails soldered to extensions,
+//   heat-shrunk. Pi-end Dupont contact is the only encoder disconnect point.
+//   Left-side mirror: script swaps enc_a/enc_b for mtr_l_f and mtr_l_b (see Python constants).
 //
 // ULTRASONICS (8 GPIO + shared 5V/GND)
 //   us_f   Trig pin  7 (GPIO  4)   Echo pin 26 (GPIO  7)   LC757 channel 1
@@ -307,9 +314,9 @@
 //   MTR_L_F = (12, 17)   # PWM, DIR  (pin 32, 11)
 //   MTR_L_B = (13, 27)   # PWM, DIR  (pin 33, 13)
 //   ENC_R_F = ( 5,  6)   # A, B      (pin 29, 31)
-//   ENC_R_B = (16, 26)   # A, B      (pin 36, 37)
-//   ENC_L_F = (20, 21)   # A, B      (pin 38, 40)
-//   ENC_L_B = (25, 22)   # A, B      (pin 22, 15)
+//   ENC_R_B = (25, 22)   # A, B      (pin 22, 15)
+//   ENC_L_F = (21, 20)   # A, B      (pin 40, 38)  ← swapped for left-side mirror
+//   ENC_L_B = (26, 16)   # A, B      (pin 37, 36)  ← swapped for left-side mirror
 //   US_F    = ( 4,  7)   # Trig, Echo (pin  7, 26)
 //   US_B    = (14, 15)   # Trig, Echo (pin  8, 10)
 //   US_L    = ( 8,  9)   # Trig, Echo (pin 24, 21)
@@ -347,11 +354,8 @@
 //  "side_box_switch_assembly" → assembled side box, front end = switch cap — inspection view
 //  "battery_box_assembly" → assembled battery box at z=0   — inspection view
 //  "sonar_mount"       → HC-SR04 sensor housing             — print FOUR (base-down)
-//  "camera_bar_R"      → right half of camera bar          — print ONE  (140.6×37mm, 8mm tall)
-//  "camera_bar_L"      → left  half of camera bar          — print ONE
-//  "print_camera_bar"  → both camera bar halves side-by-side — print layout
-//  "print_test_clips"  → fit-test plate: #757 clip + TB clip + Pi pins + buck pin — print ONE
-VIEW = "leg";   // ← change here
+//  "print_camera_bar"  → full camera bar rotated 41° to fit bed — print ONE
+VIEW = "print_camera_bar";   // ← change here
 
 $fn = (VIEW == "deck_placement") ? 20 : 60;
 
@@ -440,22 +444,24 @@ CAM_LENS_D        = 16;
 CAM_LENS_Z        = 15;
 BAR_WIDTH         = 25;
 BAR_THICKNESS     = 8;
+BAR_HOLE_WALL     = 5;    // min material past leg post hole edge
+BAR_LENGTH        = STRUT_X + (CAM_BAR_HOLE_D + BAR_HOLE_WALL * 2);  // ~251.5mm
 
-// --- Camera bar mic + speaker mounts ---
-// ⚠ Placeholder dimensions — measure physical devices before printing clips.
-CAM_MIC_W      = 25.4;   // mic body width  (X) — 1 inch
-CAM_MIC_T      =  2.0;   // mic body thickness (Y)
-CAM_MIC_H      =  8.0;   // mic body height (Z)
-CAM_MIC_L      = 15.0;   // mic body length — clip depth (Y) matches this
+// --- Camera bar mic + speaker mounts (measured) ---
+CAM_MIC_W      = 18.1;   // mic body width  (X) — grip dimension
+CAM_MIC_L      = 34.5;   // mic body depth (Y) — clip wall length
+CAM_MIC_H      =  8.2;   // mic body height (Z)
 CAM_MIC_CLIP_T =  2.0;   // clip wall thickness
 CAM_MIC_CLR    =  0.3;   // per-side clearance
-CAM_MIC_CX     = 35.0;   // placeholder X centre on bar (between cameras at ±75mm)
+CAM_MIC_CX     = CAM_BASELINE / 4;  // centred between bar centre and right camera (+37.5mm)
 
-CAM_SPK_D      = 20.0;   // speaker body outer diameter
+CAM_SPK_D_MID  = 47.01;  // speaker diameter at widest midpoint
+CAM_SPK_D_BOT  = 40.0;   // speaker diameter at bottom
+CAM_SPK_H_FULL = 33.64;  // speaker total height
+CAM_SPK_H      = 16.82;  // clip ring height — rises to midpoint only (retains bulge)
 CAM_SPK_CLIP_T =  2.0;   // clip wall thickness
-CAM_SPK_H      =  8.0;   // clip height
 CAM_SPK_CLR    =  0.3;   // radial clearance
-CAM_SPK_CX     =  0.0;   // placeholder X centre on bar (centred between cameras)
+CAM_SPK_CX     = -CAM_BASELINE / 4; // centred between bar centre and left camera (-37.5mm)
 
 // --- Battery retention box (unchanged from v2) ---
 BATT_L              = 138.34; // inner Y = 139.14mm (battery 138.34mm + 0.4mm per side — wires exit front upper corner, no end clearance needed)
@@ -1746,42 +1752,46 @@ module _sonar_mount_holes_top() {
 }
 
 // --- Camera bar ---
-// Full bar: DECK_W(255.2mm) × BAR_WIDTH(25mm) × BAR_THICKNESS(8mm).
-// Too wide for bed — split at X=0 into two halves, each ~127.6mm × 25mm+housing, 8mm tall.
-// Right half: leg post hole at +STRUT_X/2 (+115.6mm), camera housing at +CAM_BASELINE/2 (+75mm).
-// Left  half: leg post hole at -STRUT_X/2 (-115.6mm), camera housing at -CAM_BASELINE/2 (-75mm).
-// Print orientation: flat (8mm face on bed). Footprint ~140.6×37mm. No supports needed. ✓
-// Print ONE of each — "camera_bar_R" and "camera_bar_L". Or use "print_camera_bar" for both.
+// Full bar: BAR_LENGTH(~251.5mm) × BAR_WIDTH(25mm) × BAR_THICKNESS(8mm).
+// Prints as one piece rotated 41° diagonally on 250×220mm bed.
+// Leg post holes at ±STRUT_X/2 (±115.6mm). Camera housings at ±CAM_BASELINE/2 (±75mm).
+// Mic clip at +37.5mm, speaker cradle at -37.5mm, both on top surface.
 
-// Two-wall mic clip on camera bar front face — mic slides in from ±Y.
-// Walls grip mic X-width (25.4mm / 1 inch). Placed at Y = BAR_WIDTH/2 (front bar face).
+// Two-wall mic clip on bar top surface — clipped to bar width.
 module _cam_bar_mic_clip() {
     _iw = CAM_MIC_W + 2 * CAM_MIC_CLR;
     _ow = _iw + 2 * CAM_MIC_CLIP_T;
-    translate([CAM_MIC_CX - _ow/2, BAR_WIDTH/2, 0]) {
-        cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
-        translate([_iw + CAM_MIC_CLIP_T, 0, 0])
+    intersection() {
+        translate([CAM_MIC_CX - _ow/2, -CAM_MIC_L/2, BAR_THICKNESS]) {
             cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
+            translate([_iw + CAM_MIC_CLIP_T, 0, 0])
+                cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
+        }
+        translate([-BAR_LENGTH/2, -BAR_WIDTH/2, 0])
+            cube([BAR_LENGTH, BAR_WIDTH, BAR_THICKNESS + CAM_MIC_H + 1]);
     }
 }
 
-// Circular ring clip on camera bar front face — speaker drops in from above.
-// Ring back face tangent to bar front face; speaker seats inside ring.
+// Speaker cradle on bar top surface — arc clipped to bar width, no overhang.
 module _cam_bar_spk_clip() {
-    _ir = CAM_SPK_D / 2 + CAM_SPK_CLR;
+    _ir = CAM_SPK_D_MID / 2 + CAM_SPK_CLR;
     _or = _ir + CAM_SPK_CLIP_T;
-    translate([CAM_SPK_CX, BAR_WIDTH/2 + _or, 0])
-        difference() {
-            cylinder(r=_or, h=CAM_SPK_H);
-            translate([0, 0, -1]) cylinder(r=_ir, h=CAM_SPK_H + 2);
-        }
+    intersection() {
+        translate([CAM_SPK_CX, 0, BAR_THICKNESS])
+            difference() {
+                cylinder(r=_or, h=CAM_SPK_H);
+                translate([0, 0, -1]) cylinder(r=_ir, h=CAM_SPK_H + 2);
+            }
+        translate([-BAR_LENGTH/2, -BAR_WIDTH/2, 0])
+            cube([BAR_LENGTH, BAR_WIDTH, BAR_THICKNESS + CAM_SPK_H + 1]);
+    }
 }
 
-// Solid camera bar geometry at z=0 (used by both assembly and print views).
+// Solid camera bar geometry at z=0 — complete bar with all holes.
 module _camera_bar_solid() {
     difference() {
-        translate([-DECK_W/2, -BAR_WIDTH/2, 0])
-            cube([DECK_W, BAR_WIDTH, BAR_THICKNESS]);
+        translate([-BAR_LENGTH/2, -BAR_WIDTH/2, 0])
+            cube([BAR_LENGTH, BAR_WIDTH, BAR_THICKNESS]);
         for (x = [-STRUT_X/2, STRUT_X/2])
             translate([x, 0, -1])
                 cylinder(d=CAM_BAR_HOLE_D, h=BAR_THICKNESS + 2);
@@ -1791,23 +1801,6 @@ module _camera_bar_solid() {
             camera_housing();
     _cam_bar_mic_clip();
     _cam_bar_spk_clip();
-}
-
-// One printable half — lying flat, base at z=0, split at X=0.
-// side="R": right half (X=0 to +DECK_W/2). side="L": left half.
-module camera_bar_half(side="R") {
-    hw = DECK_W / 2 + 2;
-    clip_y0 = -BAR_WIDTH/2 - CAM_HOUSING_DEPTH - 2;
-    clip_z1 = BAR_THICKNESS + CAM_HOUSING_H + 2;
-    intersection() {
-        _camera_bar_solid();
-        if (side == "R")
-            translate([0, clip_y0, -1])
-                cube([hw, hw + CAM_HOUSING_DEPTH + BAR_WIDTH + 4, clip_z1]);
-        else
-            translate([-hw, clip_y0, -1])
-                cube([hw, hw + CAM_HOUSING_DEPTH + BAR_WIDTH + 4, clip_z1]);
-    }
 }
 
 module camera_bar() {
@@ -1946,23 +1939,10 @@ if (VIEW == "leg") {
     // Footprint: SN_HSG_W(51mm) × SN_HSG_D(≈14.6mm). Height: SN_BASE_T+SN_HSG_H = 34mm.
     color("DodgerBlue") sonar_mount();
 
-} else if (VIEW == "camera_bar_R") {
-    // Right half of camera bar — print ONE. Lying flat (8mm face on bed).
-    // Footprint: ~140.6mm × 37mm. Leg post hole at +120.6mm. Camera housing at +75mm.
-    color("orange") camera_bar_half("R");
-
-} else if (VIEW == "camera_bar_L") {
-    // Left half of camera bar — print ONE. Mirror image of right half.
-    // Leg post hole at -120.6mm. Camera housing at -75mm.
-    color("orange") camera_bar_half("L");
-
 } else if (VIEW == "print_camera_bar") {
-    // Both camera bar halves side-by-side — print layout, one of each.
-    _sep = DECK_W / 2 + 20;
-    color("orange")
-        translate([-_sep/2, 0, 0]) camera_bar_half("R");
-    color("DarkOrange")
-        translate([ _sep/2, 0, 0]) mirror([1,0,0]) camera_bar_half("L");
+    // Full camera bar rotated 41° to fit 250×220mm bed diagonally.
+    rotate([0, 0, 41])
+        color("orange") _camera_bar_solid();
 
 } else if (VIEW == "print_side_box") {
     // Side box parts in print orientation — rail + end cap shown.
