@@ -29,6 +29,9 @@ dev = [
     "black>=23.0.0",
     "flake8>=6.0.0",
 ]
+pi = [
+    "sounddevice>=0.4.6",
+]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
