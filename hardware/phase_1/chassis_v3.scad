@@ -1,4 +1,159 @@
 // ============================================================================
+// TODO — OPEN WORK ITEMS (v3 redesign in progress, July 2026)
+// ============================================================================
+// Work roughly in order — later items depend on decisions made in earlier ones
+// (top deck layout depends on Pi 5 placement, which depends on camera cable
+// length; nothing downstream should be finalized before item 1 is validated).
+//
+// [x] 1a. DIAGNOSIS RESOLVED (Jul 2026, on real hardware).
+//        Pi1 (old board): CONFIRMED FAULTY. Cardless, powered buck→GPIO
+//          2/4/6, a USB stick showed ZERO response — a hardware fault on
+//          Pi1 itself (probably related to whatever also broke its camera
+//          connector), NOT the generic Pi5 GPIO-power behavior being
+//          investigated below. Settled — Pi1 is retired as a test board and
+//          as the robot's compute board (already being replaced by Pi2
+//          regardless, per item 16a).
+//        Pi2 (new 8GB board): cardless, same power method, the stick blinked
+//          fine. With an OS booted and the SPEAKER plugged in (but never
+//          switched on), `lsusb` showed nothing and the charge LED stayed
+//          dark — looked like a current/enumeration limit. Tried the free
+//          software fix (`usb_max_current_enable=1` + EEPROM
+//          `PSU_MAX_CURRENT=5000`, full power cycle) — speaker still didn't
+//          show up. But swapping in the USB stick in that same state
+//          enumerated cleanly, which broke the "ports are broken" theory.
+//        ROOT CAUSE: the speaker's power button had never been pressed —
+//          every prior observation was its passive charging behavior, not a
+//          failed USB enumeration attempt. Once switched to "PC mode" via
+//          its button, it enumerated immediately (`lsusb`: "ID 8087:1024
+//          Intel Corp. USB2.0 Device"). This was never a Pi 5 power-scheme
+//          problem — plain buck→GPIO 2/4/6 power is sufficient for Pi2's
+//          USB-A ports with the devices tested so far (stick + speaker,
+//          individually).
+//        CONFIRMED with a real combined-load test: mic + speaker plugged in
+//          SIMULTANEOUSLY (via extension cables to fit both), both showed in
+//          `lsusb` (card 2 "USB PnP Sound Device" mic, card 3 "USB2.0
+//          Device" speaker). Recorded 5s with `arecord -D plughw:2,0 ...`,
+//          played back with `aplay -D plughw:3,0 test.wav` — clean full
+//          loop, played back loud and clear. Plain buck→GPIO 2/4/6 power
+//          handles mic+speaker together with no issue.
+//
+// [ ] 1b. USB-C POWER INJECTOR — DEFERRED, not proven necessary. Do NOT
+//        build this speculatively; item 1a's original justification for it
+//        (ports broadly non-functional) turned out to be a false alarm.
+//        Only revisit if a real higher cumulative-load test (e.g. mic +
+//        speaker + cameras + AI HAT all active at once, once the HAT is
+//        installed) actually shows a current/brownout problem plain GPIO
+//        power can't handle. If that happens, this is the assembly plan:
+//        - Adafruit #4090 breakout (item 13a). Solder one leg of each of the
+//          2× 5.1kΩ resistors (item 13b) into the CC1 pad and the CC2 pad.
+//        - The OTHER leg of both resistors joins a 4-way splice: a 22AWG GND
+//          pigtail soldered into the board's GND pad, plus the buck's GND
+//          lead. Pre-tin all four leads, twist, solder, slide on heat shrink
+//          BEFORE soldering (easy to forget), shrink it down, then anchor the
+//          splice near the board (hot glue or a zip-tie) so cable weight/
+//          vibration can't pull on the thin resistor legs at the CC1/CC2 pads.
+//        - Buck's +5V lead → VBUS pad. Leave D+, D-, SBU1, SBU2 unconnected
+//          (power-only; no USB data over this port).
+//        - Bridge the 4090's onboard female receptacle to the Pi 5's USB-C
+//          port with the 6" USB-C-to-USB-C cable (ordered). Anchor both cable
+//          ends (zip-tie/hot-glue right at the jacket-to-plug transition) so
+//          vibration strain lands on the anchor, not the solder joints.
+//        BEFORE connecting to Pi2: verify with a multimeter — no VBUS–GND
+//        short, and ~5.1kΩ reading from each of CC1 and CC2 to GND.
+//        Then power up on Pi2 (the software-only fix is already ruled out —
+//        see 1a) and confirm `lsusb` shows the speaker and the USB-A ports
+//        activate at full current instead of staying limited.
+//        Still open: buck sizing (see item 13 note) — the combined 5V-rail
+//        worst-case load is already at/over the D24V50F5's 5A rating now that
+//        the AI HAT is in the picture; revisit once this test confirms the
+//        wiring scheme itself works.
+//
+// [ ] 2. POWER SUFFICIENCY TEST — incrementally add every device to Pi2 and
+//        confirm operability BEFORE buying/installing the AI HAT+2 (item 3).
+//        Isolates any power problems to the current known configuration
+//        instead of conflating them with the HAT's much larger draw once
+//        it's added. Build up from what's already confirmed (see item 1a):
+//        - [x] USB devices — mic + speaker simultaneously, confirmed working
+//          (item 1a: clean record/playback loop, both enumerated together).
+//        - [x] Motors + encoders + cooler — CONFIRMED (Jul 2026) via a
+//          combined Python test (gpiozero): CPU load forced whenever SoC
+//          temp < 65C (cooler audibly kicks on, confirms fan works without
+//          the adhesive thermal pad), each of the 4 wheels spun exactly one
+//          encoder-counted revolution (3200 counts = 64 CPR x 50:1 gearbox,
+//          confirms PWM/DIR signal integrity AND encoder wiring together),
+//          and the mic/speaker record-playback loop re-verified clean with
+//          all of the above running simultaneously. No Pi brownout/reset,
+//          no audio glitches. Wire colors used: DIR=orange, PWM=red,
+//          GND=black (motors); native colors + ganged blue/green (encoders)
+//          — see PIN ASSIGNMENTS section.
+//        - [ ] + Cameras — 2× Camera Module 3 Wide. Stock CSI cable should be
+//          fine for this bench test (Pi2 isn't in its final mounted position
+//          yet — the 300mm/500mm cable need from item 4 is specifically for
+//          the final chassis position, not this test). Confirm both
+//          initialize (`rpicam-hello --list-cameras`) without instability
+//          while USB devices + motors stay in the mix.
+//        - [ ] + Ultrasonic sensors — HC-SR04 × 4 through the LC757 level
+//          shifters. Confirm clean readings with everything else running,
+//          especially watching for voltage-droop-induced misreads while
+//          motors are active at the same time.
+//        Only once ALL of the above are confirmed stable together: move to
+//        item 3 (buy/assemble the AI HAT+2) — adding the biggest single
+//        power draw in the system on top of an already-validated baseline,
+//        instead of on top of unknowns.
+//
+// [ ] 3. PI 5 + AI HAT STACK — buy, assemble, measure. Real numbers from this
+//        physical stack are a prerequisite for item 4 (top deck redesign) —
+//        don't guess dimensions there when they can be measured here first.
+//        Buy remaining parts:
+//        - Raspberry Pi 5 (8GB), new (item 16a).
+//        - Raspberry Pi AI HAT+ 2 / Hailo-10H (item 16b).
+//        - Taller GPIO stacking header — the AI HAT+2's stock header leaves no
+//          usable pin length above the HAT for the Dupont sensor/motor
+//          connections (confirmed — stock pins sit flush with the HAT top).
+//          Still unsourced; find one long enough to clear the Active Cooler
+//          gap AND leave enough exposed pin above the HAT for a secure Dupont
+//          connection.
+//        - Active Cooler already on hand.
+//        Assemble: Pi 5 + Active Cooler + stacking header + AI HAT+2 + its own
+//        bundled heatsink, per Raspberry Pi's official stacking instructions.
+//        Measure once assembled:
+//        - Total stack height, Pi 5 board bottom to top of the AI HAT+2's
+//          heatsink — sets TOTAL_HEIGHT (currently a placeholder).
+//        - Exposed GPIO pin length above the HAT with the new header — confirm
+//          it's enough for a secure Dupont connection.
+//        - Footprint and connector positions relative to the Pi 5 board edges
+//          (USB-C power port + item 13a assembly, 2× USB-A, Ethernet, camera
+//          connectors, power button) — feeds directly into item 4's
+//          connector-clearance requirement.
+//
+// [ ] 4. TOP DECK REDESIGN (both halves) — replace the tapered friction-fit
+//        standoff pins (breaking/fragile in practice) with a new Pi 5
+//        retention method:
+//        - Leading option: friction-fit walls around the board edges, routed
+//          to clear every connector (see item 3's measurements). No wall may
+//          intrude on a connector's mating/cable clearance.
+//        - Alternative: screws through the Pi 5's mounting holes instead of
+//          friction pins. If screws are used, the board needs to sit on
+//          standoffs that elevate its edges — nothing on the Pi 5's
+//          underside (PCIe FPC connector, etc.) should touch the deck surface.
+//        - Relocate the ultrasonic-related clips currently placed on the top
+//          deck (LC757 level-shifter clips, terminal block clips — see PCB
+//          STANDOFFS section) — their positions were laid out around the old
+//          Pi footprint and pin locations, and may conflict with wherever the
+//          Pi 5 + AI HAT stack actually ends up.
+//        - Pi 5 placement is driven by the camera cable run, not the other
+//          way around: order 300mm or 500mm Pi Camera Module 3 CSI cables
+//          (stock cable is too short once the Pi moves) and settle the
+//          routing before finalizing wall/standoff positions.
+//
+// [ ] 5. CAMERA BAR REDESIGN — current mic/speaker clips (_cam_bar_mic_clip(),
+//        _cam_bar_spk_clip()) are wrong size and wrong position. Rebuild both
+//        to actually match the hardware (see BOM items 18/19 for corrected
+//        mic/speaker specs and dimensions gathered so far) and hold it
+//        securely.
+// ============================================================================
+
+// ============================================================================
 // PROJECT: DUAL-DECK LEARNING PLATFORM - v3.0
 // Based on: chassis_v2.scad
 // Changes:  Eliminated corner flanges entirely.
@@ -133,11 +288,22 @@
 // BILL OF MATERIALS  (purchased parts only — qty per robot)
 // ============================================================================
 //
+// POWER DRAW NOTATION — each Power: line below is tagged with its basis:
+//   SPEC     = manufacturer datasheet/product page value
+//   MEASURED = third-party bench measurement (no official datasheet figure)
+//   ESTIMATE = derived from typical values for this component class — NOT
+//              verified, flagged for bench confirmation before finalizing
+//              regulator sizing.
+//
 //  #    Qty  Component               Make / Model
 //  ---  ---  ----------------------  ------------------------------------------
 //   1     4  Gearmotor               Pololu 37D 12V 50:1 w/encoder
+//             Power: 200mA free-run / 5.5A stall @ 12V (SPEC — Pololu product page).
+//             Battery-side load via MDD10A — not part of 5V logic/accessory budget.
 //   2     4  Motor bracket           Pololu #1995 Machined Aluminum, 36.8×36.8mm
 //   3     2  Motor driver            Cytron MDD10A Dual 10A H-Bridge
+//             Power: logic derived internally from motor VIN (battery via XT60) —
+//             0A load on Pi/buck 5V rail. GND-only tie to Pi (see PIN ASSIGNMENTS).
 //   4     4  Shaft coupler           Studica 6mm D-Shaft Coupling
 //   5     6  Axle                    Studica 6mm D-shaft 96mm
 //   6     8  Bearing pillow block    goBILDA 1621-1632-0006 (24×40mm, 7mm deep)
@@ -149,15 +315,80 @@
 //  11     1  Battery charger         SkyRC iMAX B6AC V2 AC/DC balance charger
 //  12     1  Main fuse + holder      25A resettable ATC blade fuse, 10 AWG holder
 //  13     1  Buck converter 5V/5A    Pololu D24V50F5
+//             Power: 5V/5A = 25W rated output, ~85–95% efficiency (SPEC — Pololu).
+//             Sole 5V supply for Pi 5 + AI HAT + cameras + sensors + accessories —
+//             see the running total below; combined worst-case peak is already
+//             at this rail's 5A limit with no margin now that the AI HAT is added.
+//  13a    1  USB-C power injector    Adafruit #4090 "USB Type C Breakout Board -
+//                                    Downstream Connection" (any mount style — not
+//                                    panel-mounted), bridged to the Pi 5's USB-C
+//                                    port with a standard USB-C-to-USB-C cable.
+//             WHY: Pi 5's USB-A ports stay current-limited unless its USB-C port
+//             sees a valid power-source handshake on CC1/CC2. Feeding the buck's
+//             5V straight into GPIO pins 2/4 (old plan, see PIN ASSIGNMENTS) leaves
+//             CC1/CC2 floating → undervoltage warnings/brownouts under load.
+//             `usb_max_current_enable=1` in config.txt alone did NOT resolve this.
+//             ⚠ Do NOT use item #18-adjacent Adafruit #5978 "USB Type C Plug
+//             Breakout" for this — its fixed-orientation plug only wires up ONE
+//             CC line; CC2 is not physically connected on that board, so it can't
+//             be modified for this fix (already ordered/on hand — repurpose it for
+//             a different single-orientation power tap, don't use it here).
+//             ASSEMBLY (solder side): 2× 5.1kΩ resistor (see item 13b) — one leg of
+//             each into the CC1 pad and the CC2 pad respectively; the other leg of
+//             both resistors joins a GND splice along with a 22AWG GND pigtail
+//             soldered into the board's GND pad and the buck's GND lead — twist,
+//             solder, heat-shrink that 4-way GND splice (pre-tin each lead first;
+//             slide heat shrink on before soldering; anchor the splice near the
+//             board — hot glue or a zip-tie — so cable weight/vibration doesn't
+//             pull on the thin resistor legs at the CC1/CC2 pads, the same failure
+//             mode as the fragile standoff pins driving this redesign).
+//             Buck +5V lead → VBUS pad. D+, D-, SBU1, SBU2 left unconnected
+//             (power-only; no USB data over this port).
+//             Result: CC1 + CC2 each at 5.1kΩ to GND = USB-C spec signal for
+//             "5V/3A dedicated charger" — Pi 5 accepts power without a PD
+//             negotiation chip. Verify no VBUS–GND short and ~5.1kΩ on each CC
+//             pin with a multimeter before connecting to the Pi 5.
+//  13b     2  CC resistor              5.1kΩ 1/4W through-hole, 5%, axial — 100-pack,
+//                                    Amazon (ORDERED, ETA Jul 9–13). Single-value pack
+//                                    chosen over DigiKey/Adafruit to avoid DigiKey's
+//                                    $150 shipping minimum for a two-cent part;
+//                                    Adafruit's own resistor packs only stock round
+//                                    E12 values (4.7k/10k/etc.), not 5.1k.
 //  14     1  XT60 connector pair     Amass XT60 male + female
 //  15     1  LiPo voltage alarm      3S buzzer alarm
+//             Power: no published spec. ESTIMATE ~5–10mA quiescent (typical for a
+//             comparator-based low-voltage monitor). Battery-side parasitic drain,
+//             not part of 5V logic budget.
 //  16     1  Power switch            20A rated rocker switch
-//  16a    1  Compute board           Raspberry Pi 5 (4GB or 8GB)
+//  16a    1  Compute board           Raspberry Pi 5 (8GB) — STILL TO BUY. Replaces
+//                                    Pi1 (camera connector damaged, confirmed dead
+//                                    USB-A ports — see TODO item 1a) as the robot's
+//                                    actual compute board.
+//             ⚠ "Pi2" (the board used for the USB-C power diagnosis in TODO item 1)
+//             was purchased by mistake as a 2GB model, not 8GB. It's not going into
+//             the robot — kept as a useful test/dev bench board (already proved its
+//             worth for the USB diagnostic work). The 8GB board below is a separate,
+//             still-needed purchase for final assembly.
+//             8GB chosen over 4GB: AI HAT+ 2 (item 16b) handles model weights on its
+//             own 8GB, so Pi 5 RAM only needs to cover OS + local Whisper STT + Piper
+//             TTS + camera buffers + control loops concurrently — 4GB leaves little
+//             margin (no fast swap on Pi); 16GB is unneeded since the HAT absorbs the
+//             heavy model-memory load.
 //             Mounted upper deck right half on 4 tapered friction-fit standoff pins.
 //             USB-A / Ethernet short edge faces forward (+Y). GPIO header faces inward (−X).
+//             Power: ~2.6–3.0W idle, ~3.6W typical w/ peripherals, up to ~7–8.8W
+//             under full CPU/GPU load (MEASURED — third-party benchmarks; official
+//             RPi 5V/5A=27W PSU recommendation is a safety margin, not typical draw).
+//  16b    1  AI accelerator HAT      Raspberry Pi AI HAT+ 2 (Hailo-10H, 40 TOPS)
+//             Stacks on Pi 5 via GPIO header + PCIe FPC ribbon cable — draws
+//             through Pi 5's own 5V rail; cannot be powered from an independent buck.
+//             Power: 1.2W idle, 3.5–4.5W vision inference, up to 8W peak during
+//             local LLM burst (MEASURED — third-party review benchmarks, no
+//             official datasheet figure published).
 //  17     4  Ultrasonic sensor       HC-SR04 (any variant — plain, HC-SR04B, HC-SR04P all OK)
 //             VCC from Pololu 5V rail; Echo (5V) → LC757_R HV; Trig → LC757_L HV → sensor.
 //             See PIN ASSIGNMENTS section for full wiring, GPIO map, and power architecture.
+//             Power: ~15mA each @ 5V (SPEC — datasheet) = ~60mA total for 4 units.
 //  17a    2  Logic level converter   Adafruit #757 BSS138 4-channel bidirectional level converter
 //             LC757_R (right top deck): Echo lines — sensor 5V → Pi 3.3V (4 channels).
 //             LC757_L (left  top deck): Trig lines — Pi 3.3V → sensor 5V (4 channels).
@@ -167,6 +398,8 @@
 //             LV side: Pi 3.3V rail + Pi GPIO lines (3.3V).
 //             Mount: 4-wall friction clips printed into top deck:
 //                    right half at (X=+61, Y=−100mm), left half at (X=−61, Y=−100mm).
+//             Power: no published spec. ESTIMATE ~0.5mA/channel worst-case (BSS138 +
+//             10k pullup topology, Adafruit schematic) ≈ 2mA/board, ~4mA total.
 //  17b    4  Screw terminal strip    5-position PCB screw terminal, 2.54mm or 3.5mm pitch
 //             Right half: 5V bus + GND bus — sensor VCC distribution + LC757_R HV power.
 //             Left half:  5V bus + GND bus — sensor GND distribution + LC757_L HV power.
@@ -174,13 +407,35 @@
 //             Dupont wire = 28 AWG (0.08mm²), below Wago's rated minimum → intermittent faults.
 //  18     1  USB microphone          DUNGZDUZ plug-and-play mini USB mic (high sensitivity)
 //             Mounts on camera bar via printed clip. 1ft USB-A cable to Pi USB-A port.
+//             Power: no published spec (generic product). ESTIMATE ~20–50mA,
+//             typical for a small USB condenser mic + basic codec class — bench-verify.
 //  19     1  USB speaker             Dual Modes Mini Portable USB Speaker, USB-A plug-and-play mode
 //             Mounts on camera bar via printed clip. 1ft USB-A cable to Pi USB-A port.
-//             Note: speaker also has Bluetooth — USB mode used (no pairing required, powered by Pi).
+//             USB MODE ONLY — Bluetooth intentionally never paired. Robot is
+//             permanently mounted/always USB-powered, so the speaker's internal
+//             300mAh Li-ion cell stays float-charged rather than deep-cycling —
+//             avoids the simultaneous-playback + full-charge-current worst case
+//             except once, at first power-up from factory state.
+//             Power: 3W/35mm driver (SPEC — product listing). USB playback ESTIMATE
+//             ~0.8–1A peak at full volume (class-D amp efficiency assumed, not a
+//             published spec) — plan is to cap playback volume in software (clamp
+//             PCM amplitude in the playback code path, not just OS mixer %) to hold
+//             peak draw under 1A. Bench-verify with a USB power meter (drained
+//             cell + capped volume) before finalizing buck sizing.
 //  20     2  USB-A cable 1ft         Mic to Pi + speaker to Pi
 //  21     2  Camera module           Raspberry Pi Camera Module 3 Wide (stereo pair)
 //             Mounted on camera bar at ±75mm (150mm baseline). CSI ribbon cable to Pi.
+//             Power: ~250–300mA @ 5V each (MEASURED — RPi forums/community
+//             measurements, no exact official datasheet figure) = ~500–600mA total.
 //
+// 5V RAIL RUNNING TOTAL (Pi 5 + AI HAT + cameras + sensors + accessories — excludes
+// motors/MDD10A, which are battery-side loads): worst-case peak ≈
+//   8.8W (Pi5 full load) + 8W (HAT LLM burst) + 3W (cameras) + 0.3W (sensors)
+//   + 0.02W (level shifters) + 0.25W (mic, ESTIMATE) + 5W (speaker capped ~1A, ESTIMATE)
+//   ≈ 25.4W ≈ 5.1A @ 5V — already at/over the existing D24V50F5's 5A rating with
+// no margin. This assumes several peaks (Pi5 max load + HAT LLM burst + speaker at
+// capped max) coinciding, which won't always happen, but it's the number regulator
+// sizing should be based on. Not yet resolved — see item 13 note.
 // ============================================================================
 
 // ============================================================================
@@ -226,11 +481,14 @@
 //   Pin  GPIO      Dir  Signal                Path
 //   ---  --------  ---  --------------------  -------------------------------------------
 //     1  3.3V      OUT  Encoder VCC bus        5-wire splice: 4× blue → pin 1 via single Dupont + LC757_L LV + LC757_R LV
-//     2  5V        IN   Pi power              buck OUT → Pi
+//     2  5V        —    (unused for power)    Pi now powered via USB-C, see item 13a —
+//                                              pin available as Pi 5V output if needed
 //     3  GPIO  2   —    *reserved*            I²C SDA — future IMU
-//     4  5V        IN   Pi power              buck OUT → Pi
+//     4  5V        —    (unused for power)    Pi now powered via USB-C, see item 13a —
+//                                              pin available as Pi 5V output if needed
 //     5  GPIO  3   —    *reserved*            I²C SCL — future IMU
-//     6  GND       IN   Pi GND                buck GND → Pi
+//     6  GND       —    (unused for power)    Pi now powered via USB-C, see item 13a —
+//                                              pin available as Pi GND if needed
 //     7  GPIO  4   OUT  us_f Trig             Pi → LC757_L A1 → B1 → us_f Trig
 //     8  GPIO 14   OUT  us_b Trig             Pi → LC757_L A2 → B2 → us_b Trig
 //     9  GND       OUT  Encoder GND bus        5-wire splice: 4× green → pin 9 via single Dupont
@@ -273,6 +531,7 @@
 //   mtr_l_b   PWM pin 33 (GPIO 13)   DIR pin 13 (GPIO 27)   MDD10A_L CH2   forward_dir=0 (mirror)
 //   All 4 PWM pins are Pi 5 hardware-PWM-capable (independent channels via RP1).
 //   Signal GND: MDD10A_R → pin 20,  MDD10A_L → pin 30
+//   Motor control wire colors: DIR=orange, PWM=red, GND=black (all 4 motors, both drivers).
 //
 // ENCODERS (8 GPIO + shared 3.3V/GND — direct to Pi, NOT through MDD10A)
 //   mtr_r_f   A pin 29 (GPIO  5) yellow    B pin 31 (GPIO  6) white
@@ -303,8 +562,11 @@
 //     │       ├─→ XT60 #1 → MDD10A_R power input   (14AWG silicone)
 //     │       ├─→ XT60 #2 → MDD10A_L power input   (14AWG silicone)
 //     │       ├─→ XT60 #3 → Pololu D24V50F5 VIN    (20–22AWG)
-//     │       │              D24V50F5 OUT (+5V) ─→ Pi pins 2,4 + LC757_L HV + LC757_R HV + 4× HC-SR04 VCC
-//     │       │              D24V50F5 GND       ─→ Pi pin 6
+//     │       │              D24V50F5 OUT (+5V) ─→ USB-C power injector (item 13a,
+//     │       │                                     VBUS pad) → Pi 5 USB-C port
+//     │       │                                   + LC757_L HV + LC757_R HV + 4× HC-SR04 VCC
+//     │       │              D24V50F5 GND       ─→ USB-C power injector (item 13a,
+//     │       │                                     GND pad/splice) → Pi 5 USB-C port
 //     │       └─→ XT60 #4 spare
 //     └─→ (negative trunk, continuous, bypasses switch)
 //
