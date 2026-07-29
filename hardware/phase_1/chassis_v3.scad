@@ -13,7 +13,7 @@
 //          investigated below. Settled — Pi1 is retired as a test board and
 //          as the robot's compute board (already being replaced by Pi2
 //          regardless, per item 16a).
-//        Pi2 (new 8GB board): cardless, same power method, the stick blinked
+//        Pi2 (2GB, mistaken purchase — see item 16a): cardless, same power method, the stick blinked
 //          fine. With an OS booted and the SPEAKER plugged in (but never
 //          switched on), `lsusb` showed nothing and the charge LED stayed
 //          dark — looked like a current/enumeration limit. Tried the free
@@ -36,6 +36,24 @@
 //          played back with `aplay -D plughw:3,0 test.wav` — clean full
 //          loop, played back loud and clear. Plain buck→GPIO 2/4/6 power
 //          handles mic+speaker together with no issue.
+//
+//        UPDATE (Jul 21, 2026): Pi2's CSI camera connector was damaged from
+//          repeated cable swaps while bench-testing different CSI cable
+//          lengths (300mm vs 500mm) ahead of the item 4 top-deck redesign —
+//          NOT random fragility; these connectors just don't tolerate many
+//          insert/remove cycles well (plausibly also what happened to Pi1's
+//          camera port, see above, though that was never confirmed as the
+//          root cause the way this one is). Testing moved to "Pi3", yet
+//          another 2GB board purchased by mistake (see item 16a) — silver
+//          lining of the repeated mis-orders is that this destructive-testing
+//          phase isn't burning through the actual 8GB board bought for final
+//          assembly. Implication for item 4: settle on ONE cable length from
+//          this testing and stop swapping once decided, rather than
+//          continuing to cycle the connector on whichever board is active.
+//          MDD10A + encoder connections have NOT been wired into the dev
+//          board (Pi2 or Pi3) — deliberately deferred since the real 8GB
+//          Pi 5 + AI HAT+2 are expected to arrive soon and full motor wiring
+//          will happen on that board instead.
 //
 // [ ] 1b. USB-C POWER INJECTOR — DEFERRED, not proven necessary. Do NOT
 //        build this speculatively; item 1a's original justification for it
@@ -86,12 +104,26 @@
 //          no audio glitches. Wire colors used: DIR=orange, PWM=red,
 //          GND=black (motors); native colors + ganged blue/green (encoders)
 //          — see PIN ASSIGNMENTS section.
-//        - [ ] + Cameras — 2× Camera Module 3 Wide. Stock CSI cable should be
-//          fine for this bench test (Pi2 isn't in its final mounted position
-//          yet — the 300mm/500mm cable need from item 4 is specifically for
-//          the final chassis position, not this test). Confirm both
-//          initialize (`rpicam-hello --list-cameras`) without instability
-//          while USB devices + motors stay in the mix.
+//        - [x] + Cameras — 2× Camera Module 3 Wide. CONFIRMED (Jul 21, 2026).
+//          Stock CSI cable used for this bench test (fine — Pi2 isn't in its
+//          final mounted position yet; the 300mm/500mm cable need from item 4
+//          is specifically for the final chassis position, not this test).
+//          `rpicam-hello --list-cameras` detected both imx708_wide sensors;
+//          `rpicam-still` captured a real frame from each. Then a combined
+//          wake-word test (tests/av_test.py: offline Vosk keyword spotting on
+//          the mic → simultaneous 5s dual-camera + mic capture → espeak-ng
+//          "done" announcement through the speaker) ran clean ON BATTERY
+//          POWER (buck → GPIO 2/4/6, not USB-C bench power) — no Pi
+//          brownout/reset, no dropped camera frames, no audio dropout.
+//          Confirms the buck rail holds up with cameras+mic+speaker together
+//          on battery, not just on bench USB power. NOTE: motors were not
+//          running during this test — MDD10A + encoder connections are not
+//          wired into the dev board at all right now (see item 1a update,
+//          Jul 21 2026: deliberately deferred, real 8GB Pi 5 + AI HAT+2
+//          expected soon). mic/speaker+motors together was already confirmed
+//          above on a different session; cameras+motors running
+//          simultaneously remains untested and won't be until motors are
+//          wired to whichever board is doing camera testing.
 //        - [ ] + Ultrasonic sensors — HC-SR04 × 4 through the LC757 level
 //          shifters. Confirm clean readings with everything else running,
 //          especially watching for voltage-droop-induced misreads while
@@ -136,21 +168,24 @@
 //          friction pins. If screws are used, the board needs to sit on
 //          standoffs that elevate its edges — nothing on the Pi 5's
 //          underside (PCIe FPC connector, etc.) should touch the deck surface.
-//        - Relocate the ultrasonic-related clips currently placed on the top
-//          deck (LC757 level-shifter clips, terminal block clips — see PCB
-//          STANDOFFS section) — their positions were laid out around the old
-//          Pi footprint and pin locations, and may conflict with wherever the
-//          Pi 5 + AI HAT stack actually ends up.
+//        - [x] DONE (Jul 2026, first pass): LC757 level-shifter clips + terminal
+//          block clips moved outboard to X=±90mm, stacked fore/aft in Y instead
+//          of the old side-by-side row — see LC757_CX/TB_5V_CX notes in
+//          PARAMETERS for the hole-clearance math. Frees the Pi's old X
+//          footprint (32–88mm) of the TB row that used to sit inside it.
+//          STILL OPEN: this was positioned against the Pi's CURRENT pin
+//          locations (PI5_CX/PI5_CY, not yet redesigned) — re-verify once the
+//          Pi 5 + AI HAT stack's new retention geometry and final position are
+//          settled, in case the new footprint pushes further into X=77–102mm.
 //        - Pi 5 placement is driven by the camera cable run, not the other
 //          way around: order 300mm or 500mm Pi Camera Module 3 CSI cables
 //          (stock cable is too short once the Pi moves) and settle the
 //          routing before finalizing wall/standoff positions.
 //
-// [ ] 5. CAMERA BAR REDESIGN — current mic/speaker clips (_cam_bar_mic_clip(),
-//        _cam_bar_spk_clip()) are wrong size and wrong position. Rebuild both
-//        to actually match the hardware (see BOM items 18/19 for corrected
-//        mic/speaker specs and dimensions gathered so far) and hold it
-//        securely.
+// [x] 5. CAMERA BAR REDESIGN — done Jul 2026: mic/speaker clips replaced with
+//        _cam_bar_usb_clip(), a barrel-profile ring gripping the female USB shell each
+//        cable terminates in (16.98 x 19 x 9mm), bar locally widened at each mount so the
+//        ring is fully supported.
 // ============================================================================
 
 // ============================================================================
@@ -367,8 +402,12 @@
 //             ⚠ "Pi2" (the board used for the USB-C power diagnosis in TODO item 1)
 //             was purchased by mistake as a 2GB model, not 8GB. It's not going into
 //             the robot — kept as a useful test/dev bench board (already proved its
-//             worth for the USB diagnostic work). The 8GB board below is a separate,
-//             still-needed purchase for final assembly.
+//             worth for the USB diagnostic work), though its CSI camera connector is
+//             now damaged (see TODO item 1a update, Jul 21 2026) so it's retired from
+//             camera testing specifically. "Pi3" — a THIRD 2GB board, also purchased
+//             by mistake — has taken over as the camera/mic/speaker test board.
+//             The 8GB board below is a separate, still-needed purchase for final
+//             assembly.
 //             8GB chosen over 4GB: AI HAT+ 2 (item 16b) handles model weights on its
 //             own 8GB, so Pi 5 RAM only needs to cover OS + local Whisper STT + Piper
 //             TTS + camera buffers + control loops concurrently — 4GB leaves little
@@ -396,12 +435,20 @@
 //             maintains noise margin under motor PWM, and removes diagnostic ambiguity.
 //             HV side: Pololu 5V rail + HC-SR04 signal lines (5V).
 //             LV side: Pi 3.3V rail + Pi GPIO lines (3.3V).
-//             Mount: 4-wall friction clips printed into top deck:
-//                    right half at (X=+61, Y=−100mm), left half at (X=−61, Y=−100mm).
+//             Mount: 4-wall friction clips printed into top deck (moved outboard Jul 2026,
+//                    see LC757_CX note in PARAMETERS): right half at (X=+90, Y=−113mm),
+//                    left half at (X=−90, Y=−113mm).
 //             Power: no published spec. ESTIMATE ~0.5mA/channel worst-case (BSS138 +
 //             10k pullup topology, Adafruit schematic) ≈ 2mA/board, ~4mA total.
-//  17b    4  Screw terminal strip    5-position PCB screw terminal, 2.54mm or 3.5mm pitch
+//  17b    5  Screw terminal strip    kuosbiu 5-pin 2.54mm pitch pluggable screw terminal
+//                                    block, male+female Phoenix-type connector (Amazon,
+//                                    purchased May 18 2026).
+//             Rated 125V / 8A, wire range 28-16 AWG (0.1-0.5mm²) — confirms the buck's 5V
+//             bus terminals and the 11.1V battery-voltage terminal (TB_VBAT) are both well
+//             within spec on both voltage and current.
 //             Right half: 5V bus + GND bus — sensor VCC distribution + LC757_R HV power.
+//                         Also TB_VBAT — battery-voltage (11.1V, pre-buck) tap near the buck
+//                         clip (moved off-centreline, Jul 2026, to clear the rear sonar mount).
 //             Left half:  5V bus + GND bus — sensor GND distribution + LC757_L HV power.
 //             ⚠ Do NOT use Wago 221 clips with Dupont wire — Wago min 26 AWG (0.14mm²);
 //             Dupont wire = 28 AWG (0.08mm²), below Wago's rated minimum → intermittent faults.
@@ -616,8 +663,30 @@
 //  "side_box_switch_assembly" → assembled side box, front end = switch cap — inspection view
 //  "battery_box_assembly" → assembled battery box at z=0   — inspection view
 //  "sonar_mount"       → HC-SR04 sensor housing             — print FOUR (base-down)
+//  "print_sonar_mount_x4" → all 4 sonar housings, plain 2×2 grid — one print job
 //  "print_camera_bar"  → full camera bar rotated 41° to fit bed — print ONE
+//  "print_test_clips"       → compact made-up layout, one of each clip type — quick mechanics test
+//  "print_clip_fit_test"    → ALL top-deck clips at their REAL relative positions, 2mm base —
+//                             quick print to test-fit everything at once and check for collisions
+//  "print_usb_clip_test" → both camera-bar USB shell clips (mic+speaker), 2mm base, bar-width —
+//                          quick print to test-fit the shell before committing to the full bar
 VIEW = "print_camera_bar";   // ← change here
+
+SHOW_DECK_SPLIT_LINE = false;  // ← toggle a red marker plane at X=0 (the deck-half print
+                                // split) in "deck_top", "deck_placement", and
+                                // "print_clip_fit_test" — visualization only, see
+                                // _deck_split_line_marker(). ⚠ This is real solid geometry,
+                                // not a preview-only annotation — OpenSCAD's color() doesn't
+                                // exclude anything from STL export, so it WILL show up as an
+                                // actual fin in the sliced/printed part if left on. Default
+                                // off (Jul 2026) after it showed up in a PrusaSlicer import —
+                                // only flip to true temporarily while inspecting in the
+                                // OpenSCAD GUI, then back off before exporting/slicing.
+SHOW_RAIL_BOLT_ZONES = false;  // ← toggle bright green markers at every side-box rail bolt's
+                                // real counterbore size in "deck_top" and "deck_placement" —
+                                // confirmed clear of all clips at their current positions
+                                // (Jul 2026) — leave off unless re-checking after another move
+                                // visualization only, see _rail_bolt_zone_markers()
 
 $fn = (VIEW == "deck_placement") ? 20 : 60;
 
@@ -629,7 +698,17 @@ $fn = (VIEW == "deck_placement") ? 20 : 60;
 BEARING_HOLE_D    = 12.1;
 LEG_POST_D        = 10;
 LEG_POST_H        = 8;
-CAM_BAR_HOLE_D    = LEG_POST_D + 0.3;
+LEG_POST_D_MEASURED = 9.91; // actual printed leg post diameter (Jul 2026) — under the 10mm
+                             // nominal LEG_POST_D above (that value still drives the leg's own
+                             // geometry; this is just what the post really measures once printed)
+CAM_BAR_HOLE_D    = LEG_POST_D_MEASURED + 0.0; // tightened again (Jul 2026): first pass
+                             // (LEG_POST_D_MEASURED+0.2 = 10.11mm nominal) printed at 10.12mm
+                             // measured — confirms this hole prints almost exactly to nominal,
+                             // unlike the "~0.2mm undersized" pattern elsewhere in this file.
+                             // Reduced by the requested 0.2mm against that real 10.12mm result,
+                             // landing at 9.91mm nominal — the same as the post's own measured
+                             // size, i.e. essentially zero clearance / a light interference fit.
+                             // Adjust further if this prints too tight to assemble.
 
 // --- Leg / Chassis structure ---
 // v3: NO flanges. Column 12×24mm below deck, 12×12mm stub above (inside side box).
@@ -701,29 +780,37 @@ CAM_HOUSING_W     = 34;
 CAM_HOUSING_H     = 32;
 CAM_HOUSING_DEPTH = 12;
 CAM_SLOT_W        = 2.4;
-CAM_PCB_W         = 25.5;
+CAM_PCB_W         = 25;   // board width (X), measured Jul 2026 — was 25.5. Slot is closed on
+                           // both sides (contained within CAM_HOUSING_W=34), not open to the
+                           // exterior — the connector housing fits within this width.
+CAM_PCB_H         = 23.7; // board height (Z, insertion direction), measured Jul 2026 — the
+                           // board must reach full insertion (bottom of slot) to be secure.
+                           // CAM_LENS_Z=15 falls within the board's occupied range [2, 25.7]
+                           // once inserted, so the lens position is consistent with this.
 CAM_LENS_D        = 16;
 CAM_LENS_Z        = 15;
 BAR_WIDTH         = 25;
 BAR_THICKNESS     = 8;
 BAR_HOLE_WALL     = 5;    // min material past leg post hole edge
-BAR_LENGTH        = STRUT_X + (CAM_BAR_HOLE_D + BAR_HOLE_WALL * 2);  // ~251.5mm
+BAR_LENGTH        = STRUT_X + (CAM_BAR_HOLE_D + BAR_HOLE_WALL * 2);  // ~251.1mm (was ~251.5mm
+                                                                       // before CAM_BAR_HOLE_D tightened)
 
-// --- Camera bar mic + speaker mounts (measured) ---
-CAM_MIC_W      = 18.1;   // mic body width  (X) — grip dimension
-CAM_MIC_L      = 34.5;   // mic body depth (Y) — clip wall length
-CAM_MIC_H      =  8.2;   // mic body height (Z)
-CAM_MIC_CLIP_T =  2.0;   // clip wall thickness
-CAM_MIC_CLR    =  0.3;   // per-side clearance
-CAM_MIC_CX     = CAM_BASELINE / 4;  // centred between bar centre and right camera (+37.5mm)
-
-CAM_SPK_D_MID  = 47.01;  // speaker diameter at widest midpoint
-CAM_SPK_D_BOT  = 40.0;   // speaker diameter at bottom
-CAM_SPK_H_FULL = 33.64;  // speaker total height
-CAM_SPK_H      = 16.82;  // clip ring height — rises to midpoint only (retains bulge)
-CAM_SPK_CLIP_T =  2.0;   // clip wall thickness
-CAM_SPK_CLR    =  0.3;   // radial clearance
-CAM_SPK_CX     = -CAM_BASELINE / 4; // centred between bar centre and left camera (-37.5mm)
+// --- Camera bar mic + speaker USB connector mounts (measured) ---
+// Both mic and speaker cables terminate in an identical female USB-A shell; mount by
+// gripping that shell (not the device body) with two separate curved side walls, full
+// BAR_WIDTH long, permanently open between them (never reconnect at the rim — see
+// _cam_bar_usb_clip()). Each wall keeps only the lower half of its side of the shell's
+// barrel cross-section (below its widest point), so it tapers from widest at the bar
+// surface up to the open rim — nothing to bridge, no supports needed. Cross-section is a
+// "barrel": flat edges (CAM_USB_FLAT_W wide) with the sides bulging out to CAM_USB_W at the
+// midpoint. See _usb_shell_profile() / _cam_bar_usb_clip().
+CAM_USB_W      = 16.98;  // max shell width, at the curved sides' widest point
+CAM_USB_FLAT_W = 11.5;   // shell width at the flat edges
+CAM_USB_L      = 19.0;   // shell height, flat edge to flat edge (cross-section)
+CAM_USB_CLIP_T =  4.0;   // clip wall thickness (uniform)
+CAM_USB_CLR    =  0.2;   // per-side clearance
+CAM_USB_MIC_CX = CAM_BASELINE / 4;   // mic-side mount, centred between bar centre and right camera (+37.5mm)
+CAM_USB_SPK_CX = -CAM_BASELINE / 4;  // speaker-side mount, centred between bar centre and left camera (-37.5mm)
 
 // --- Battery retention box (unchanged from v2) ---
 BATT_L              = 138.34; // inner Y = 139.14mm (battery 138.34mm + 0.4mm per side — wires exit front upper corner, no end clearance needed)
@@ -765,70 +852,232 @@ STANDOFF_H        = 5.0;   // pedestal height — clears M3 socket-cap bolt head
 PIN_H             = 4.0;   // pin height above pedestal top
 
 // Raspberry Pi 5 — RP-008347-DS-1 mechanical drawing
-// Long axis (85mm) along Y, short axis (56mm) along X.
-// Board centre at X=60 — entirely on right half (X=32 to 88mm). All 4 pins on right half.
-// 4 × M2.5 holes, 49.0mm(X) × 58.0mm(Y) centre-to-centre.
-PI5_HOLE_D        = 2.75;  // PCB hole diameter
-PI5_HOLE_X        = 49.0;  // hole spacing along X (short axis, board 56mm wide)
-PI5_HOLE_Y        = 58.0;  // hole spacing along Y (long axis, board 85mm deep)
-PI5_CX            = 60.0;  // board centre X — right half, clear of front sonar mount (±26.2mm).
-                            // Board spans X=+32 to +88mm. GPIO header (left long edge) faces inward at X=+32mm.
-PI5_CY            = -32.0; // board centre Y — front board edge at Y=+10.5mm, rear at Y=−74.5mm.
+//
+// v3.1 REPOSITION (Jul 2026, item 4 redesign prep): removed the 4 tapered-pin standoffs —
+// they broke off in practice, AND (independent of that) they would have projected up into
+// the AI HAT+2's footprint even if they'd held, since the HAT stacks directly on the GPIO
+// header with no room for pins poking through the Pi's mounting holes. Replaced with a
+// 2-wall slide clip (shares _shelf_2wall_clip() with the buck's clip, see there for the
+// shelf-lip mechanics) — a shelf lip is included per this section's own note above about
+// nothing on the Pi 5's underside (PCIe FPC connector etc.) touching the deck.
+//
+// Board ROTATED 90° from the old pin layout: long axis (85mm) now runs along X, parallel
+// to the deck's front edge, per your reference photo — short axis (56mm) now along Y,
+// gripped between the two walls. Walls straddle X=0 like the buck clip (80mm wall length,
+// 40mm printed on each deck half) rather than sitting entirely on the right half.
+//
+// ⚠ OPEN QUESTION: this clip has no cutout for the GPIO header or any connector yet — with
+// the board rotated 90°, I don't know which physical edge the GPIO header/USB-A/Ethernet
+// end up facing without more detail from your photo. If a wall lands on top of a connector,
+// it'll need a notch (same "no wall may intrude on a connector's clearance" rule TODO item
+// 4 already calls out for the wraparound-wall option). Confirm before printing.
+//
+// PI5_CY derivation: walls sit at CY±28 (half of the 56mm gap). Checked clear of every
+// deck-through-hole in this zone: front sonar insert (Y=11), battery end-bolt (Y=-11.58),
+// battery side-rail bolts (Y=-35.58, -85), wire clearance holes (Y=-111 to -128.55), buck
+// clip (Y=-132.45 to -157.45), rear battery/sonar holes further south. CY=-73 puts the
+// front wall at Y=-45 (9.4mm clear of the Y=-35.58 battery bolt) and the rear wall at
+// Y=-101 (16mm clear of the Y=-85 battery bolt, 10mm clear of the wire holes' front edge)
+// — the widest clean gap available given how tightly the battery-box bolts are spaced
+// through the front half of the deck.
+PI5_PCB_X          = 85.0;  // board long axis — along X (wall length / slide direction)
+PI5_PCB_Y          = 56.0;  // board short axis — along Y (gripped between the two walls)
+PI5_CLIP_WALL_L    = 80.0;  // wall length (X) — straddles X=0, 40mm prints on each deck half
+PI5_CLIP_GAP_Y     = 56.0;  // inner Y gap between the two walls — matches board width exactly
+                            // (zero nominal clearance per spec — tune if the fit prints too tight)
+PI5_CLIP_T         =  3.0;  // wall thickness (Y) — ASSUMED, not specified; confirm/adjust
+PI5_CLIP_H         =  6.0;  // wall height — 5.0mm (matched to LC757_CLIP_H) + 1mm (Jul 2026,
+                            // test-fit feedback). The 8/15/20mm increases before the 5.0mm
+                            // reset were chasing a bug in _deck_half_clip_top() that was
+                            // silently capping the rendered height at 2mm regardless of this
+                            // value — now that the actual height is visible, this is a real,
+                            // deliberate 1mm increase on top of the LC757-matched baseline.
+PI5_CLIP_SH        =  1.5;  // shelf height — clears PCIe FPC connector / underside components
+PI5_CLIP_SW        =  0.8;  // shelf ledge width — NARROWED from 1.5mm (Jul 2026) so the ledge
+                            // doesn't intrude on backside components. ASSUMED value — 0.8mm is
+                            // still enough to catch a bare PCB edge, but confirm against actual
+                            // component keep-out from the Pi 5's board edge before printing
+PI5_CX             =  0;     // straddles the deck joint (was 60, entirely on the right half)
+PI5_CY             = -73.0;  // see derivation note above
+// USB-C / USB-A / PCIe connector clearance notch — FORE wall only (the +Y wall, per your
+// test-fit photo showing that edge's connector row hitting the wall). Measured directly off
+// the board (Jul 2026): 37mm wide, starting 7mm in from the wall's right (+X) end. Full
+// height + thickness cut — this removes material across nearly half the fore wall's 80mm
+// length, so board retention along that stretch comes entirely from the aft wall now.
+// v3.6 (Jul 2026): widened 6mm (37→43mm), taken off the left side — right edge stays fixed
+// at X=33 (still 7mm from the wall's right end), left edge moves from X=-4 to X=-10. Left
+// remnant of the fore wall (solid material past the cutout) shrinks from 36mm to 30mm
+// (X=-40 to -10).
+PI5_USBC_CUTOUT_W   = 43.0;  // notch width (X)
+PI5_USBC_CUTOUT_INSET = 7.0; // gap from the wall's right (+X) end to the notch's right edge
 
-// Pololu D24V50F5 (item 2851) — 5V/5A step-down regulator on centreline behind Pi 5.
-// 2 × M2 holes (diagonally opposite), 13.46mm(X) × 16.0mm(Y) centre-to-centre. Board 17.8mm(X) × 20.3mm(Y).
-REG_HOLE_D        = 2.18;  // PCB hole diameter
-REG_HOLE_X        = 13.46; // hole spacing along X (diagonal pair)
-REG_HOLE_Y        = 16.0;  // hole spacing along Y (diagonal pair)
-REG_CX            = 0;     // on centreline — straddles deck joint, 1 pin per half
-REG_CY            = PI5_CY - 85.0/2 - 10 - 20.3/2;
-                            // 10mm gap behind Pi 5 rear edge (Pi 85mm in Y) → centre ≈ −88mm
+// Second cutout (Jul 2026) — through the END wall (the right/+X closing wall), not the fore
+// wall. Reference corner: where the fore wall's inner face (Y=CY+gap/2) meets the end wall's
+// inner face (X=wall_l/2-END_T) — i.e. the inside corner of the assembly at its right-front.
+// From that corner, measured 16mm toward the back (-Y), then a 6mm-wide notch continuing in
+// the same direction: Y = -61 to -67 at current values. Full X-thickness + Z-height cut,
+// same style as the USB-C notch.
+PI5_END_CUTOUT_INSET = 16.0; // distance back (-Y) from the fore/end wall inner corner
+PI5_END_CUTOUT_H     =  6.0; // notch height (Y)
+
+// Third side (Jul 2026): closes the clip on the right (+X) end — solid end wall connecting
+// the fore and aft walls, matching PI5_CLIP_H in height. Left (-X) end stays open for the
+// board to slide in. Sits at X=37..40 (using PI5_CLIP_END_T below), clear of the USB-C
+// cutout above (which ends at X=33) — no conflict between the two features.
+PI5_CLIP_END_T      =  3.0;  // end wall thickness (X) — ASSUMED, matches PI5_CLIP_T; confirm/adjust
+
+// Pololu D24V50F5 (item 2851) — 5V/5A step-down regulator on centreline.
+//
+// v3.1 REPOSITION (Jul 2026, item 4 redesign prep): replaced the tapered-pin mount (2
+// diagonal pins, 1 per half) with a 2-wall slide clip, same style as _tb_clip() but with
+// an LC757-style shelf lip so the board's underside components don't touch the deck.
+// Walls run along X and are EACH centred at X=0 — every wall is bisected by the deck-half
+// split (10mm of its 20mm length prints on each half) and the two halves combine into one
+// continuous wall pair once bolted together — this preserves the old pin design's
+// "straddles the joint, retained by both halves" property, just applied to walls instead
+// of pins. Implemented by adding _reg_clip() inside _top_deck_base() (before the R/L
+// intersection) rather than calling it separately per half, so the split happens
+// automatically. Board slides in from either open (±Y) end; its two X-parallel edges
+// (20.3mm each) rest on the shelf ledges.
+//
+// v3.3 (Jul 2026): swapped which board edge is gripped — the Y-gap now grips the board's
+// 17.3mm edge (remeasured from an earlier 17.6mm estimate) instead of its 20.3mm edge,
+// with REG_CLIP_GAP at 0 for a tight FDM friction fit (no added clearance — same "print
+// slightly undersized" approach as SN_TR_SEAT_D elsewhere in this file). REG_CLIP_WALL_L
+// stays 20mm, which now corresponds to the board's 20.3mm edge (was 17.6mm) — still gives a
+// small overhang margin either way.
+//
+// Position: AFT of the wire clearance holes (WIRE_HOLE_Y — now a fixed value independent
+// of REG_CY, so moving this clip doesn't drag the holes with it). REG_CY=-145 gives the
+// clip's front edge (REG_CY + gap/2 + REG_CLIP_T = -134.35, using the v3.3 gap=17.3mm) 5.8mm
+// clearance behind the wire holes' rear edge (WIRE_HOLE_Y - WIRE_HOLE_D/2 = -128.55, using
+// the 17.5mm hole dia — see WIRE_HOLE_D note); the clip's max X reach (±10mm, half the wall
+// length) stays clear of the battery box's nearest frame bolt (X=±23.55mm) regardless of Y;
+// and its rear edge (-155.65) is 34.35mm clear of the deck's rear edge (-190). [Both edges
+// recomputed Jul 2026 after the v3.3 gap change from 20.9mm to 17.3mm shrank the footprint —
+// both margins grew as a result, no new conflicts introduced.]
+REG_PCB_X          = 17.3;  // board width  (X) — gripped between the two walls (remeasured
+                            // Jul 2026, was 17.6mm)
+REG_PCB_Y          = 20.3;  // board depth  (Y) — now the wall-length/slide direction
+REG_CLIP_WALL_L    = 20.0;  // wall length (X) — straddles X=0, 10mm prints on each deck half
+REG_CLIP_T         =  2.0;  // wall thickness (Y)
+REG_CLIP_H         =  5.0;  // wall height — RESET to match LC757_CLIP_H (Jul 2026), same
+                            // reasoning as PI5_CLIP_H above (the 10/15/20mm increases were
+                            // chasing a bug, not a real height problem). Keep in sync with
+                            // LC757_CLIP_H if that changes.
+REG_CLIP_GAP       =  0.1;  // per-side clearance on top of REG_PCB_X — 0.1mm/side (0.2mm
+                            // total gap, Jul 2026) — tight fit printed too snug at 0mm.
+                            // (Was 0.3mm when this gripped the other board edge.)
+                            // Bump this up if the printed fit is too tight rather than
+                            // re-deriving REG_PCB_X.
+REG_CLIP_SH        =  1.5;  // shelf height — lifts board off the deck surface
+REG_CLIP_SW        =  0.8;  // shelf ledge width — NARROWED from 1.5mm (Jul 2026) so the ledge
+                            // doesn't intrude on backside components. ASSUMED value — confirm
+                            // against the buck board's actual component keep-out before printing
+REG_CX             =  0;      // on centreline — straddles the deck joint (unchanged)
+REG_CY             = -145.0;  // aft of the wire clearance holes — see note above
 
 // Adafruit #757 BSS138 4-channel bidirectional logic level converter.
 // Board ≈ 20mm(X) × 15mm(Y); no mounting holes — retained by 4-wall clip printed into deck.
 // ⚠ Verify LC757_PCB_W and LC757_PCB_D against your board before printing clip.
-// Placed on right half between Pololu regulator (Y ≈ −88mm) and wire holes (Y ≈ −113mm).
+//
+// v3.1 REPOSITION (Jul 2026, item 4 top-deck redesign prep): moved outboard and off the
+// old TB side-by-side row to clear X-space for the Pi 5's new wraparound retention clip
+// (replacing the tapered pins, which kept breaking off in practice — see TODO item 4).
+// LC757 + both terminal blocks now share ONE outboard X column, stacked fore/aft in Y
+// (TB_5V front of LC757, TB_GND behind it) instead of spread across X at one Y.
+//
+// X = 70mm (Jul 2026, moved inboard 20mm from the original 90mm for wire-run room). X-range
+// alone (LC757 spans 57.95–82.05mm) overlaps the inner rail bolt's X position (71.6mm), but
+// the bolt only actually occupies 3 specific Y points (-145/-85/-25mm) with a 5.5mm-radius
+// counterbore, not a full column — LC757's Y-extent (-122.425 to -103.575mm) doesn't reach
+// any of them (nearest is 18.6mm away), so there's no real overlap. Confirmed via the
+// SHOW_RAIL_BOLT_ZONES markers (rendered at the counterbore's true size) before removing them.
+// This also moves further from the sonar mount's insert hole at X=107.6mm (now 25.55mm clear
+// of LC757's new 82.05mm outer edge) and further onto the Pi 5's X footprint (32–88mm).
+//
+// Y stacking: TB_5V front edge kept 3.25mm behind the Pi 5's current rear edge (Y=−74.5mm),
+// each part separated from its neighbour by ~3.3mm. All three parts are also clear of the
+// sonar insert holes at Y=−70/−100 (LC757 never reaches them; TB_5V's range does touch
+// Y=−100 but stays X-clear as noted above).
 LC757_PCB_W       = 20.5;   // PCB width  (X when installed) — measured 20.5mm
 LC757_PCB_D       = 15.25;  // PCB depth  (Y when installed) — measured 15.25mm
 LC757_CLIP_T      =  1.5;   // clip wall thickness
 LC757_CLIP_H      =  5.0;   // clip wall height (retains 1.6mm PCB + component clearance)
 LC757_CLIP_GAP    =  0.3;   // per-side clearance inside clip (0.3mm → snug slide-in fit)
 LC757_CLIP_SLOT   = 10.0;   // wire exit notch width in rear (−Y) clip wall
-LC757_CX          = 61.0;   // board R centre X — right half, outboard of wire holes + buck
-LC757_CY          = -102.0; // board R centre Y — 2mm rearward of TB row to clear inner rail bolt counterbore (±71.6,−85)
-LC757_CX_L        = -61.0;  // board L centre X — left half (mirror of R)
-LC757_CY_L        = -102.0; // board L centre Y
+LC757_CX          = 70.0;   // board R centre X — outboard column, see note above
+LC757_CY          = -113.0; // board R centre Y — between TB_5V (front) and TB_GND (rear)
+LC757_CX_L        = -70.0;  // board L centre X — left half (mirror of R)
+LC757_CY_L        = -113.0; // board L centre Y
 
 // 5-pin 2.54mm pluggable terminal block rail — two parallel walls, open both ends.
 // Block slides in from either Y face so wires can exit whichever direction is convenient.
 // Power wires: buck output → terminal blocks → Pi GPIO 5V/GND pins.
-TB_CLIP_IW  = 14.5;   // inner gap between walls — fits 5-pos body (5 × 2.54mm + housing)
-TB_CLIP_T   =  2.0;   // wall thickness
+TB_CLIP_IW  = 14.4;   // inner gap between walls — fits 5-pos body (5 × 2.54mm + housing).
+                       // Tightened 0.1mm (Jul 2026, first test increment on the 0.6mm
+                       // nozzle) from 14.5mm — was too loose, adjust further in 0.1mm
+                       // steps if still not snug
+TB_CLIP_T   =  4.0;   // wall thickness — DOUBLED from 2.0mm (Jul 2026): one wall broke off in use
 TB_CLIP_H   = 10.0;   // wall height
 TB_CLIP_D   =  8.0;   // wall length (Y) — shorter than block so both ends protrude
 TB_ASSM_D   = 22.5;   // total assembled length (Y) — block overhangs walls on both faces
-TB_CLIP_OW  = TB_CLIP_IW + 2 * TB_CLIP_T;  // outer width = 18.5mm (for bounding boxes)
-// Terminal blocks flank their associated #757 clip in a row at Y=−100, shifted outboard to clear
-// the wire holes (X=±9→23) and buck converter (X=±8.9) at the deck centre.
-// Right half: inboard TB at X=+37 (4mm from wire hole), outboard TB at X=+85.
-// Left  half: mirror at X=−37 and X=−85.
-// Clearance verified: 18mm to buck; 4mm to wire hole; 11.8mm diagonal to inner rail bolt (±71.6,−85);
-// 28mm to right/left sonar insert holes at X=±122.6.
-TB_5V_CX    = 37.0;   // 5V terminal centre X — right half, inboard of right #757
-TB_5V_CY    = -100.0; // 5V terminal centre Y — same row as #757
-TB_GND_CX   = 85.0;   // GND terminal centre X — right half, outboard of right #757
-TB_GND_CY   = -100.0; // GND terminal centre Y — same row as #757
-TB_5V_L_CX  = -37.0;  // 5V terminal centre X — left half, inboard of left #757
-TB_5V_L_CY  = -100.0; // 5V terminal centre Y — left half
-TB_GND_L_CX = -85.0;  // GND terminal centre X — left half, outboard of left #757
-TB_GND_L_CY = -100.0; // GND terminal centre Y — left half
+TB_CLIP_OW  = TB_CLIP_IW + 2 * TB_CLIP_T;  // outer width = 22.5mm (for bounding boxes)
+// v3.1: both terminal blocks share LC757's outboard X column (X=90/−90), stacked fore/aft
+// in Y instead of side-by-side in X — see the reposition note above LC757_CX for the full
+// hole-clearance derivation (inner rail bolt, sonar insert hole, outer rail bolt).
+// TB_5V is the FORE block (toward the Pi, +Y); TB_GND is the AFT block (away from the Pi, −Y).
+// This is an arbitrary front/back assignment — swap if you'd rather have GND toward the Pi.
+//
+// v3.2 (Jul 2026): pulled a further 10mm from #757 for wiring room, twice — gap to #757 was
+// 3.325mm each side originally, then 13.325mm, then 23.325mm each side (Y-only moves,
+// didn't change X). Re-checked clearance at the Y-only stage: TB_5V's near edge was 15.75mm
+// clear of the Pi 5 clip's fore wall; TB_GND's far edge was 21.75mm clear of the deck's rear
+// edge — both still comfortably clear at that point.
+//
+// v3.2 cont'd (Jul 2026): X also moved inboard 20mm (90→70), matching LC757's new outboard
+// column. X-range overlaps the inner rail bolt's X position (71.6mm), but the PRINTED wall
+// is only TB_CLIP_D=8mm long in Y (the terminal block's 22.5mm assembled length is the
+// user's own hardware sliding into the clip, not printed plastic) — TB_5V's wall (Y=-73 to
+// -65) is 12mm from the nearest bolt (-85); TB_GND's wall (Y=-161 to -153) is 8mm from its
+// nearest bolt (-145). Both clear of the 5.5mm-radius counterbore. Confirmed via
+// SHOW_RAIL_BOLT_ZONES before removing them.
+TB_5V_CX    = 70.0;   // 5V terminal centre X — right half, same outboard column as #757
+TB_5V_CY    = -69.0;  // 5V terminal centre Y — fore of #757, 23.325mm clearance (was -79.0)
+TB_GND_CX   = 70.0;   // GND terminal centre X — right half, same outboard column as #757
+TB_GND_CY   = -157.0; // GND terminal centre Y — aft of #757, 23.325mm clearance (was -147.0)
+TB_5V_L_CX  = -70.0;  // 5V terminal centre X — left half (mirror of R)
+TB_5V_L_CY  = -69.0;  // 5V terminal centre Y — left half
+TB_GND_L_CX = -70.0;  // GND terminal centre X — left half (mirror of R)
+TB_GND_L_CY = -157.0; // GND terminal centre Y — left half
+
+// Battery-voltage (11.1V, pre-buck) terminal — new (Jul 2026), near the buck clip.
+// v3.4: moved off the X=0 centreline — it conflicted with the REAR sonar mount's housing,
+// which is centred on X=0 and spans X=-26.2..26.2, Y=-190..-173 (front face at the deck rear
+// edge, body extending 17mm inward). Moved to X=41 (right half only now — no longer
+// straddles the joint, so it's called from top_deck_half("R") like TB_5V/TB_GND, not from
+// _top_deck_base()): 3.6mm clear of the sonar housing's X edge.
+// v3.5: Y aligned to TB_GND's row (-157, was -175) so the two terminals sit in a tidy line —
+// also pulls it 18mm further from the deck's rear edge (29mm clear now, was 11mm). Re-checked:
+// 6.55mm clear of TB_GND itself, 19.4mm clear of the inner rail bolt (X=71.6); the sonar
+// housing and REG clip clearances are unaffected since neither overlaps TB_VBAT's X range.
+// ⚠ Only ONE clip added (as asked) — if this needs a separate GND terminal too (matching
+// the 5V/GND pairing convention used elsewhere), say so and I'll add a second one.
+TB_VBAT_CX  =   41.0; // battery-voltage terminal centre X — right half only
+TB_VBAT_CY  = -157.0; // battery-voltage terminal centre Y — aligned with TB_GND's row
 
 // Wire clearance holes flanking regulator (one per side, through deck thickness)
-WIRE_HOLE_D       = 14.0;  // diameter
+WIRE_HOLE_D       = 17.5;  // diameter — 14.0mm × 1.25 (Jul 2026). Re-verified clearance to the
+                            // REG clip (now 4.0mm, was 5.75mm) and to the battery side-rail bolt
+                            // at X=±27.55mm (now 4.25mm, was 6mm) — both still clear, see REG_CY
+                            // note above for the full derivation.
 WIRE_HOLE_X       = 16.0;  // X offset from centreline — symmetric either side of joint, 2mm gap from regulator body
-WIRE_HOLE_Y       = REG_CY - 20.3/2 - 15;
-                            // 15mm rearward of regulator rear edge → ≈ −113mm
-                            // (battery side-rail bolts are at X=±29mm, no conflict with holes at X=±16mm)
+// v3.1: fixed as a literal (was formula-coupled first to REG_CY, then to PI5_CY) so
+// repositioning either the buck clip OR the Pi 5 clip never drags these holes along —
+// this is exactly the bug class that bit WIRE_HOLE_Y once already this session when it was
+// still tied to REG_CY. Value preserved from before any of these reposition passes.
+WIRE_HOLE_Y       = -119.8;
+                            // ≈ -119.8mm
 
 // --- Encoder cable holes (through bottom deck, one per side) ---
 // 8mm diameter holes just outside battery box outer walls, centred fore/aft.
@@ -982,15 +1231,33 @@ SN_COMP_D        =  8.4;  // Component clearance depth behind PCB face
 SN_CABLE_W       = 12;    // Connector slot width — clears 4-pin 2.54mm header (10.16mm span + margin)
 SN_HDR_BELOW     =  8.0;  // Pin tails extend this far below PCB bottom edge (measured)
 SN_HDR_OUT       =  3.0;  // Header body protrudes this far from PCB back face toward rear (measured)
-SN_BASE_T        =  8;    // Base plate thickness (= PLATE_THICKNESS — for M3 inserts)
+SN_BASE_T        =  8;    // Base plate thickness (= PLATE_THICKNESS — for M3 inserts). Reverted
+                           // to original (Jul 2026) — see SN_FLOOR_RISE below for how the PCB
+                           // actually got raised without growing this or the total housing height.
+SN_FLOOR_RISE    =  8.0;  // Jul 2026: raises the interior floor (and transducer slots with it)
+                           // 8mm above where SN_BASE_T+SN_WALL alone would put them, WITHOUT
+                           // growing SN_BASE_T or the total housing height (_hz stays the same).
+                           // Why this works: the housing is open at the top — the PCB doesn't
+                           // need a "ceiling" above it, it can simply extend further past the
+                           // wall rim than before with nothing above to hit. The real problem
+                           // this fixes: SN_HDR_BELOW (8mm, header pins reaching below the PCB)
+                           // was colliding with solid SN_BASE_T material at the original floor
+                           // height (pins reached to 11-8=3mm, well inside the 0-8mm solid base).
+                           // At the new floor height, pins reach to 19-8=11mm — right at the old
+                           // floor level, which is already open/hollow (part of the existing
+                           // cable-slot cut), giving the premade Dupont connector housings actual
+                           // room to exist instead of overlapping solid plastic.
 SN_MNT_SEP       = 30;    // M3 deck mounting hole spacing (centre-to-centre)
 SN_MNT_INSET     =  9;    // M3 hole inset from housing front face
                            // Centred in 10mm interior depth: y=SN_FACE_T + (SN_PCB_T+SN_COMP_D)/2
                            // = 4 + 5 = 9mm → counterbore (d=10, r=5) clears front wall (y=4) and
                            // back wall inside face (y=14) by exactly 5mm on each side. ✓
 SN_MNT_CBR_D     = 10.0;  // counterbore pocket dia — 10mm clears socket wrench over M3 cap head (5.5mm OD) + M3 washer (7mm OD)
-SN_MNT_CBR_DEPTH =  4.5;  // recess depth below interior floor — head (3mm) + washer (0.5mm) + 1mm margin
-                           // Bolt spec: M3×10mm — shank passes 4mm base plate + 6mm INSERT_DEPTH = 10mm under-head length
+SN_MNT_CBR_DEPTH =  4.5;  // recess depth below interior floor — head (3mm) + washer (0.5mm) + 1mm margin.
+                           // Reverted to original (Jul 2026) — unaffected by SN_FLOOR_RISE since
+                           // the mounting bolt/counterbore is independent of where the PCB sits.
+                           // Bolt spec unchanged: M3×10mm — shank passes 4mm base plate + 6mm
+                           // INSERT_DEPTH ≈ 10mm under-head length.
 
 // Derived housing outer dimensions
 SN_HSG_W = SN_PCB_W + 2*SN_WALL;                        // = 52.4mm
@@ -1002,6 +1269,13 @@ SN_HSG_D = SN_FACE_T + SN_PCB_T + SN_COMP_D + SN_WALL;  // = 17mm (4+1.6+8.4+3)
 // Using this instead of SN_HSG_W/2 (26.2mm) gives 0.75mm face-plate clearance on each side
 // so the housing does not render as two separate pieces.
 SN_CABLE_CX = SN_WALL + (SN_TR1_X + SN_TR2_X) / 2;     // = 25.5mm
+
+// Print-all-4-in-one-job layout (Jul 2026) — see _sonar_mount_grid_x4() below. Plain 2×2
+// grid, no connecting geometry between parts — a slicer prints multiple separate objects in
+// one job natively, no physical connection needed. (The "thin perimeter" for priming/bed
+// check is a slicer feature — PrusaSlicer's Skirt, under Print Settings → Skirt and Brim —
+// not something modeled here.)
+SONAR_GRID_GAP  = 15.0; // gap between adjacent mounts (both X and Y pitch)
 
 // ============================================================================
 // MODULES
@@ -1020,8 +1294,6 @@ module camera_housing() {
             translate([-CAM_LENS_D/2, CAM_HOUSING_DEPTH/2 - 0.5, CAM_LENS_Z])
                 cube([CAM_LENS_D, CAM_HOUSING_DEPTH/2 + 1, CAM_HOUSING_H]);
         }
-        translate([-CAM_HOUSING_W/2 - 1, (CAM_HOUSING_DEPTH - CAM_SLOT_W)/2, 5])
-            cube([12, CAM_SLOT_W, CAM_HOUSING_H + 1]);
     }
 }
 
@@ -1501,7 +1773,14 @@ module _deck_half_clip_bottom(side) {
 
 module _deck_half_clip_top(side) {
     dz0 = TOP_DECK_Z - 2;
-    dz1 = TOP_DECK_Z + PLATE_THICKNESS + 2;
+    // v3.1 BUG FIX (Jul 2026): was TOP_DECK_Z + PLATE_THICKNESS + 2 — fine when nothing
+    // above the deck surface needed to survive this R/L split intersection, but REG/PI5
+    // clips now live inside _top_deck_base() specifically so this intersection bisects
+    // them at X=0, and that tight +2mm was silently capping their height to 2mm regardless
+    // of REG_CLIP_H/PI5_CLIP_H — every height increase to those was getting sliced off
+    // right back down before it ever reached the R/L half views. +40mm covers the current
+    // 20mm clips with headroom for further increases.
+    dz1 = TOP_DECK_Z + PLATE_THICKNESS + 40;
     dy0 = DECK_Y_CENTER - DECK_D / 2 - 2;
     dd  = DECK_D + 4;
     hw  = DECK_W / 2 + 2;
@@ -1585,26 +1864,6 @@ module tapered_pin_standoff(d_hole=2.75, h_ped=STANDOFF_H, h_pin=PIN_H) {
     }
 }
 
-// Raspberry Pi 5 — all 4 standoffs on right deck half (board entirely at X>0).
-module pi5_standoffs() {
-    for (sx = [-1, 1])
-        for (sy = [-1, 1])
-            translate([PI5_CX + sx * PI5_HOLE_X / 2,
-                       PI5_CY + sy * PI5_HOLE_Y / 2,
-                       TOP_DECK_Z + PLATE_THICKNESS])
-                tapered_pin_standoff(d_hole=PI5_HOLE_D);
-}
-
-// Pololu D24V50F5 (item 2851) — 1 standoff per deck half (diagonal hole pair straddles X=0).
-// side="R" → pin at (+REG_HOLE_X/2, +REG_HOLE_Y/2);  side="L" → pin at (−REG_HOLE_X/2, −REG_HOLE_Y/2).
-module pololu2851_standoffs(side="R") {
-    sx = (side == "R") ? 1 : -1;
-    translate([REG_CX + sx * REG_HOLE_X / 2,
-               REG_CY + sx * REG_HOLE_Y / 2,
-               TOP_DECK_Z + PLATE_THICKNESS])
-        tapered_pin_standoff(d_hole=REG_HOLE_D);
-}
-
 // Adafruit #757 logic level converter — 4-wall PCB clip printed into right deck half.
 // Board drops in from above; 1.5mm perimeter shelf lifts board above deck so bottom-side
 // SMD components don't contact the deck surface. Wire exit notch in −Y wall.
@@ -1645,6 +1904,91 @@ module _tb_clip(cx, cy) {
         cube([TB_CLIP_T, TB_CLIP_D, TB_CLIP_H]);     // left wall
         translate([TB_CLIP_IW + TB_CLIP_T, 0, 0])
             cube([TB_CLIP_T, TB_CLIP_D, TB_CLIP_H]); // right wall
+    }
+}
+
+// Generic 2-wall slide clip with an LC757-style shelf lip (holds the board off the deck so
+// underside components/solder joints don't touch it). Walls run along X; EACH wall is
+// centred at cx so a straddling clip (cx=0) is bisected cleanly by the deck-half split —
+// half its length prints on each half and the two halves combine into one continuous wall
+// pair once bolted together. Board slides in from either open ±Y end; its two X-parallel
+// edges rest on the shelf. Shared by _reg_clip() and _pi5_clip() — see their headers for
+// component-specific placement/clearance derivations.
+module _shelf_2wall_clip(cx, cy, wall_l, gap, t, h, sh, sw) {
+    translate([cx, cy, TOP_DECK_Z + PLATE_THICKNESS]) {
+        // Aft wall (−Y side) — built like _lc757_clip(): one solid (t+sw)-thick block for
+        // the full height, then the inward sw sliver above the shelf is cut away, leaving
+        // plain thickness t up top. (Previously built as two touching boxes stacked at
+        // z=sh — mathematically the same shape, but the coincident face at the seam
+        // z-fights in OpenSCAD's preview; this single difference() avoids that.)
+        difference() {
+            translate([-wall_l/2, -gap/2 - t, 0])
+                cube([wall_l, t + sw, h]);
+            translate([-wall_l/2 - 1, -gap/2, sh])
+                cube([wall_l + 2, sw + 1, h - sh + 1]);
+        }
+        // Fore wall (+Y side) — mirror of the aft wall.
+        difference() {
+            translate([-wall_l/2, gap/2 - sw, 0])
+                cube([wall_l, t + sw, h]);
+            // Cut must END exactly at gap/2 (where the plain-wall thickness t begins) and
+            // extend inward past the solid's true edge for a clean boolean — NOT overshoot
+            // past gap/2, which would eat into the plain wall above the shelf. (Bug fixed
+            // Jul 2026: this previously started at gap/2-sw and ran outward past gap/2,
+            // shaving up to 1mm off the fore wall's plain thickness — it looked thinner/
+            // shorter than the aft wall even though both used the same height h.)
+            translate([-wall_l/2 - 1, gap/2 - sw - 1, sh])
+                cube([wall_l + 2, sw + 1, h - sh + 1]);
+        }
+    }
+}
+
+// Pololu D24V50F5 buck clip — called from inside _top_deck_base() (not per-half in
+// top_deck_half()) so the existing R/L intersection naturally bisects it. See the REG_CY
+// note in PARAMETERS for the placement/clearance derivation.
+module _reg_clip(cx=REG_CX, cy=REG_CY) {
+    // v3.3: gap now uses REG_PCB_X (the gripped edge), not REG_PCB_Y — see PARAMETERS note.
+    _shelf_2wall_clip(cx, cy, REG_CLIP_WALL_L, REG_PCB_X + 2 * REG_CLIP_GAP,
+                       REG_CLIP_T, REG_CLIP_H, REG_CLIP_SH, REG_CLIP_SW);
+}
+
+// Raspberry Pi 5 clip — also called from inside _top_deck_base() so it's bisected the same
+// way as the buck clip. See the PI5_CY note in PARAMETERS for the placement derivation, the
+// PI5_USBC_CUTOUT_* note for the connector notch cut into the fore wall, and the
+// PI5_CLIP_END_T note for the third (right-end) wall added below.
+module _pi5_clip(cx=PI5_CX, cy=PI5_CY) {
+    _gap = PI5_CLIP_GAP_Y;
+    // End-wall notch: 16mm back (-Y) from the inside corner where the fore wall's inner face
+    // (Y=cy+gap/2) meets the end wall's inner face, then 6mm further — see
+    // PI5_END_CUTOUT_INSET/H note in PARAMETERS.
+    _end_notch_y1 = cy + _gap/2 - PI5_END_CUTOUT_INSET;
+    _end_notch_y0 = _end_notch_y1 - PI5_END_CUTOUT_H;
+    union() {
+        difference() {
+            _shelf_2wall_clip(cx, cy, PI5_CLIP_WALL_L, _gap,
+                               PI5_CLIP_T, PI5_CLIP_H, PI5_CLIP_SH, PI5_CLIP_SW);
+            // USB-C/USB-A/PCIe connector notch — fore (+Y) wall only, full height + thickness.
+            // Z must match _shelf_2wall_clip's own TOP_DECK_Z+PLATE_THICKNESS offset — the
+            // wall geometry lives up there, not at world Z=0.
+            translate([cx + PI5_CLIP_WALL_L/2 - PI5_USBC_CUTOUT_INSET - PI5_USBC_CUTOUT_W,
+                       cy + _gap/2 - PI5_CLIP_SW - 1,
+                       TOP_DECK_Z + PLATE_THICKNESS - 1])
+                cube([PI5_USBC_CUTOUT_W, PI5_CLIP_T + PI5_CLIP_SW + 2, PI5_CLIP_H + 2]);
+        }
+        // Third side — solid end wall closing the right (+X) end, connecting the fore and
+        // aft walls. Left (-X) end stays open for the board to slide in. No shelf profile,
+        // full PI5_CLIP_H height, clear of the USB-C cutout (ends at X=33, this starts at 37).
+        difference() {
+            translate([cx + PI5_CLIP_WALL_L/2 - PI5_CLIP_END_T,
+                       cy - _gap/2 - PI5_CLIP_T,
+                       TOP_DECK_Z + PLATE_THICKNESS])
+                cube([PI5_CLIP_END_T, _gap + 2 * PI5_CLIP_T, PI5_CLIP_H]);
+            // Second cutout — through the end wall, see note above.
+            translate([cx + PI5_CLIP_WALL_L/2 - PI5_CLIP_END_T - 1,
+                       _end_notch_y0,
+                       TOP_DECK_Z + PLATE_THICKNESS - 1])
+                cube([PI5_CLIP_END_T + 2, PI5_END_CUTOUT_H, PI5_CLIP_H + 2]);
+        }
     }
 }
 
@@ -1766,14 +2110,20 @@ module _frame_bolt_holes_top() {
 }
 
 module _top_deck_base() {
-    difference() {
-        deck_plate(TOP_DECK_Z + PLATE_THICKNESS / 2,
-                   leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
-                   deck_overhang=DECK_OVERHANG);
-        _frame_bolt_holes_top();
-        _side_box_bolt_holes_deck(TOP_DECK_Z);
-        _reg_wire_holes(TOP_DECK_Z);
-        _sonar_mount_holes_top();
+    union() {
+        difference() {
+            deck_plate(TOP_DECK_Z + PLATE_THICKNESS / 2,
+                       leg_cutout=LEG_SIZE, leg_cutout_y=LEG_SIZE,
+                       deck_overhang=DECK_OVERHANG);
+            _frame_bolt_holes_top();
+            _side_box_bolt_holes_deck(TOP_DECK_Z);
+            _reg_wire_holes(TOP_DECK_Z);
+            _sonar_mount_holes_top();
+        }
+        // Buck + Pi 5 clips both straddle X=0 — added here (not per-half below) so the R/L
+        // intersection in top_deck_half() bisects each one automatically, one half per side.
+        _reg_clip(REG_CX, REG_CY);
+        _pi5_clip(PI5_CX, PI5_CY);
     }
 }
 
@@ -1781,18 +2131,16 @@ module top_deck_half(side="R") {
     if (side == "R") {
         union() {
             intersection() { _top_deck_base(); _deck_half_clip_top("R"); }
-            pi5_standoffs();                      // all 4 posts on right half
-            pololu2851_standoffs("R");
             _lc757_clip(LC757_CX, LC757_CY);      // Adafruit #757 clip — right (Echo lines)
             _tb_clip(TB_5V_CX,  TB_5V_CY);       // 5V power bus terminal block
             _tb_clip(TB_GND_CX, TB_GND_CY);      // GND bus terminal block
+            _tb_clip(TB_VBAT_CX, TB_VBAT_CY);    // battery-voltage terminal (right half only)
             _align_stubs(TOP_DECK_Z, "R");
         }
     } else {
         difference() {
             union() {
                 intersection() { _top_deck_base(); _deck_half_clip_top("L"); }
-                pololu2851_standoffs("L");
                 _lc757_clip(LC757_CX_L, LC757_CY_L);  // Adafruit #757 clip — left (LC757_L, Trig lines)
                 _tb_clip(TB_5V_L_CX,  TB_5V_L_CY);    // 5V bus terminal — left half
                 _tb_clip(TB_GND_L_CX, TB_GND_L_CY);   // GND bus terminal — left half
@@ -1813,7 +2161,8 @@ module top_deck_half(side="R") {
 //   are in the PIN ASSIGNMENTS section above — that is the single source of truth.
 //
 // MECHANICAL
-//   Housing: SN_HSG_W(51) × SN_HSG_D(≈14.6mm) × 34mm tall.
+//   Housing: SN_HSG_W(51) × SN_HSG_D(≈14.6mm) × 35mm tall (unchanged — the PCB/transducers
+//   sit 8mm higher inside this same envelope via SN_FLOOR_RISE, Jul 2026; see PARAMETERS).
 //   Base plate (SN_BASE_T = 8mm) has 2× counterbored M3 holes. Heat-set inserts live in
 //   the TOP DECK surface (6mm blind holes from top, 2mm solid below).
 //   Each hole is two-part: M3_CLEAR_D shank clearance through the full base, plus a
@@ -1859,21 +2208,25 @@ module top_deck_half(side="R") {
 // ============================================================================
 
 // ── sonar_mount() ──────────────────────────────────────────────────────────
-// Print: base flat on bed (z=0). x=[0..SN_HSG_W], y=[0..SN_HSG_D], z=[0..34mm].
+// Print: base flat on bed (z=0). x=[0..SN_HSG_W], y=[0..SN_HSG_D], z=[0..35mm].
 // Front face at y=0 (the face with transducer holes, facing outward when installed).
-// PCB inserts from open top (z = SN_BASE_T+SN_WALL .. top). Print ONE per sensor, FOUR total.
+// PCB inserts from open top (z = SN_BASE_T+SN_WALL+SN_FLOOR_RISE .. top). Print ONE per
+// sensor, FOUR total.
 module sonar_mount() {
-    _hz   = SN_BASE_T + SN_HSG_H;            // total Z = 34mm
-    _tr_z = SN_BASE_T + SN_WALL + SN_TR_CY;  // transducer centre Z = 8+3+10 = 21mm
+    _hz   = SN_BASE_T + SN_HSG_H;                          // total Z = 35mm (unchanged)
+    _floor_z = SN_BASE_T + SN_WALL + SN_FLOOR_RISE;        // interior floor Z = 8+3+8 = 19mm
+    _tr_z = _floor_z + SN_TR_CY;                           // transducer centre Z = 19+10 = 29mm
 
     difference() {
         // Solid body
         cube([SN_HSG_W, SN_HSG_D, _hz]);
 
-        // Interior pocket — open at top, PCB slides in from above
+        // Interior pocket — open at top, PCB slides in from above. Housing has no lid, so
+        // raising the floor doesn't need more total height — the PCB just extends further
+        // past the (unchanged) wall rim than before, same idea as the transducer slot below.
         // Width = SN_PCB_W, depth = PCB thickness + component space, height = PCB height + clearance
-        translate([SN_WALL, SN_FACE_T, SN_BASE_T + SN_WALL])
-            cube([SN_PCB_W, SN_PCB_T + SN_COMP_D, SN_HSG_H - SN_WALL + 1]);
+        translate([SN_WALL, SN_FACE_T, _floor_z])
+            cube([SN_PCB_W, SN_PCB_T + SN_COMP_D, SN_HSG_H - SN_WALL + 1 - SN_FLOOR_RISE]);
 
         // Keyhole openings in front face — one per transducer.
         // Rectangular slot (SN_TR_OD wide) lets the barrel slide down freely from the top.
@@ -1898,7 +2251,10 @@ module sonar_mount() {
         //
         // Part ①: interior zone, above base plate only.
         //   Y = SN_FACE_T+SN_PCB_T (5.6mm) → back wall inside face (SN_HSG_D-SN_WALL = 11.6mm).
-        //   Z = SN_BASE_T (8mm) → top.  Interior base plate floor stays solid. ✓
+        //   Z = SN_BASE_T (8mm) → top.  This channel already reaches up past the new (raised)
+        //   interior floor at 19mm, which is what gives the header pins/Dupont connector
+        //   housings room now — see SN_FLOOR_RISE note in PARAMETERS. Interior base plate
+        //   floor (Z=0..8) stays solid. ✓
         //   Slot is centred on SN_CABLE_CX (25.5mm) — midpoint between TR1 right edge
         //   (20.25mm) and TR2 left edge (30.75mm).  0.75mm face-plate strip preserved
         //   at each TR side so housing renders and prints as one piece. ✓
@@ -1928,22 +2284,44 @@ module sonar_mount() {
         // Two-part cut per hole:
         //   ① Clearance hole (M3_CLEAR_D): full depth through base plate — bolt shank passage.
         //   ② Counterbore pocket (SN_MNT_CBR_D, SN_MNT_CBR_DEPTH): opens at interior pocket
-        //      floor (z = SN_BASE_T + SN_WALL = 11mm) and recesses SN_MNT_CBR_DEPTH into the
-        //      base plate. Bolthead + washer sit below interior floor — no interference with PCB.
-        //      Pocket also cuts the 3mm wall above base plate → screwdriver path from open
-        //      housing top all the way down to the bolt head.
+        //      floor (z = SN_BASE_T + SN_WALL + SN_FLOOR_RISE = 19mm) and recesses
+        //      SN_MNT_CBR_DEPTH into the base plate. Bolthead + washer sit below interior
+        //      floor — no interference with PCB. Pocket also cuts the 3mm wall above base
+        //      plate → screwdriver path from open housing top all the way down to the bolt
+        //      head. ⚠ Height includes +SN_FLOOR_RISE (Jul 2026) so this pocket still reaches
+        //      the raised interior floor — without it, solid wall material would block the
+        //      screwdriver path between the (now higher) open pocket and the bolt head.
         //
-        // Result: head + 7mm washer fully recessed below z=11 (PCB floor), accessible
+        // Result: head + 7mm washer fully recessed below z=19 (PCB floor), accessible
         // via hex key or screwdriver inserted through the open top of the housing.
         for (dx = [-SN_MNT_SEP/2, SN_MNT_SEP/2]) {
             // ① Bolt shank clearance hole through base plate
             translate([SN_HSG_W/2 + dx, SN_MNT_INSET, -1])
                 cylinder(d=M3_CLEAR_D, h=SN_BASE_T + 2);
-            // ② Counterbore + wall access pocket
+            // ② Counterbore + wall access pocket — extended by SN_FLOOR_RISE to stay
+            // connected to the raised interior pocket (see note above)
             translate([SN_HSG_W/2 + dx, SN_MNT_INSET, SN_BASE_T - SN_MNT_CBR_DEPTH])
-                cylinder(d=SN_MNT_CBR_D, h=SN_MNT_CBR_DEPTH + SN_WALL + 1);
+                cylinder(d=SN_MNT_CBR_D, h=SN_MNT_CBR_DEPTH + SN_WALL + 1 + SN_FLOOR_RISE);
         }
     }
+}
+
+// ── _sonar_mount_grid_x4() ──────────────────────────────────────────────────
+// All 4 sonar mounts arranged in a 2×2 grid for one print job — no connecting geometry
+// between them (a slicer prints multiple separate objects together natively; physically
+// joining them would just make them harder to separate afterward). Print flat, base-down,
+// no supports — same orientation as a single sonar_mount(), just 4 of them with gaps.
+// Footprint ≈ (2×SN_HSG_W + SONAR_GRID_GAP) × (2×SN_HSG_D + SONAR_GRID_GAP) ≈ 120mm × 49mm —
+// comfortably inside the 250×220mm bed. If you want a priming/bed-check outline around them,
+// that's PrusaSlicer's Skirt setting (Print Settings → Skirt and Brim), not modeled here.
+module _sonar_mount_grid_x4() {
+    _gx = SN_HSG_W + SONAR_GRID_GAP; // column pitch
+    _gy = SN_HSG_D + SONAR_GRID_GAP; // row pitch
+
+    for (col = [0, 1])
+        for (row = [0, 1])
+            translate([col * _gx, row * _gy, 0])
+                sonar_mount();
 }
 
 // ── _sonar_mount_installed(dir) ────────────────────────────────────────────
@@ -2019,34 +2397,61 @@ module _sonar_mount_holes_top() {
 // Leg post holes at ±STRUT_X/2 (±115.6mm). Camera housings at ±CAM_BASELINE/2 (±75mm).
 // Mic clip at +37.5mm, speaker cradle at -37.5mm, both on top surface.
 
-// Two-wall mic clip on bar top surface — clipped to bar width.
-module _cam_bar_mic_clip() {
-    _iw = CAM_MIC_W + 2 * CAM_MIC_CLR;
-    _ow = _iw + 2 * CAM_MIC_CLIP_T;
-    intersection() {
-        translate([CAM_MIC_CX - _ow/2, -CAM_MIC_L/2, BAR_THICKNESS]) {
-            cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
-            translate([_iw + CAM_MIC_CLIP_T, 0, 0])
-                cube([CAM_MIC_CLIP_T, CAM_MIC_L, CAM_MIC_H]);
+// Barrel-shaped 2D profile matching the female USB shell: flat top/bottom edges
+// (2*hw_flat wide) with the left/right sides bulging out to 2*hw_max at the vertical
+// midpoint. The bulge is a circular arc fit through both flat-edge corners and the bulge
+// apex (so it lands exactly on the three measured points), unioned onto the flat rect core.
+module _usb_shell_profile(hw_flat, hw_max, hh) {
+    _k  = hw_max - hw_flat;
+    _R  = (_k*_k + hh*hh) / (2*_k);
+    _cx = hw_max - _R;
+    union() {
+        square([2*hw_flat, 2*hh], center=true);
+        intersection() {
+            translate([_cx, 0]) circle(r=_R, $fn=180);
+            translate([hw_flat, -hh]) square([_R, 2*hh]);
         }
-        translate([-BAR_LENGTH/2, -BAR_WIDTH/2, 0])
-            cube([BAR_LENGTH, BAR_WIDTH, BAR_THICKNESS + CAM_MIC_H + 1]);
+        mirror([1, 0, 0])
+            intersection() {
+                translate([_cx, 0]) circle(r=_R, $fn=180);
+                translate([hw_flat, -hh]) square([_R, 2*hh]);
+            }
     }
 }
 
-// Speaker cradle on bar top surface — arc clipped to bar width, no overhang.
-module _cam_bar_spk_clip() {
-    _ir = CAM_SPK_D_MID / 2 + CAM_SPK_CLR;
-    _or = _ir + CAM_SPK_CLIP_T;
-    intersection() {
-        translate([CAM_SPK_CX, 0, BAR_THICKNESS])
-            difference() {
-                cylinder(r=_or, h=CAM_SPK_H);
-                translate([0, 0, -1]) cylinder(r=_ir, h=CAM_SPK_H + 2);
-            }
-        translate([-BAR_LENGTH/2, -BAR_WIDTH/2, 0])
-            cube([BAR_LENGTH, BAR_WIDTH, BAR_THICKNESS + CAM_SPK_H + 1]);
-    }
+// USB shell clip — two separate curved side walls (left + right), full BAR_WIDTH long, open
+// between them the entire height. Each wall keeps only the lower half of its side of the
+// barrel profile (from the widest bulge point, at the bar surface, tapering up to the rim —
+// max ~32° from vertical, well under the ~45° unsupported-overhang limit). The center strip
+// is cut away for the FULL height (not just the upper half) so the two walls never reconnect
+// near the rim — an earlier version let them merge into a closed loop there, which meant
+// bridging across open space and needed support. Shell rests down between the two walls and
+// can also slide in lengthwise along the trough.
+module _cam_bar_usb_clip(cx) {
+    _hh_outer = CAM_USB_L/2 + CAM_USB_CLR + CAM_USB_CLIP_T;
+    _hw_outer = CAM_USB_W/2 + CAM_USB_CLR + CAM_USB_CLIP_T;
+    translate([cx, 0, BAR_THICKNESS])
+        rotate([-90, 0, 0])
+            linear_extrude(height = BAR_WIDTH, center = true)
+                difference() {
+                    offset(r = CAM_USB_CLR + CAM_USB_CLIP_T)
+                        _usb_shell_profile(CAM_USB_FLAT_W/2, CAM_USB_W/2, CAM_USB_L/2);
+                    union() {
+                        offset(r = CAM_USB_CLR)
+                            _usb_shell_profile(CAM_USB_FLAT_W/2, CAM_USB_W/2, CAM_USB_L/2);
+                        // Discard the upper half (y>0) — y=0 is the widest (bulge) point,
+                        // mapped to the bar surface, so only the safe tapering lower half
+                        // remains on each side.
+                        translate([-_hw_outer - 1, 0])
+                            square([2 * _hw_outer + 2, _hh_outer + 1]);
+                        // Discard the center strip for the FULL height — keeps left and
+                        // right walls permanently separate, no reconnecting bridge at the rim.
+                        // (Kept geometry lives in y<0 — see rotation/translate above — so this
+                        // must span negative y, not positive.)
+                        translate([-CAM_USB_FLAT_W/2 - 1, -_hh_outer - 1])
+                            square([CAM_USB_FLAT_W + 2, _hh_outer + 2]);
+                    }
+                }
 }
 
 // Solid camera bar geometry at z=0 — complete bar with all holes.
@@ -2061,8 +2466,8 @@ module _camera_bar_solid() {
     for (x = [-CAM_BASELINE/2, CAM_BASELINE/2])
         translate([x, BAR_WIDTH/2, 0])
             camera_housing();
-    _cam_bar_mic_clip();
-    _cam_bar_spk_clip();
+    _cam_bar_usb_clip(CAM_USB_MIC_CX);
+    _cam_bar_usb_clip(CAM_USB_SPK_CX);
 }
 
 module camera_bar() {
@@ -2087,6 +2492,30 @@ module _component_bbox(w, d, h, cx, cy, c="Yellow") {
         cube([w, t, h]);                         // front wall
         translate([0, d - t, 0]) cube([w, t, h]); // back wall
     }
+}
+
+// Thin red marker plane at X=0 — the deck-half print split (same line _deck_half_clip_top()
+// cuts on). Visualization only, gated by SHOW_DECK_SPLIT_LINE (see VIEW CONTROL) — never
+// part of the actual print geometry, just a reference for eyeballing whether a feature
+// (e.g. the Pi 5 clip's USB-C cutout) crosses the seam.
+module _deck_split_line_marker() {
+    color("Red", 0.6)
+        translate([-0.25, DECK_Y_CENTER - DECK_D/2, TOP_DECK_Z])
+            cube([0.5, DECK_D, PLATE_THICKNESS + 40]);
+}
+
+// Bright green markers at every side-box rail bolt's REAL counterbore diameter (11mm,
+// DECK_CSK_D), poking up above the deck surface — these are the actual keep-out zones a
+// clip wall must clear for a screwdriver/socket to reach the bolt during assembly. A wall
+// sitting on top of one of these won't look like a collision in a plain render (OpenSCAD
+// doesn't flag overlapping unrelated solids) — this makes the real hole visible directly
+// instead of relying on the X-coordinate math. Gated by SHOW_RAIL_BOLT_ZONES.
+module _rail_bolt_zone_markers() {
+    color("Green", 0.7)
+        for (bx = [-SIDE_BOX_RAIL_X, SIDE_BOX_RAIL_X, -SIDE_BOX_RAIL_X_INNER, SIDE_BOX_RAIL_X_INNER])
+            for (i = [0:2])
+                translate([bx, _sbox_bolt_ly(i) - (STRUT_Y + SIDE_BOX_OVER), TOP_DECK_Z + PLATE_THICKNESS])
+                    cylinder(d=DECK_CSK_D, h=15);
 }
 
 // ============================================================================
@@ -2117,6 +2546,8 @@ if (VIEW == "leg") {
     color("Silver")        top_deck_half("R");
     color("DarkGray", 0.8) top_deck_half("L");
     color("DodgerBlue")    for (d = ["front","rear","right","left"]) _sonar_mount_installed(d);
+    if (SHOW_DECK_SPLIT_LINE) _deck_split_line_marker();
+    if (SHOW_RAIL_BOLT_ZONES) _rail_bolt_zone_markers();
 
 } else if (VIEW == "deck_placement") {
     // Top deck with component footprint boxes.
@@ -2125,11 +2556,11 @@ if (VIEW == "leg") {
     color("DarkGray", 0.8) top_deck_half("L");
     color("DodgerBlue")    for (d = ["front","rear","right","left"]) _sonar_mount_installed(d);
 
-    // Pi 5 — 56mm(X) × 85mm(Y), 15mm tall (board + connectors)
-    _component_bbox(56, 85, 15, PI5_CX, PI5_CY, "Yellow");
+    // Pi 5 — 85mm(X) × 56mm(Y), 15mm tall (board + connectors) — rotated 90° v3.1
+    _component_bbox(PI5_PCB_X, PI5_PCB_Y, 15, PI5_CX, PI5_CY, "Yellow");
 
-    // Pololu D24V50F5 buck — 17.8mm(X) × 20.3mm(Y), 10mm tall
-    _component_bbox(17.8, 20.3, 10, REG_CX, REG_CY, "Cyan");
+    // Pololu D24V50F5 buck — 17.3mm(X) × 20.3mm(Y), 10mm tall
+    _component_bbox(REG_PCB_X, REG_PCB_Y, 10, REG_CX, REG_CY, "Cyan");
 
     // Terminal blocks right half — 5V bus + GND bus
     _component_bbox(TB_CLIP_OW, TB_ASSM_D, 9, TB_5V_CX,    TB_5V_CY,    "Orange");
@@ -2142,6 +2573,9 @@ if (VIEW == "leg") {
     // Adafruit #757 level converters — LC757_R right (Echo) + LC757_L left (Trig)
     _component_bbox(LC757_PCB_W, LC757_PCB_D, 8, LC757_CX,   LC757_CY,   "Magenta");
     _component_bbox(LC757_PCB_W, LC757_PCB_D, 8, LC757_CX_L, LC757_CY_L, "Magenta");
+
+    if (SHOW_DECK_SPLIT_LINE) _deck_split_line_marker();
+    if (SHOW_RAIL_BOLT_ZONES) _rail_bolt_zone_markers();
 
 } else if (VIEW == "deck_top_R") {
     _r_cx = DECK_W / 4;
@@ -2198,13 +2632,38 @@ if (VIEW == "leg") {
 } else if (VIEW == "sonar_mount") {
     // HC-SR04 sensor housing — print FOUR total (one per deck edge).
     // Base-down, front face (transducer side) at y=0.
-    // Footprint: SN_HSG_W(51mm) × SN_HSG_D(≈14.6mm). Height: SN_BASE_T+SN_HSG_H = 34mm.
+    // Footprint: SN_HSG_W(51mm) × SN_HSG_D(≈14.6mm). Height: SN_BASE_T+SN_HSG_H = 35mm.
     color("DodgerBlue") sonar_mount();
+
+} else if (VIEW == "print_sonar_mount_x4") {
+    // All 4 HC-SR04 housings as a single print job — plain 2×2 grid, no connecting geometry
+    // (see _sonar_mount_grid_x4()). Base-down, no supports.
+    // Footprint ≈ 120mm × 49mm × 35mm tall.
+    color("DodgerBlue") _sonar_mount_grid_x4();
 
 } else if (VIEW == "print_camera_bar") {
     // Full camera bar rotated 41° to fit 250×220mm bed diagonally.
     rotate([0, 0, 41])
         color("orange") _camera_bar_solid();
+
+} else if (VIEW == "print_usb_clip_test") {
+
+    // ── USB SHELL CLIP FIT-TEST PLATE ────────────────────────────────────────
+    // Both camera-bar USB shell clips (mic-side + speaker-side, _cam_bar_usb_clip()) on a
+    // thin base, print flat, base-down, no supports. Base plate matches BAR_WIDTH (25mm) so
+    // the test print is representative of the real bar; base is 2mm (not the full 8mm bar
+    // thickness) for a fast test print — clips are shifted down to sit on this thinner base.
+    _cpt = 2;    // base plate thickness
+    _cpl = 110;  // base plate length (X) — fits both mounts (75mm apart) with margin
+    color("orange")
+        union() {
+            translate([-_cpl/2, -BAR_WIDTH/2, 0])
+                cube([_cpl, BAR_WIDTH, _cpt]);
+            translate([0, 0, -(BAR_THICKNESS - _cpt)]) {
+                _cam_bar_usb_clip(CAM_USB_MIC_CX);
+                _cam_bar_usb_clip(CAM_USB_SPK_CX);
+            }
+        }
 
 } else if (VIEW == "print_side_box") {
     // Side box parts in print orientation — rail + end cap shown.
@@ -2250,52 +2709,84 @@ if (VIEW == "leg") {
     color("Silver", 0.6)
         deck_plate(TOP_DECK_Z + PLATE_THICKNESS/2, deck_overhang=DECK_OVERHANG);
 
+} else if (VIEW == "print_clip_fit_test") {
+
+    // ── FULL CLIP LAYOUT FIT-TEST PLATE ──────────────────────────────────────
+    // Every top-deck clip at its REAL relative position (unlike print_test_clips below,
+    // which uses a compact made-up layout for a quick single-instance mechanics test) — this
+    // one verifies the actual final arrangement, including that neighbouring clips clear
+    // each other. Print flat, base-down, no supports.
+    // Footprint ≈ 210mm × 143mm (fits the 250×220mm bed with margin) × 8mm tall
+    // (2mm base + 6mm tallest clip). Base plate is 2mm — thin for a fast test print.
+    // Y depth grew again (133→143mm, Jul 2026) to contain the new TB_VBAT terminal — its
+    // rear edge (Y=-179) is now the deck-most extreme point, past TB_GND's -168.25.
+    //
+    // Includes: Pi 5 clip, buck clip, both #757 clips (R+L), all 4 terminal block clips,
+    // and the new battery-voltage terminal (TB_VBAT).
+    _cpt = 2;    // base plate thickness
+    _cbx0 = -105;  _cby0 = -182;  _cbw = 210;  _cbd = 143;
+    translate([0, 0, -(TOP_DECK_Z + PLATE_THICKNESS) + _cpt])
+    union() {
+        translate([_cbx0, _cby0, TOP_DECK_Z + PLATE_THICKNESS - _cpt])
+            cube([_cbw, _cbd, _cpt]);
+
+        _pi5_clip(PI5_CX, PI5_CY);
+        _reg_clip(REG_CX, REG_CY);
+        _lc757_clip(LC757_CX,   LC757_CY);
+        _lc757_clip(LC757_CX_L, LC757_CY_L);
+        _tb_clip(TB_5V_CX,    TB_5V_CY);
+        _tb_clip(TB_GND_CX,   TB_GND_CY);
+        _tb_clip(TB_5V_L_CX,  TB_5V_L_CY);
+        _tb_clip(TB_GND_L_CX, TB_GND_L_CY);
+        _tb_clip(TB_VBAT_CX,  TB_VBAT_CY);
+
+        // Deck-split marker (X=0), sized to this plate rather than the full deck —
+        // _deck_split_line_marker() would extend well past this smaller footprint.
+        if (SHOW_DECK_SPLIT_LINE)
+            color("Red", 0.6)
+                translate([-0.25, _cby0, TOP_DECK_Z])
+                    cube([0.5, _cbd, PLATE_THICKNESS + 40]);
+    }
+
 } else if (VIEW == "print_test_clips") {
 
     // ── UPPER DECK CLIP FIT-TEST PLATE ───────────────────────────────────────
-    // Print flat, base-down, no supports. Footprint ≈ 126mm × 72mm × 13mm tall.
+    // Print flat, base-down, no supports. Footprint ≈ 136mm × 72mm × 17mm tall.
     // Base plate is 4mm (not 8mm) for a faster test print.
     //
     // Layout:
-    //   Centre:  Pi 5 — 4 pins, full 2×2 grid (49mm × 58mm spacing)
-    //            #757 pocket clip nested inside the Pi pin grid at centre
+    //   Centre:  Pi 5 — 2-wall shelf clip at cx=0 (80mm wall, 56mm gap — not bisected here,
+    //            this test plate has no deck split, so the full wall prints in one piece)
+    //            #757 pocket clip nested inside the Pi clip's open gap at centre
     //   Right:   Terminal block clip at cx=44
-    //   Far-R:   Pololu buck — 2 diagonal pins centred at cx=80 (13.46mm × 16mm diagonal)
+    //   Far-R:   Pololu buck — 2-wall shelf clip centred at cx=80 (also not bisected here)
     //
     // What to test:
-    //   Pi pins  — press all 4 Pi PCB holes onto pins; board must sit flat, no rocking
+    //   Pi clip  — slide Pi 5 in from +X or −X open end; seats on 1.5mm shelf, walls snug
     //   #757     — drop board in from above; seats on 1.5mm shelf, walls snug
     //   TB clip  — press block in from +Y open face; grips sides firmly
-    //   Buck     — press Pololu PCB onto both diagonal pins; same friction feel as Pi
+    //   Buck     — slide Pololu PCB in from +Y or −Y open end; seats on 1.5mm shelf, walls snug
     //
-    // Tuning: adjust *_CLIP_GAP ±0.1mm for clips; d_hole multipliers in tapered_pin_standoff for pins
+    // Tuning: adjust *_CLIP_GAP/*_CLIP_T ±0.1-0.2mm for clips if fit is too tight/loose
     _pt = 4;  // test plate thickness — thinner than deck for speed
     translate([0, 0, -(TOP_DECK_Z + PLATE_THICKNESS) + _pt])
     union() {
         // Base plate — 4mm thick, covers all features with margin
-        translate([-32, -36, TOP_DECK_Z + PLATE_THICKNESS - _pt])
-            cube([126, 72, _pt]);
+        translate([-42, -36, TOP_DECK_Z + PLATE_THICKNESS - _pt])
+            cube([136, 72, _pt]);
 
-        // Pi 5 — 4× standoff pins at full 49mm(X) × 58mm(Y) hole grid
-        for (sx = [-1, 1])
-            for (sy = [-1, 1])
-                translate([sx * PI5_HOLE_X / 2,
-                           sy * PI5_HOLE_Y / 2,
-                           TOP_DECK_Z + PLATE_THICKNESS])
-                    tapered_pin_standoff(d_hole=PI5_HOLE_D);
+        // Pi 5 — 2-wall shelf clip, full 80mm × 56mm size (not bisected on this test plate)
+        _pi5_clip(0, 0);
 
-        // #757 pocket clip — nested inside Pi pin grid (clip 24.1×18.85mm, pins ±24.5/±29mm)
+        // #757 pocket clip — nested inside the Pi clip's open gap (clip 24.1×18.85mm,
+        // Pi clip walls at Y=±28..31, well clear of #757's ±9.4mm Y extent)
         _lc757_clip(0, 0);
 
         // Terminal block clip
         _tb_clip(44, 0);
 
-        // Pololu buck — 2× diagonal pins at REG_HOLE_X(13.46mm) × REG_HOLE_Y(16mm) spacing
-        for (s = [-1, 1])
-            translate([80 + s * REG_HOLE_X / 2,
-                          s * REG_HOLE_Y / 2,
-                          TOP_DECK_Z + PLATE_THICKNESS])
-                tapered_pin_standoff(d_hole=REG_HOLE_D);
+        // Pololu buck — 2-wall shelf clip (not straddling a split here, just a flat test print)
+        _reg_clip(80, 0);
     }
 
 } else {
