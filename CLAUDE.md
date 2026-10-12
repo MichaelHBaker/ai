@@ -7,7 +7,8 @@ four Pololu 37D motors on two Cytron MDD10A drivers, four HC-SR04 ultrasonics.
 - Run `git fetch origin main` and work from the latest `main`. Session branches can start
   from an old commit; reading stale files has caused wrong wiring advice before.
 - Read `OPEN_ITEMS.md` for work in progress and open questions before starting.
-- The owner handles git. Do not commit or push unless asked.
+- Git: reading is fine (fetch, pull, log, status). Never commit, push, or change
+  branches unless the owner asks.
 
 ## Source of truth for wiring — check these before giving ANY wiring advice
 - `hardware/phase_1/claude_output/Sensor_Wiring_Reference.xlsx`
