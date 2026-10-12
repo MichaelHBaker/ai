@@ -4,6 +4,7 @@ Mecanum-wheel robot: Raspberry Pi 5 + AI HAT+ 2 (Hailo-10H), two Camera Module 3
 four Pololu 37D motors on two Cytron MDD10A drivers, four HC-SR04 ultrasonics.
 
 ## Before anything else
+- Read `OPEN_ITEMS.md` for work in progress and open questions before starting.
 - Run `git fetch origin main` and work from the latest `main`. Session branches can start
   from an old commit; reading stale files has caused wrong wiring advice before.
 - The owner handles git. Do not commit or push unless asked.
