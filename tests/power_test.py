@@ -7,10 +7,10 @@ import multiprocessing
 from gpiozero import PWMOutputDevice, DigitalOutputDevice, DigitalInputDevice
 
 MOTORS = {
-    "mtr_r_f": {"pwm": 18, "dir": 23, "enc_a": 5},
-    "mtr_r_b": {"pwm": 19, "dir": 24, "enc_a": 25},
-    "mtr_l_f": {"pwm": 12, "dir": 17, "enc_a": 20},
-    "mtr_l_b": {"pwm": 13, "dir": 27, "enc_a": 16},
+    "mtr_r_f": {"pwm": 19, "dir": 24, "enc_a": 5},
+    "mtr_r_b": {"pwm": 18, "dir": 23, "enc_a": 25},
+    "mtr_l_f": {"pwm": 13, "dir": 27, "enc_a": 20},
+    "mtr_l_b": {"pwm": 12, "dir": 17, "enc_a": 16},
 }
 
 COUNTS_PER_REV = 3200   # Pololu 37D: 64 CPR motor shaft x 50:1 gearbox

@@ -704,8 +704,8 @@
 //   Compute:        Raspberry Pi 5
 //   Motors:         4× Pololu 37D 12V 50:1 gearmotors with quadrature encoders
 //   Motor drivers:  2× Cytron MDD10A dual H-bridge
-//     MDD10A_R  lower deck right — mtr_r_f (CH1), mtr_r_b (CH2)
-//     MDD10A_L  lower deck left  — mtr_l_f (CH1), mtr_l_b (CH2)
+//     MDD10A_R  lower deck right — mtr_r_f (CH2), mtr_r_b (CH1)
+//     MDD10A_L  lower deck left  — mtr_l_f (CH2), mtr_l_b (CH1)
 //   Power:          Pololu D24V50F5 buck → Pi 5V rail
 //   Ultrasonics:    4× HC-SR04 (front / back / left / right)
 //   Level shifters: 2× Adafruit #757 BSS138 bidirectional 4-channel
@@ -791,16 +791,16 @@
 //                                              Deck 2: riser → single screw clamp, pin 9.
 //                                              No deck-2 joint (nothing else joins). See ENCODERS.
 //    10  GPIO 15   IN   us_b Echo             us_b Echo → LC757_R B2 → A2 → Pi
-//    11  GPIO 17   OUT  mtr_l_f DIR           Pi → MDD10A_L DIR1
-//    12  GPIO 18   OUT  mtr_r_f PWM           Pi → MDD10A_R PWM1
-//    13  GPIO 27   OUT  mtr_l_b DIR           Pi → MDD10A_L DIR2
+//    11  GPIO 17   OUT  mtr_l_b DIR           Pi → MDD10A_L DIR1
+//    12  GPIO 18   OUT  mtr_r_b PWM           Pi → MDD10A_R PWM1
+//    13  GPIO 27   OUT  mtr_l_f DIR           Pi → MDD10A_L DIR2
 //    14  GND       OUT  Ultrasonic+LC757 GND  Pi → both LC757 GND pins + 4× HC-SR04 GND
 //    15  GPIO 22   IN   mtr_r_b encoder B     mtr_r_b white → Pi
-//    16  GPIO 23   OUT  mtr_r_f DIR           Pi → MDD10A_R DIR1
+//    16  GPIO 23   OUT  mtr_r_b DIR           Pi → MDD10A_R DIR1
 //    17  3.3V      OUT  Encoder VCC riser     Deck 1: 5-way splice, 4× blue → ONE riser →
 //                                              screw clamp, pin 17. NOT free. Was spare;
 //                                              claimed Aug 2026. Same rail as pin 1.
-//    18  GPIO 24   OUT  mtr_r_b DIR           Pi → MDD10A_R DIR2
+//    18  GPIO 24   OUT  mtr_r_f DIR           Pi → MDD10A_R DIR2
 //    19  GPIO 10   OUT  us_r Trig             Pi → LC757_L A3 → B3 → us_r Trig
 //    20  GND       IN   MDD10A_R signal GND   MDD10A_R logic GND
 //    21  GPIO  9   IN   us_l Echo             us_l Echo → LC757_R B3 → A3 → Pi
@@ -814,13 +814,13 @@
 //    29  GPIO  5   IN   mtr_r_f encoder A     mtr_r_f yellow → Pi
 //    30  GND       IN   MDD10A_L signal GND   MDD10A_L logic GND
 //    31  GPIO  6   IN   mtr_r_f encoder B     mtr_r_f white → Pi
-//    32  GPIO 12   OUT  mtr_l_f PWM           Pi → MDD10A_L PWM1
-//    33  GPIO 13   OUT  mtr_l_b PWM           Pi → MDD10A_L PWM2
+//    32  GPIO 12   OUT  mtr_l_b PWM           Pi → MDD10A_L PWM1
+//    33  GPIO 13   OUT  mtr_l_f PWM           Pi → MDD10A_L PWM2
 //    34  GND       IN   Pi stack power  GND   Buck GND → GND joint 0 → pin 34. NOT free.
 //                                              SECOND return leg, added Aug 2026 — was a
 //                                              spare. Same even-row strip as pin 6. See the
 //                                              ⚠ under pins 2/4/6 for why the return is split.
-//    35  GPIO 19   OUT  mtr_r_b PWM           Pi → MDD10A_R PWM2
+//    35  GPIO 19   OUT  mtr_r_f PWM           Pi → MDD10A_R PWM2
 //    36  GPIO 16   IN   mtr_l_b encoder A     mtr_l_b yellow → Pi
 //    37  GPIO 26   IN   mtr_l_b encoder B     mtr_l_b white → Pi
 //    38  GPIO 20   IN   mtr_l_f encoder A     mtr_l_f yellow → Pi
@@ -828,10 +828,14 @@
 //    40  GPIO 21   IN   mtr_l_f encoder B     mtr_l_f white → Pi
 //
 // MOTORS (8 GPIO)
-//   mtr_r_f   PWM pin 12 (GPIO 18)   DIR pin 16 (GPIO 23)   MDD10A_R CH1   forward_dir=1
-//   mtr_r_b   PWM pin 35 (GPIO 19)   DIR pin 18 (GPIO 24)   MDD10A_R CH2   forward_dir=1
-//   mtr_l_f   PWM pin 32 (GPIO 12)   DIR pin 11 (GPIO 17)   MDD10A_L CH1   forward_dir=0 (mirror)
-//   mtr_l_b   PWM pin 33 (GPIO 13)   DIR pin 13 (GPIO 27)   MDD10A_L CH2   forward_dir=0 (mirror)
+//   mtr_r_f   PWM pin 35 (GPIO 19)   DIR pin 18 (GPIO 24)   MDD10A_R CH2   forward_dir=1
+//   mtr_r_b   PWM pin 12 (GPIO 18)   DIR pin 16 (GPIO 23)   MDD10A_R CH1   forward_dir=1
+//   mtr_l_f   PWM pin 33 (GPIO 13)   DIR pin 13 (GPIO 27)   MDD10A_L CH2   forward_dir=0 (mirror)
+//   mtr_l_b   PWM pin 32 (GPIO 12)   DIR pin 11 (GPIO 17)   MDD10A_L CH1   forward_dir=0 (mirror)
+//   ⚠ CHANGED Oct 2026: FRONT motors are on CH2 (M2A/M2B), REAR motors on CH1 (M1A/M1B),
+//     on BOTH drivers — the as-built motor leads after the top-deck rebuild. The Pi→MDD10A
+//     signal wires did not move (GPIO 18/23 still → R PWM1/DIR1, etc.); only which motor
+//     name each channel drives changed. Found by wheel test: GPIO 18 turned the right REAR.
 //   All 4 PWM pins are Pi 5 hardware-PWM-capable (independent channels via RP1).
 //   Signal GND: MDD10A_R → pin 20,  MDD10A_L → pin 30
 //   Motor control wire colors: DIR=orange, PWM=red, GND=black (all 4 motors, both drivers).

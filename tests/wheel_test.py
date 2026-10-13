@@ -15,10 +15,10 @@ from gpiozero import PWMOutputDevice, DigitalOutputDevice
 from time import sleep
 
 MOTORS = {
-    "mtr_r_f": {"pwm": 18, "dir": 23},
-    "mtr_r_b": {"pwm": 19, "dir": 24},
-    "mtr_l_f": {"pwm": 12, "dir": 17},
-    "mtr_l_b": {"pwm": 13, "dir": 27},
+    "mtr_r_f": {"pwm": 19, "dir": 24},
+    "mtr_r_b": {"pwm": 18, "dir": 23},
+    "mtr_l_f": {"pwm": 13, "dir": 27},
+    "mtr_l_b": {"pwm": 12, "dir": 17},
 }
 
 PWM_FREQ = 1000      # 1 kHz, same as pwm_test.py

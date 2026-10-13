@@ -1,28 +1,15 @@
 # Open items — work in progress
 
 Read at the start of every session. Update as items close; delete closed items.
-Last updated: 2026-10-12.
+Last updated: 2026-10-13.
 
-## 1. Ground terminals may not match the wiring reference (OPEN — blocks motor power)
+## 1. GPIO pull-downs are lost when a script exits (OPEN — safety)
 
-During the Oct 2026 top-deck reassembly, a session that had not read the wiring reference
-directed three ground wires to different pins than `Sensor_Wiring_Reference.xlsx` specifies.
-All Pi GND pins are common on the Pi PCB, so this is not an electrical hazard, but the
-as-built wiring and the reference may now disagree.
-
-| Wire | Reference says | Session advised |
-|---|---|---|
-| Buck GND return, leg 2 (via GND joint 0) | Pin 34 | Pin 9 |
-| MDD10A_R signal GND | Pin 20 | Pin 14 |
-| MDD10A_L signal GND | Pin 30 | Pin 20 |
-
-Reference owners of the affected pins: pin 9 = encoder GND riser (green), pin 14 = LC757
-GND joint 1. If the buck GND went into pin 9, find where the encoder green riser went.
-
-**Next step:** owner reports what is physically in the GeeekPi terminals for pins
-9, 14, 20, 30, 34 (even strip: pin 14 = terminal 7, 20 = 10, 30 = 15, 34 = 17; pin 9 is on
-the odd strip, labelled GND, 5th from the 3V3 end). Then move wires back to match the
-reference (preferred) or update the spreadsheet and the MASTER PIN TABLE in `chassis_v3.scad`.
+When a gpiozero script exits, the PWM pins go back to input with NO pull (`ip pn`), so the
+MDD10A PWM inputs float while motor power is on. After every test, either unplug the
+MDD10A feeds or run `pinctrl set <pin> ip pd` for 12, 13, 18, 19. Permanent fix to do:
+add `gpio=12,13,18,19=ip,pd` to `/boot/firmware/config.txt` (covers boot only), and make
+test scripts leave pins driven low or pulled down on exit.
 
 ## 2. Pi 5 bring-up after board replacement (IN PROGRESS)
 
@@ -35,15 +22,18 @@ Done: OS + bootloader (25 Sep 2026) updated, fan (pwm-fan), both cameras (imx708
 stills captured), AI HAT+ 2 (Hailo-10H in lspci), breakout fitted and orientation verified
 from two photos, loose test resistor removed.
 
+Ground terminals now match the reference (pins 6/34 buck, 20 MDD_R, 30 MDD_L; continuity
+checked). Logic-only power-up and PWM dry run passed on all four pins (IO13 wire had to be
+reseated). Motor channels found swapped vs the old docs: FRONT motors are on MDD10A CH2,
+REAR on CH1, both sides. Owner kept the wiring; spreadsheet, SCAD pin table, CLAUDE.md and
+both test scripts were updated to match (Oct 13).
+
 Remaining, in order:
-1. Resolve item 1.
-2. Power from buck with MDD10A feeds unplugged (XT60 #1/#2). Check
-   `pinctrl get 12,13,18,19` — all low.
-3. Dry-run `tests/wheel_test.py` with motors unpowered, meter on each PWM terminal to GND:
-   ~0.9-1.0V average during a spin, 0V otherwise.
-4. Reconnect MDD10A feeds, robot on stand, run `tests/wheel_test.py`. Record for each motor
-   which wheel moved and which DIR level was forward (expected: right = HIGH, left = LOW).
-5. Hailo software install (not started).
+1. Run `tests/wheel_test.py` with the updated pin map. Record for each motor which wheel
+   moved and which DIR level was forward (expected: right = HIGH, left = LOW).
+2. Reconnect encoders (risers to pins 17 and 9, A/B per the pin table) and rerun
+   `tests/power_test.py` (expects 3200 counts per wheel).
+3. Hailo software install (not started).
 
 ## 3. Claude memory on the owner's PC blocks `git fetch` (OPEN — owner action)
 

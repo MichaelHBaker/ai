@@ -33,7 +33,8 @@ MDD10As and a Pololu D24V50F5 buck (5V, 5A) that powers the Pi through the GPIO 
 - Pins 27 and 28 (GPIO 0/1) are the HAT EEPROM bus — never use.
 
 ## Quick reference (verify against the sources above before relying on it)
-- Motors (BCM): r_f PWM18/DIR23, r_b PWM19/DIR24, l_f PWM12/DIR17, l_b PWM13/DIR27.
+- Motors (BCM): r_f PWM19/DIR24, r_b PWM18/DIR23, l_f PWM13/DIR27, l_b PWM12/DIR17.
+  Front motors are on MDD10A channel 2, rear on channel 1 (both drivers, Oct 2026).
   MDD10A_R signal GND → pin 20, MDD10A_L signal GND → pin 30.
 - Pi power: 5V on pins 2 and 4; buck return split over GND pins 6 and 34.
 - Encoders run at 3.3V (VCC riser pin 17, GND riser pin 9). Left-side mirror is done in
