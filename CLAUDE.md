@@ -8,7 +8,9 @@ MDD10As and a Pololu D24V50F5 buck (5V, 5A) that powers the Pi through the GPIO 
 ## Before anything else
 1. Run `git fetch origin main` and work from the latest `main`. Session branches can start
    from an old commit; reading stale files has caused wrong wiring advice before.
-2. Read `OPEN_ITEMS.md` for work in progress and open questions.
+2. Read `OPEN_ITEMS.md` in full before answering anything. End every first answer
+   with ONE open item: the one most relevant to the question, or if none is
+   relevant, the most important one (items marked "blocks" come first).
 3. Git: reading is fine and expected (fetch, pull, log, status, diff). Never commit, push,
    or change branches unless the owner asks. If a memory note says "never run git", it
    means never WRITE — fetching is still required by step 1.
